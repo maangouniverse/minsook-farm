@@ -1109,14 +1109,14 @@
 
           <!-- 🔍 상세 검색 및 날짜 기간 필터 바 -->
           <div class="filter-bar" style="background: #fafbfc; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 18px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: end;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: end;">
               <!-- 기간 필터 -->
               <div class="filter-group">
                 <label class="admin-form-label" style="margin-bottom: 6px; font-weight: 800; font-size: 0.8rem;">📅 주문 조회 기간</label>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                  <input type="date" id="filterStartDate" class="input-field" style="padding: 8px 10px; font-size: 0.85rem; height: 38px;">
-                  <span style="font-weight: bold; color: var(--text-muted);">~</span>
-                  <input type="date" id="filterEndDate" class="input-field" style="padding: 8px 10px; font-size: 0.85rem; height: 38px;">
+                  <input type="date" id="filterStartDate" class="input-field" style="padding: 8px 10px; font-size: 0.85rem; height: 38px; flex: 1; min-width: 120px;">
+                  <span style="font-weight: bold; color: var(--text-muted); flex-shrink: 0;">~</span>
+                  <input type="date" id="filterEndDate" class="input-field" style="padding: 8px 10px; font-size: 0.85rem; height: 38px; flex: 1; min-width: 120px;">
                 </div>
               </div>
               
@@ -1130,7 +1130,7 @@
                     <option value="phone">연락처</option>
                     <option value="address">배송주소</option>
                   </select>
-                  <input type="text" id="filterSearchKeyword" class="input-field" placeholder="검색어 입력" style="padding: 8px 10px; font-size: 0.85rem; height: 38px;">
+                  <input type="text" id="filterSearchKeyword" class="input-field" placeholder="검색어 입력" style="padding: 8px 10px; font-size: 0.85rem; height: 38px; flex: 1; min-width: 150px;">
                 </div>
               </div>
 
@@ -1347,6 +1347,7 @@
           showToast('🔓 로그인에 성공하였습니다!');
           currentUserRole = data.role;
           currentUsername = 'admin';
+          sessionStorage.setItem('minsook_admin_logged_in', 'true');
           showDashboard();
         } else {
           showToast(`❌ 로그인 실패: ${data.error || '비밀번호가 올바르지 않습니다.'}`);
@@ -1368,8 +1369,8 @@
     }
 
     async function handleLogout() {
+      sessionStorage.removeItem('minsook_admin_logged_in');
       if (window.location.protocol === 'file:') {
-        sessionStorage.removeItem('minsook_admin_logged_in');
         showToast('🔒 안전하게 로그아웃되었습니다.');
         showLogin();
         return;
@@ -1555,22 +1556,43 @@
       showToast('🔄 필터가 초기화되었습니다.');
     }
 
+    // Clean and Format Product Name (e.g. 특품 오이 (무게) -> 특품, 한입 오이 -> 한입오이)
+    function cleanItemName(name) {
+      let clean = name;
+      // 괄호 내용 삭제 (예: (무게), (개수), (못난이) 등)
+      clean = clean.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+      
+      // 중복 단어 정제
+      if (clean === '특품 오이') {
+        clean = '특품';
+      } else if (clean === '상품 오이') {
+        clean = '상품';
+      } else if (clean === '공품 오이') {
+        clean = '공품';
+      } else if (clean === '한입 오이' || clean === '한입오이') {
+        clean = '한입오이';
+      }
+      return clean;
+    }
+
     // Create Order Table Row Element
     function createOrderRow(order) {
       const fragment = document.createDocumentFragment();
 
       const dateObj = new Date(order.created_at);
-      const dateStr = dateObj.toLocaleDateString('ko-KR', {
-        month: 'short', day: 'numeric'
-      });
-      const timeStr = dateObj.toLocaleTimeString('ko-KR', {
-        hour: '2-digit', minute: '2-digit', hour12: false
-      });
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      
+      const hours = String(dateObj.getHours()).padStart(2, '0');
+      const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+      const timeStr = `${hours}:${minutes}`;
 
       // Formatting items (무게/개수/못난이 괄호 및 수량 단위 제거하여 자연스럽게 포맷팅)
       let itemsHtml = '<ul class="ordered-items-list">';
       order.items.forEach(item => {
-        const cleanName = item.name.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+        const cleanName = cleanItemName(item.name);
         itemsHtml += `<li>${cleanName} ${item.quantity}${item.unit}</li>`;
       });
       itemsHtml += '</ul>';
@@ -1583,7 +1605,7 @@
 
       const isPickup = order.address.includes('[직접 픽업]');
 
-      // Row 1: Main Order Info (rowspan="2" on non-split fields)
+      // Row 1: Main Order Info (rowspan="2" on checkbox, id, date, status; others rowspan="1")
       const tr1 = document.createElement('tr');
       tr1.className = 'order-main-row';
       tr1.innerHTML = `
@@ -1593,13 +1615,13 @@
         <td rowspan="2" style="text-align: center; vertical-align: middle;"><strong>#${order.id}</strong></td>
         <td rowspan="2" style="font-size: 0.8rem; color: var(--text-muted); text-align: center; vertical-align: middle; line-height: 1.3;">
           <div style="font-weight: 700; color: var(--text-dark);">${dateStr}</div>
-          <div style="font-size: 0.72rem; margin-top: 2px;">${timeStr}</div>
+          <div style="font-size: 0.75rem; margin-top: 4px; color: var(--text-muted); font-weight: 600;">${timeStr}</div>
         </td>
         <td style="vertical-align: middle;"><strong>${escapeHtml(order.name)}</strong></td>
         <td style="font-size: 0.82rem; vertical-align: middle;">${escapeHtml(order.phone)}</td>
-        <td rowspan="2" class="cell-items" style="vertical-align: middle;">${itemsHtml}</td>
-        <td rowspan="2" style="vertical-align: middle;"><strong style="color: var(--primary);">${order.total_price.toLocaleString()}원</strong></td>
-        <td rowspan="2" class="cell-memo" style="vertical-align: middle;">
+        <td class="cell-items" style="vertical-align: middle;">${itemsHtml}</td>
+        <td style="vertical-align: middle;"><strong style="color: var(--primary);">${order.total_price.toLocaleString()}원</strong></td>
+        <td class="cell-memo" style="vertical-align: middle;">
           ${escapeHtml(order.memo || '-')}
           ${order.tracking_number ? `<div style="margin-top: 6px; padding: 2px 6px; font-size: 0.72rem; color: var(--primary); font-weight: bold; background-color: var(--primary-light); border-radius: var(--radius-sm); display: inline-block; white-space: nowrap;">송장: ${order.courier ? escapeHtml(order.courier) + ' ' : ''}${escapeHtml(order.tracking_number)}</div>` : ''}
         </td>
@@ -1616,15 +1638,15 @@
         </td>
       `;
 
-      // Row 2: Address / Pickup Detail (colspan="2" to span under name and phone columns)
+      // Row 2: Address / Pickup Detail (colspan="5" to span under name, phone, items, total_price, memo columns)
       const tr2 = document.createElement('tr');
       tr2.className = 'order-address-row';
       tr2.innerHTML = `
-        <td colspan="2" class="cell-address" style="padding: 6px 8px 10px 8px; background-color: #fafbfc; vertical-align: top;">
-          <div style="display: flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 800; color: ${isPickup ? '#3b82f6' : 'var(--primary)'}; margin-bottom: 3px;">
+        <td colspan="5" class="cell-address" style="padding: 8px 12px; background-color: #fafbfc; vertical-align: top;">
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 800; color: ${isPickup ? '#3b82f6' : 'var(--primary)'}; margin-bottom: 4px;">
             <span>${isPickup ? '🚗 직접 픽업 일정' : '📍 배송지 주소'}</span>
           </div>
-          <div style="font-size: 0.78rem; font-weight: 600; color: var(--text-dark); line-height: 1.35;">
+          <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-dark); line-height: 1.4;">
             ${escapeHtml(order.address)}
           </div>
         </td>
@@ -1697,7 +1719,7 @@
       sortedOrders.forEach((order, idx) => {
         // 포맷팅 상품: (무게)/(개수) 괄호 제거 후 "특품 오이 10개" 형태로 노출
         const itemsStr = order.items.map(item => {
-          const cleanName = item.name.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+          const cleanName = cleanItemName(item.name);
           return `${cleanName} ${item.quantity}${item.unit}`;
         }).join(', ');
         
@@ -1747,7 +1769,7 @@
           year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
         });
         const itemsHtml = order.items.map(item => {
-          const cleanName = item.name.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+          const cleanName = cleanItemName(item.name);
           return `<li>${cleanName} - <strong>${item.quantity}${item.unit}</strong></li>`;
         }).join('');
         
@@ -2511,15 +2533,16 @@
 
     // Verify session state on first load
     async function checkAuthOnLoad() {
+      const sessionLoggedIn = sessionStorage.getItem('minsook_admin_logged_in');
+      if (sessionLoggedIn !== 'true') {
+        showLogin();
+        return;
+      }
+
       if (window.location.protocol === 'file:') {
-        const sessionLoggedIn = sessionStorage.getItem('minsook_admin_logged_in');
-        if (sessionLoggedIn === 'true') {
-          currentUserRole = 'admin';
-          currentUsername = 'admin';
-          showDashboard();
-        } else {
-          showLogin();
-        }
+        currentUserRole = 'admin';
+        currentUsername = 'admin';
+        showDashboard();
         return;
       }
 
@@ -2530,9 +2553,11 @@
           currentUsername = 'admin'; 
           showDashboard();
         } else {
+          sessionStorage.removeItem('minsook_admin_logged_in');
           showLogin();
         }
       } catch (err) {
+        sessionStorage.removeItem('minsook_admin_logged_in');
         showLogin();
       }
     }
