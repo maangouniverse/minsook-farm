@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://minsook-farm.vercel.app/sitemap.xml

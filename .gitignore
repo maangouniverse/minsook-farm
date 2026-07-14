@@ -1,0 +1,10 @@
+.vercel
+node_modules/
+git-portable/
+gh-portable/
+.env
+*.zip
+*.log
+get_keys.js
+query_db_temp.js
+db_info_temp.js

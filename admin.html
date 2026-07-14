@@ -1,0 +1,2215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>민숙농장 관리자 페이지</title>
+  
+  <!-- Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800;900&display=swap">
+  
+  <style>
+    :root {
+      --primary: #15803d;
+      --primary-hover: #166534;
+      --primary-light: #e8f5e9;
+      --primary-dark: #0f172a;
+      --accent: #22c55e;
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --text-dark: #0f172a;
+      --text-muted: #64748b;
+      --border-light: #e2e8f0;
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+      --font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, h1, h2, h3, h4, h5, h6, p, span, li, a, button, input, select, textarea, td, th {
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-page);
+      color: var(--text-dark);
+      line-height: 1.6;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--primary-dark);
+      color: white;
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 0.9rem;
+      z-index: 3000;
+      box-shadow: var(--shadow-lg);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Login Screen */
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      background: linear-gradient(135deg, #e8f5e9 0%, #f1f5f9 100%);
+    }
+
+    .login-card {
+      background: var(--bg-card);
+      width: 100%;
+      max-width: 420px;
+      padding: 40px 32px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid rgba(22, 163, 74, 0.15);
+      text-align: center;
+    }
+
+    .login-logo {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 16px;
+    }
+
+    .login-card h2 {
+      font-size: 1.5rem;
+      font-weight: 900;
+      margin-bottom: 8px;
+      color: var(--primary-dark);
+    }
+
+    .login-card p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      font-weight: 500;
+    }
+
+    .login-tabs {
+      display: flex;
+      border-bottom: 2px solid var(--border-light);
+      margin-bottom: 24px;
+    }
+
+    .login-tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .login-tab-btn.active {
+      color: var(--primary);
+      border-bottom: 2px solid var(--primary);
+      margin-bottom: -2px;
+    }
+
+    .form-group {
+      text-align: left;
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: all 0.2s;
+      font-weight: 600;
+    }
+
+    .input-field:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.15);
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      background-color: var(--primary-dark);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+
+    .btn-login:hover {
+      background-color: var(--primary);
+    }
+
+    /* Main Dashboard Layout */
+    .dashboard-container {
+      display: none;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+
+    header.dashboard-header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-light);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-logo {
+      height: 40px;
+      width: auto;
+    }
+
+    .header-title {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: var(--primary-dark);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-info {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .btn-logout {
+      padding: 8px 16px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      background: white;
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #ef4444;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-logout:hover {
+      background-color: #fee2e2;
+      border-color: #fca5a5;
+    }
+
+    .dashboard-content {
+      display: flex;
+      flex: 1;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px;
+      gap: 24px;
+    }
+
+    /* Sidebar Navigation */
+    aside.dashboard-sidebar {
+      width: 240px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .menu-item-btn {
+      width: 100%;
+      padding: 14px 18px;
+      border: none;
+      background: white;
+      border-radius: var(--radius-md);
+      text-align: left;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid transparent;
+    }
+
+    .menu-item-btn:hover {
+      background-color: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .menu-item-btn.active {
+      background-color: var(--primary);
+      color: white;
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Main Content Area */
+    main.dashboard-main {
+      flex: 1;
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-light);
+      padding: 32px;
+      overflow-x: auto;
+    }
+
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 900;
+      margin-bottom: 24px;
+      color: var(--primary-dark);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Table Styles */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background-color: #f8fafc;
+      padding: 14px 16px;
+      font-weight: 800;
+      color: var(--primary-dark);
+      border-bottom: 2px solid var(--border-light);
+    }
+
+    td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: top;
+      font-weight: 500;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Order Status Styles */
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .status-badge.status-order {
+      background-color: #f1f5f9;
+      color: #475569;
+    }
+
+    .status-badge.status-pay {
+      background-color: #f1f5f9;
+      color: #475569;
+    }
+
+    .status-badge.status-delivery {
+      background-color: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .status-badge.status-cancel {
+      background-color: #fef2f2;
+      color: #dc2626;
+    }
+
+    .order-checkbox {
+      transform: scale(1.25);
+      cursor: pointer;
+    }
+
+    /* Status controller select box */
+    .status-select {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-light);
+      font-weight: 700;
+      outline: none;
+      cursor: pointer;
+      background: white;
+      transition: all 0.2s;
+    }
+    
+    .status-select:focus {
+      border-color: var(--primary);
+    }
+
+    /* Items formatted string */
+    .ordered-items-list {
+      font-size: 0.82rem;
+      list-style-type: square;
+      padding-left: 14px;
+      color: var(--text-dark);
+    }
+
+    .ordered-items-list li {
+      margin-bottom: 3px;
+    }
+
+    /* Panel sections conditional display */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Form within panel */
+    .dashboard-form {
+      max-width: 500px;
+    }
+
+    .dashboard-form .btn-submit {
+      padding: 12px 24px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .dashboard-form .btn-submit:hover {
+      background-color: var(--primary-hover);
+    }
+
+    /* Card statistics */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: #f8fafc;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      word-break: keep-all;
+    }
+
+    .stat-card h4 {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .stat-card .stat-value {
+      font-size: 1.75rem;
+      font-weight: 900;
+      color: var(--primary-dark);
+    }
+
+    /* Stat Cards Specific Styles (Color Reduction) */
+    .stat-card.stat-total {
+      border-left: 4px solid var(--text-muted);
+    }
+    .stat-card.stat-order {
+      border-left: 4px solid #94a3b8;
+    }
+    .stat-card.stat-order .stat-value {
+      color: #475569;
+    }
+    .stat-card.stat-pay {
+      border-left: 4px solid #94a3b8;
+    }
+    .stat-card.stat-pay .stat-value {
+      color: #475569;
+    }
+    .stat-card.stat-delivery {
+      border-left: 4px solid var(--primary);
+    }
+    .stat-card.stat-delivery .stat-value {
+      color: var(--primary);
+    }
+    .stat-card.stat-cancel {
+      border-left: 4px solid #dc2626;
+    }
+    .stat-card.stat-cancel .stat-value {
+      color: #dc2626;
+    }
+
+    /* Action Buttons in Dashboard (Unified secondary gray/outline styling) */
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    
+    .btn-action-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+    .btn-action-primary:hover {
+      background-color: var(--primary-hover);
+    }
+    
+    .btn-action-secondary {
+      background-color: #f1f5f9;
+      color: var(--text-dark);
+      border-color: var(--border-light);
+    }
+    .btn-action-secondary:hover {
+      background-color: #e2e8f0;
+      border-color: #cbd5e1;
+    }
+    
+    .btn-action-danger {
+      background-color: #dc2626;
+      color: white;
+    }
+    .btn-action-danger:hover {
+      background-color: #b91c1c;
+    }
+
+    /* Price setup responsive grid */
+    .price-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    /* User management card list */
+    .user-list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      background-color: #fafbfc;
+    }
+
+    .user-details h5 {
+      font-weight: 800;
+      font-size: 0.95rem;
+    }
+
+    .user-details p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .btn-delete-user {
+      padding: 6px 12px;
+      background-color: #fee2e2;
+      color: #ef4444;
+      border: 1px solid #fca5a5;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-delete-user:hover {
+      background-color: #ef4444;
+      color: white;
+    }
+
+    @media (max-width: 1200px) {
+      .stats-row {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 992px) {
+      .dashboard-content {
+        flex-direction: column;
+        gap: 16px;
+        padding: 16px;
+      }
+      aside.dashboard-sidebar {
+        width: 100%;
+      }
+      .sidebar-menu {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .menu-item-btn {
+        flex: 1;
+        min-width: 120px;
+        padding: 12px;
+        font-size: 0.88rem;
+        justify-content: center;
+      }
+      main.dashboard-main {
+        padding: 24px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 576px) {
+      .sidebar-menu {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .menu-item-btn {
+        min-width: unset;
+        font-size: 0.75rem;
+        padding: 8px 4px;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .stats-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .price-form-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .section-title {
+        font-size: 1.2rem;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .section-title div {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        width: 100%;
+      }
+      .btn-action {
+        padding: 10px 8px;
+        font-size: 0.8rem;
+        justify-content: center;
+      }
+    }
+    /* Admin Modal Styles */
+    .admin-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 0.3s ease;
+    }
+    .admin-modal.hidden {
+      display: none;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .admin-modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+    }
+    .admin-modal-content {
+      position: relative;
+      background: var(--bg-card);
+      width: calc(100% - 32px);
+      max-width: 460px;
+      margin: 16px;
+      padding: 24px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-light);
+      z-index: 2001;
+      animation: modalSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      overflow-y: auto;
+      max-height: calc(100vh - 40px);
+    }
+
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    #ordersTable th,
+    #ordersTable td {
+      white-space: nowrap;
+    }
+    
+    #ordersTable td.cell-address {
+      white-space: normal;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      min-width: 200px;
+      max-width: 280px;
+      font-size: 0.82rem;
+    }
+    
+    #ordersTable td.cell-memo {
+      white-space: normal;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      min-width: 150px;
+      max-width: 220px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    @keyframes modalSlideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .admin-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .admin-modal-header h3 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+    }
+    .admin-modal-close {
+      background: none;
+      border: none;
+      font-size: 1.75rem;
+      font-weight: 300;
+      color: var(--text-muted);
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+    }
+    .admin-modal-close:hover {
+      color: var(--text-dark);
+    }
+    .admin-form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .admin-form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      margin-bottom: 8px;
+    }
+    .courier-options {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .courier-option {
+      flex: 1;
+      cursor: pointer;
+    }
+    .courier-option input[type="radio"] {
+      display: none;
+    }
+    .courier-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius-md);
+      transition: all 0.2s ease;
+      font-weight: 700;
+      text-align: center;
+      background: #f8fafc;
+    }
+    .courier-option input[type="radio"]:checked + .courier-box {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary-hover);
+    }
+    .courier-name {
+      font-size: 1rem;
+    }
+    .admin-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 28px;
+    }
+    .btn-cancel {
+      padding: 12px 20px;
+      background: #f1f5f9;
+      color: var(--text-muted);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-cancel:hover {
+      background: #e2e8f0;
+      color: var(--text-dark);
+    }
+    .btn-confirm {
+      padding: 12px 24px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-confirm:hover {
+      background: var(--primary-hover);
+    }
+    @keyframes slideDown {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toast system -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Delivery Tracking Modal -->
+  <div id="deliveryModal" class="admin-modal hidden">
+    <div class="admin-modal-overlay"></div>
+    <div class="admin-modal-content">
+      <div class="admin-modal-header">
+        <h3>택배사 전달 & 송장 번호 입력</h3>
+        <button type="button" class="admin-modal-close" id="btnDeliveryModalClose">&times;</button>
+      </div>
+      <form id="deliveryForm">
+        <div class="admin-form-group">
+          <label class="admin-form-label">택배사 선택</label>
+          <div class="courier-options">
+            <label class="courier-option">
+              <input type="radio" name="courier" value="한진택배" checked>
+              <span class="courier-box">
+                <span class="courier-name">한진택배</span>
+              </span>
+            </label>
+            <label class="courier-option">
+              <input type="radio" name="courier" value="로젠택배">
+              <span class="courier-box">
+                <span class="courier-name">로젠택배</span>
+              </span>
+            </label>
+          </div>
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="modalTrackingNumber">송장 번호</label>
+          <input type="text" id="modalTrackingNumber" class="input-field" placeholder="송장 번호를 입력하세요 (숫자만)" required pattern="[0-9\-]+">
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-cancel" id="btnDeliveryCancel">취소</button>
+          <button type="submit" class="btn-confirm">알림톡 발송 및 저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Product Management Modal -->
+  <div id="productModal" class="admin-modal hidden">
+    <div class="admin-modal-overlay" onclick="closeProductModal()"></div>
+    <div class="admin-modal-content">
+      <div class="admin-modal-header">
+        <h3 id="productModalTitle">품목 추가</h3>
+        <button type="button" class="admin-modal-close" onclick="closeProductModal()">&times;</button>
+      </div>
+      <form id="productForm" onsubmit="handleSaveProduct(event)">
+        <input type="hidden" id="modalProductId">
+        
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="modalProductName">상품 제목</label>
+          <input type="text" id="modalProductName" class="input-field" placeholder="예: 특품 참외 (무게)" required>
+        </div>
+        
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="modalProductPrice">가격 (원)</label>
+          <input type="number" id="modalProductPrice" class="input-field" placeholder="예: 7900" required min="0">
+        </div>
+        
+        <div class="admin-form-group">
+          <label class="admin-form-label">단위 선택</label>
+          <div style="display: flex; gap: 20px; margin-top: 6px;">
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 700;">
+              <input type="radio" name="modalProductUnit" value="kg" checked onchange="toggleUnitSettings()"> 무게 (kg)
+            </label>
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 700;">
+              <input type="radio" name="modalProductUnit" value="개" onchange="toggleUnitSettings()"> 갯수 (개)
+            </label>
+          </div>
+        </div>
+        
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="modalProductStep">수량 조절 단위 (Step)</label>
+          <input type="number" id="modalProductStep" class="input-field" placeholder="예: 1 (무게는 1 또는 0.5, 개수는 10 등)" required min="0.01" step="any" value="1">
+        </div>
+        
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="modalProductImageFile">상품 사진</label>
+          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
+            <input type="file" id="modalProductImageFile" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
+            <button type="button" class="btn-action btn-action-secondary" onclick="document.getElementById('modalProductImageFile').click()" style="padding: 10px 16px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+              <span>📁</span> 컴퓨터에서 찾기
+            </button>
+            <span id="modalProductImageName" style="font-size: 0.85rem; color: var(--text-muted); word-break: break-all;">선택된 파일 없음</span>
+          </div>
+          <div id="imagePreviewContainer" style="margin-top: 10px; display: none; position: relative; width: 100px; height: 100px;">
+            <img id="modalProductImagePreview" src="" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+            <button type="button" onclick="clearSelectedImage()" style="position: absolute; top: -5px; right: -5px; width: 20px; height: 20px; border-radius: 50%; background: #ef4444; color: white; border: none; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;" title="이미지 삭제">&times;</button>
+          </div>
+          <div style="margin-top: 10px;">
+            <label class="admin-form-label" for="modalProductImageUrl">이미지 URL 또는 데이터 (Supabase DB 저장값)</label>
+            <input type="text" id="modalProductImageUrl" class="input-field" placeholder="이미지 주소(URL)를 직접 입력하거나 컴퓨터에서 파일을 선택하세요" oninput="document.getElementById('modalProductImagePreview').src = this.value; document.getElementById('imagePreviewContainer').style.display = this.value ? 'block' : 'none';">
+          </div>
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="modalProductBadgeText">뱃지 텍스트</label>
+          <input type="text" id="modalProductBadgeText" class="input-field" placeholder="예: 최상급 선물용">
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="modalProductBadgeClass">뱃지 CSS 클래스</label>
+          <select id="modalProductBadgeClass" class="input-field" style="font-weight: 700;">
+            <option value="badge-special">badge-special (초록 진함 - 최상급)</option>
+            <option value="badge-good">badge-good (초록 연함 - 추천)</option>
+            <option value="badge-value">badge-value (회색 - 실속)</option>
+            <option value="badge-signature">badge-signature (오렌지 - 시그니처)</option>
+          </select>
+        </div>
+        
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="modalProductDescription">상품 설명</label>
+          <textarea id="modalProductDescription" class="input-field" rows="3" placeholder="상품에 대한 상세 설명을 입력하세요" style="resize: vertical; font-family: inherit;"></textarea>
+        </div>
+
+        <div class="admin-modal-footer" style="margin-top: 24px;">
+          <button type="button" class="btn-cancel" onclick="closeProductModal()">취소</button>
+          <button type="submit" class="btn-confirm">저장하기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Login view -->
+  <div id="loginSection" class="login-container">
+    <div class="login-card">
+      <img src="민숙농장로고가로형-배경없음.png" alt="민숙농장" class="login-logo">
+      <h2>민숙농장 어드민</h2>
+      <p>주문 및 품목 관리를 위한 로그인</p>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label" for="loginPassword" id="passwordLabel">관리자 비밀번호</label>
+          <input type="password" id="loginPassword" class="input-field" placeholder="비밀번호 입력" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="btn-login">로그인하기</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dashboard view -->
+  <div id="dashboardSection" class="dashboard-container">
+    <header class="dashboard-header">
+      <div class="header-left">
+        <img src="민숙농장로고가로형-배경없음.png" alt="민숙농장 로고" class="header-logo">
+        <span class="header-title">민숙농장 대시보드</span>
+      </div>
+      <div class="header-right">
+        <span class="user-info" id="loggedInUserDisplay">사용자: admin (관리자)</span>
+        <button type="button" class="btn-logout" onclick="handleLogout()">로그아웃</button>
+      </div>
+    </header>
+
+    <!-- Migration Alert Banner -->
+    <div id="migrationBanner" style="display: none; background: #f8fafc; border-bottom: 1px solid var(--border-light); padding: 12px 24px; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; animation: slideDown 0.3s ease-out; word-break: keep-all;">
+      <div style="display: flex; align-items: center; gap: 12px; color: var(--text-dark); font-size: 0.9rem; font-weight: 700;">
+        <span style="font-size: 1.2rem;">⚠️</span>
+        <span id="migrationMessage" style="word-break: keep-all;">로컬 브라우저에 마이그레이션되지 않은 데이터가 있습니다. Supabase DB로 통합해 주세요.</span>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button type="button" onclick="runLocalStorageMigration()" class="btn-action btn-action-primary" style="padding: 6px 14px; font-size: 0.8rem; border-radius: 4px;">Supabase로 마이그레이션 실행</button>
+        <button type="button" onclick="closeMigrationBanner()" class="btn-action btn-action-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 4px;">나중에 하기</button>
+      </div>
+    </div>
+
+    <div class="dashboard-content">
+      <!-- Sidebar Navigation -->
+      <aside class="dashboard-sidebar">
+        <ul class="sidebar-menu">
+          <li>
+            <button type="button" id="menuOrders" class="menu-item-btn active" onclick="switchTab('orders')">
+              <span>📋</span> 주문 리스트 관리
+            </button>
+          </li>
+          <li>
+            <button type="button" id="menuPrices" class="menu-item-btn" onclick="switchTab('prices')">
+              <span>📦</span> 품목 관리
+            </button>
+          </li>
+          <li>
+            <button type="button" id="menuSettings" class="menu-item-btn" onclick="switchTab('settings')">
+              <span>⚙️</span> 비밀번호 변경
+            </button>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- Main Section -->
+      <main class="dashboard-main">
+        <!-- 1. Orders Tab -->
+        <section id="tabOrders" class="tab-content active">
+          <div class="section-title">
+            <span>주문 항목 및 진행 단계</span>
+            <div>
+              <button type="button" class="btn-action btn-action-danger" id="btnDeleteSelected" onclick="deleteSelectedOrders()" style="display: none;">🗑️ 선택 삭제</button>
+              <button type="button" class="btn-action btn-action-secondary" onclick="copyOrdersToClipboard()">📋 엑셀 복사</button>
+              <button type="button" class="btn-action btn-action-secondary" onclick="openPrintTemplate()">🖨️ 주문 상황 인쇄</button>
+              <button type="button" class="btn-action btn-action-primary" onclick="loadOrders()">새로고침</button>
+            </div>
+          </div>
+
+          <!-- Cards Summary Statistics -->
+          <div class="stats-row">
+            <div class="stat-card stat-total">
+              <h4>총 접수</h4>
+              <div class="stat-value" id="statTotalOrders">0건</div>
+            </div>
+            <div class="stat-card stat-order">
+              <h4>주문 접수</h4>
+              <div class="stat-value" id="statStatusOrder">0건</div>
+            </div>
+            <div class="stat-card stat-pay">
+              <h4>결제 완료</h4>
+              <div class="stat-value" id="statStatusPay">0건</div>
+            </div>
+            <div class="stat-card stat-delivery">
+              <h4>택배사 전달</h4>
+              <div class="stat-value" id="statStatusDelivery">0건</div>
+            </div>
+            <div class="stat-card stat-cancel">
+              <h4>주문 취소</h4>
+              <div class="stat-value" id="statStatusCancel">0건</div>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table id="ordersTable">
+              <thead>
+                <tr>
+                  <th style="width: 40px; text-align: center;"><input type="checkbox" id="checkAllOrders" onchange="toggleSelectAll(this)"></th>
+                  <th>주문번호</th>
+                  <th>일시</th>
+                  <th>고객명</th>
+                  <th>연락처</th>
+                  <th>배송지 주소</th>
+                  <th>구매 내역</th>
+                  <th>총 금액</th>
+                  <th>배송 메모</th>
+                  <th>상태 관리</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTableBody">
+                <!-- Row template inserted dynamically -->
+                <tr>
+                  <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 40px 0;">주문 데이터를 로드하는 중입니다...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 2. Prices Tab (Product Management) -->
+        <section id="tabPrices" class="tab-content">
+          <div class="section-title">
+            <span>📦 품목 관리</span>
+            <button type="button" class="btn-action btn-action-primary" onclick="openProductModal()">➕ 품목 추가</button>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+            쇼핑몰에서 판매 및 계산기에서 계산할 품목을 추가, 수정, 삭제할 수 있습니다. 무게(kg) 또는 갯수 단위를 선택하여 유연하게 설정하세요.
+          </p>
+          
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 80px; text-align: center;">사진</th>
+                  <th>품목명</th>
+                  <th>가격</th>
+                  <th style="text-align: center;">단위</th>
+                  <th style="text-align: center;">조절 단위(step)</th>
+                  <th style="text-align: center;">뱃지</th>
+                  <th>설명</th>
+                  <th style="text-align: center; width: 120px;">동작</th>
+                </tr>
+              </thead>
+              <tbody id="productsTableBody">
+                <tr>
+                  <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px 0;">품목 데이터를 로드하는 중입니다...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 3. Settings Tab -->
+        <section id="tabSettings" class="tab-content">
+          <div class="section-title">⚙️ 관리자 보안 및 설정</div>
+          <div class="dashboard-form">
+            <h3 style="font-size: 1rem; font-weight: 800; margin-bottom: 16px; color: var(--primary-dark);">비밀번호 수정</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+              현재 로그인한 계정의 비밀번호를 안전하게 변경할 수 있습니다.<br>
+              수정 완료 시 DB에 암호화되어 저장됩니다.
+            </p>
+            
+            <form id="changePasswordForm" onsubmit="handleChangePassword(event)">
+              <div class="form-group">
+                <label class="form-label" for="newPassword">새 비밀번호 입력</label>
+                <input type="password" id="newPassword" class="input-field" placeholder="새로운 비밀번호 입력" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="confirmPassword">비밀번호 재확인</label>
+                <input type="password" id="confirmPassword" class="input-field" placeholder="한 번 더 입력" required>
+              </div>
+              <button type="submit" class="btn-submit">비밀번호 변경 저장</button>
+            </form>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Admin JS logic -->
+  <script>
+    let activeLoginTab = 'common'; // 'common' or 'staff'
+    let currentUserRole = '';
+    let currentUsername = '';
+
+    // Switch sidebar navigation tabs
+    function switchTab(tabId) {
+      document.querySelectorAll('.sidebar-menu .menu-item-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+
+      if (tabId === 'orders') {
+        document.getElementById('menuOrders').classList.add('active');
+        document.getElementById('tabOrders').classList.add('active');
+        loadOrders();
+      } else if (tabId === 'prices') {
+        document.getElementById('menuPrices').classList.add('active');
+        document.getElementById('tabPrices').classList.add('active');
+        loadProducts();
+      } else if (tabId === 'settings') {
+        document.getElementById('menuSettings').classList.add('active');
+        document.getElementById('tabSettings').classList.add('active');
+      }
+    }
+
+    // Show message toast
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // Handles Admin Authentication
+    async function handleLogin(e) {
+      e.preventDefault();
+      const password = document.getElementById('loginPassword').value;
+
+      // Local offline fallback check for file:// static mode
+      if (window.location.protocol === 'file:') {
+        // Read custom changed password or default back to 6138
+        const savedPass = localStorage.getItem('minsook_admin_password') || '6138';
+        if (password === savedPass) {
+          showToast('🔓 로컬 개발자 모드로 로그인에 성공하였습니다! (데이터는 브라우저에 저장됩니다)');
+          currentUserRole = 'admin';
+          currentUsername = 'admin';
+          sessionStorage.setItem('minsook_admin_logged_in', 'true');
+          showDashboard();
+        } else {
+          showToast('❌ 로그인 실패: 비밀번호가 올바르지 않습니다.');
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast('🔓 로그인에 성공하였습니다!');
+          currentUserRole = data.role;
+          currentUsername = 'admin';
+          showDashboard();
+        } else {
+          showToast(`❌ 로그인 실패: ${data.error || '비밀번호가 올바르지 않습니다.'}`);
+        }
+      } catch (err) {
+        // Network offline fallback
+        const savedPass = localStorage.getItem('minsook_admin_password') || '6138';
+        if (password === savedPass) {
+          showToast('🔓 오프라인 로컬 모드로 로그인에 성공하였습니다!');
+          currentUserRole = 'admin';
+          currentUsername = 'admin';
+          sessionStorage.setItem('minsook_admin_logged_in', 'true');
+          showDashboard();
+        } else {
+          showToast('❌ 네트워크 오류가 발생하였으며 로컬 비밀번호도 틀립니다.');
+          console.error(err);
+        }
+      }
+    }
+
+    async function handleLogout() {
+      if (window.location.protocol === 'file:') {
+        sessionStorage.removeItem('minsook_admin_logged_in');
+        showToast('🔒 안전하게 로그아웃되었습니다.');
+        showLogin();
+        return;
+      }
+
+      try {
+        await fetch('/api/admin/logout', { method: 'POST' });
+        showToast('🔒 안전하게 로그아웃되었습니다.');
+        showLogin();
+      } catch (err) {
+        showToast('❌ 로그아웃 중 오류가 발생했습니다.');
+      }
+    }
+
+    function showDashboard() {
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('dashboardSection').style.display = 'flex';
+      document.getElementById('loggedInUserDisplay').textContent = `사용자: 최고 관리자 (admin)`;
+      switchTab('orders');
+      checkPendingMigration();
+    }
+
+    function showLogin() {
+      document.getElementById('loginSection').style.display = 'flex';
+      document.getElementById('dashboardSection').style.display = 'none';
+      document.getElementById('loginPassword').value = '';
+    }
+
+    // Fetch and render orders from DB
+    async function loadOrders() {
+      const tbody = document.getElementById('ordersTableBody');
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 40px 0;">주문 리스트를 로드 중...</td></tr>`;
+
+      if (window.location.protocol === 'file:') {
+        const localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
+        renderOrdersTable(localOrders);
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/orders');
+        if (res.status === 401) {
+          showToast('⚠️ 세션이 만료되었습니다. 다시 로그인해 주세요.');
+          showLogin();
+          return;
+        }
+
+        const data = await res.json();
+        const orders = data.orders || [];
+        renderOrdersTable(orders);
+
+      } catch (err) {
+        // Fallback to local storage if API call fails
+        const localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
+        renderOrdersTable(localOrders);
+      }
+    }
+
+    function renderOrdersTable(orders) {
+      const tbody = document.getElementById('ordersTableBody');
+      window.loadedOrders = orders; // Save to global variable for copy/print templates
+      
+      // Reset main check box and delete button
+      const checkAll = document.getElementById('checkAllOrders');
+      if (checkAll) checkAll.checked = false;
+      const deleteBtn = document.getElementById('btnDeleteSelected');
+      if (deleteBtn) deleteBtn.style.display = 'none';
+
+      if (orders.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 40px 0;">접수된 주문 내역이 존재하지 않습니다.</td></tr>`;
+        updateStats(orders);
+        return;
+      }
+
+      tbody.innerHTML = '';
+      orders.forEach(order => {
+        const dateStr = new Date(order.created_at).toLocaleString('ko-KR', {
+          month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+
+        // Formatting items
+        let itemsHtml = '<ul class="ordered-items-list">';
+        order.items.forEach(item => {
+          itemsHtml += `<li>${item.name} (${item.quantity}${item.unit})</li>`;
+        });
+        itemsHtml += '</ul>';
+
+        // Status class badge mapper
+        let statusClass = 'status-order';
+        if (order.status === '결제') statusClass = 'status-pay';
+        if (order.status === '택배사') statusClass = 'status-delivery';
+        if (order.status === '주문취소') statusClass = 'status-cancel';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="text-align: center; vertical-align: middle;">
+            <input type="checkbox" class="order-checkbox" data-id="${order.id}" onchange="onOrderCheckboxChange()">
+          </td>
+          <td><strong>#${order.id}</strong></td>
+          <td style="font-size: 0.8rem; color: var(--text-muted);">${dateStr}</td>
+          <td><strong>${escapeHtml(order.name)}</strong></td>
+          <td style="font-size: 0.82rem;">${escapeHtml(order.phone)}</td>
+          <td class="cell-address">${escapeHtml(order.address)}</td>
+          <td>${itemsHtml}</td>
+          <td><strong style="color: var(--primary);">${order.total_price.toLocaleString()}원</strong></td>
+          <td class="cell-memo">
+            ${escapeHtml(order.memo || '-')}
+            ${order.tracking_number ? `<div style="margin-top: 6px; padding: 2px 6px; font-size: 0.72rem; color: var(--primary); font-weight: bold; background-color: var(--primary-light); border-radius: var(--radius-sm); display: inline-block; white-space: nowrap;">송장: ${order.courier ? escapeHtml(order.courier) + ' ' : ''}${escapeHtml(order.tracking_number)}</div>` : ''}
+          </td>
+          <td>
+            <div style="display: flex; flex-direction: column; gap: 8px; align-items: start;">
+              <span class="status-badge ${statusClass}">${order.status}</span>
+              <select class="status-select" onchange="updateOrderStatus(${order.id}, this.value, this)">
+                <option value="주문" ${order.status === '주문' ? 'selected' : ''}>주문 (접수)</option>
+                <option value="결제" ${order.status === '결제' ? 'selected' : ''}>결제 완료</option>
+                <option value="택배사" ${order.status === '택배사' ? 'selected' : ''}>택배사 전달</option>
+                <option value="주문취소" ${order.status === '주문취소' ? 'selected' : ''}>주문취소</option>
+              </select>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      updateStats(orders);
+    }
+
+    // Copy active orders as TSV for Excel pasting
+    function copyOrdersToClipboard() {
+      const orders = window.loadedOrders || [];
+      if (orders.length === 0) {
+        showToast('📋 복사할 주문 데이터가 없습니다.');
+        return;
+      }
+
+      let tsv = '주문번호\t접수일시\t주문자명\t연락처\t배송지 주소\t구매 내역\t결제 금액\t배송 요청사항\t주문상태\n';
+      orders.forEach(order => {
+        const dateStr = new Date(order.created_at).toLocaleString('ko-KR');
+        const itemsStr = order.items.map(item => `${item.name} (${item.quantity}${item.unit})`).join(', ');
+        tsv += `#${order.id}\t${dateStr}\t${order.name}\t${order.phone}\t${order.address}\t${itemsStr}\t${order.total_price}\t${order.memo || ''}\t${order.status}\n`;
+      });
+
+      navigator.clipboard.writeText(tsv).then(() => {
+        showToast('📋 엑셀 붙여넣기용 주문 데이터가 클립보드에 복사되었습니다! (엑셀에서 Ctrl+V 하시면 표로 들어갑니다)');
+      }).catch(err => {
+        showToast('클립보드 복사에 실패했습니다.');
+      });
+    }
+
+    // Open a printable popup with order manifest template
+    function openPrintTemplate() {
+      const orders = window.loadedOrders || [];
+      if (orders.length === 0) {
+        showToast('🖨️ 인쇄할 주문 데이터가 없습니다.');
+        return;
+      }
+
+      const printWindow = window.open('', '_blank');
+      let rowsHtml = '';
+      
+      orders.forEach((order, idx) => {
+        const dateStr = new Date(order.created_at).toLocaleString('ko-KR', {
+          year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+        });
+        const itemsHtml = order.items.map(item => `<li>${item.name} - <strong>${item.quantity}${item.unit}</strong></li>`).join('');
+        
+        const statusDetail = order.status === '택배사' && order.tracking_number
+          ? `${order.status}<br><span style="font-size: 0.8em; color: #166534; font-weight: normal; white-space: nowrap;">${order.courier || ''} ${order.tracking_number}</span>`
+          : order.status;
+        
+        rowsHtml += `
+          <tr>
+            <td style="text-align: center;">${idx + 1}</td>
+            <td style="text-align: center; font-weight: bold;">#${order.id}</td>
+            <td style="text-align: center;">${dateStr}</td>
+            <td style="text-align: center; font-weight: bold;">${escapeHtml(order.name)}</td>
+            <td style="text-align: center; font-size: 0.9em;">${escapeHtml(order.phone)}</td>
+            <td style="font-size: 0.85em; max-width: 250px;">${escapeHtml(order.address)}</td>
+            <td>
+              <ul style="margin: 0; padding-left: 20px; font-size: 0.9em;">
+                ${itemsHtml}
+              </ul>
+            </td>
+            <td style="text-align: right; font-weight: bold; color: #16a34a;">${order.total_price.toLocaleString()}원</td>
+            <td style="font-size: 0.85em;">${escapeHtml(order.memo || '-')}</td>
+            <td style="text-align: center;"><span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 0.85em; background: #e0f2fe; color: #0369a1;">${statusDetail}</span></td>
+          </tr>
+        `;
+      });
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>민숙농장 주문 상황 보고서</title>
+          <style>
+            body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; color: #111827; }
+            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #111827; padding-bottom: 10px; }
+            .header h1 { margin: 0 0 10px 0; font-size: 24px; }
+            .header p { margin: 0; font-size: 14px; color: #6b7280; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            th, td { border: 1px solid #d1d5db; padding: 10px; text-align: left; }
+            th { background-color: #f3f4f6; font-weight: bold; }
+            .footer-info { display: flex; justify-content: space-between; margin-top: 30px; font-size: 13px; color: #4b5563; }
+            @media print {
+              .no-print { display: none; }
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>민숙농장 실시간 주문 접수 대장</h1>
+            <p>출력 일시: ${new Date().toLocaleString('ko-KR')}</p>
+          </div>
+          
+          <div class="no-print" style="margin-bottom: 20px; text-align: right;">
+            <button onclick="window.print()" style="padding: 10px 20px; background-color: #7c3aed; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; font-family: inherit;">🖨️ 인쇄하기 (Ctrl+P)</button>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 4%; text-align: center;">No</th>
+                <th style="width: 8%; text-align: center;">주문번호</th>
+                <th style="width: 14%; text-align: center;">접수 일시</th>
+                <th style="width: 10%; text-align: center;">고객명</th>
+                <th style="width: 12%; text-align: center;">연락처</th>
+                <th style="width: 20%;">배송지 주소</th>
+                <th style="width: 18%;">주문 내역</th>
+                <th style="width: 10%; text-align: right;">총 금액</th>
+                <th style="width: 14%;">배송 메모</th>
+                <th style="width: 8%; text-align: center;">주문상태</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+
+          <div class="footer-info">
+            <span>민숙농장 어드민 주문관리 모듈</span>
+            <span>총 주문 건수: ${orders.length}건</span>
+          </div>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+    }
+
+    // Update statistics dashboard counts
+    function updateStats(orders) {
+      document.getElementById('statTotalOrders').textContent = `${orders.length}건`;
+      const countOrder = orders.filter(o => o.status === '주문').length;
+      const countPay = orders.filter(o => o.status === '결제').length;
+      const countDelivery = orders.filter(o => o.status === '택배사').length;
+      const countCancel = orders.filter(o => o.status === '주문취소').length;
+
+      document.getElementById('statStatusOrder').textContent = `${countOrder}건`;
+      document.getElementById('statStatusPay').textContent = `${countPay}건`;
+      document.getElementById('statStatusDelivery').textContent = `${countDelivery}건`;
+      document.getElementById('statStatusCancel').textContent = `${countCancel}건`;
+    }
+
+    let currentOrderIdForDelivery = null;
+    let previousSelectElement = null;
+
+    function closeDeliveryModal() {
+      document.getElementById('deliveryModal').classList.add('hidden');
+      if (previousSelectElement && currentOrderIdForDelivery) {
+        const order = (window.loadedOrders || []).find(o => o.id === currentOrderIdForDelivery);
+        if (order) {
+          previousSelectElement.value = order.status;
+        }
+      }
+      currentOrderIdForDelivery = null;
+      previousSelectElement = null;
+    }
+
+    // Setup delivery modal listeners
+    document.getElementById('btnDeliveryModalClose').addEventListener('click', () => closeDeliveryModal());
+    document.getElementById('btnDeliveryCancel').addEventListener('click', () => closeDeliveryModal());
+    document.querySelector('.admin-modal-overlay').addEventListener('click', () => closeDeliveryModal());
+
+    document.getElementById('deliveryForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const courier = document.querySelector('input[name="courier"]:checked').value;
+      const trackingNumber = document.getElementById('modalTrackingNumber').value.trim();
+      
+      if (!trackingNumber) {
+        showToast('⚠️ 송장 번호를 입력해 주세요.');
+        return;
+      }
+      
+      const orderId = currentOrderIdForDelivery;
+      if (!orderId) return;
+
+      // Close modal without resetting selectElement mapping (so it doesn't revert)
+      document.getElementById('deliveryModal').classList.add('hidden');
+      currentOrderIdForDelivery = null;
+      previousSelectElement = null;
+
+      await submitDeliveryStatus(orderId, courier, trackingNumber);
+    });
+
+    // Update status API
+    async function updateOrderStatus(orderId, newStatus, selectElement) {
+      if (newStatus === '택배사') {
+        currentOrderIdForDelivery = orderId;
+        previousSelectElement = selectElement;
+        
+        // Open the custom delivery modal
+        document.getElementById('deliveryModal').classList.remove('hidden');
+        document.getElementById('modalTrackingNumber').value = '';
+        document.getElementById('modalTrackingNumber').focus();
+        return;
+      }
+
+      if (window.location.protocol === 'file:') {
+        const localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
+        const idx = localOrders.findIndex(o => o.id === orderId);
+        if (idx !== -1) {
+          localOrders[idx].status = newStatus;
+          delete localOrders[idx].tracking_number;
+          delete localOrders[idx].courier;
+          localStorage.setItem('minsook_orders', JSON.stringify(localOrders));
+          showToast(`📋 주문 #${orderId}의 상태가 [${newStatus}]로 업데이트되었습니다. (로컬)`);
+          loadOrders();
+        } else {
+          showToast('❌ 해당 주문을 로컬 저장소에서 찾을 수 없습니다.');
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/admin/orders/${orderId}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus, trackingNumber: null, courier: null })
+        });
+        if (res.ok) {
+          showToast(`📋 주문 #${orderId}의 상태가 [${newStatus}]로 업데이트되었습니다.`);
+          loadOrders(); // reload
+        } else {
+          showToast('❌ 상태 변경 처리에 실패하였습니다.');
+          loadOrders();
+        }
+      } catch (err) {
+        // Fallback to local storage if offline
+        const localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
+        const idx = localOrders.findIndex(o => o.id === orderId);
+        if (idx !== -1) {
+          localOrders[idx].status = newStatus;
+          delete localOrders[idx].tracking_number;
+          delete localOrders[idx].courier;
+          localStorage.setItem('minsook_orders', JSON.stringify(localOrders));
+          showToast(`📋 주문 #${orderId}의 상태가 [${newStatus}]로 업데이트되었습니다. (로컬 저장소)`);
+          loadOrders();
+        } else {
+          showToast('❌ 서버 통신 오류가 발생했습니다.');
+          loadOrders();
+        }
+      }
+    }
+
+    async function submitDeliveryStatus(orderId, courier, trackingNumber) {
+      if (window.location.protocol === 'file:') {
+        const localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
+        const idx = localOrders.findIndex(o => o.id === orderId);
+        if (idx !== -1) {
+          localOrders[idx].status = '택배사';
+          localOrders[idx].courier = courier;
+          localOrders[idx].tracking_number = trackingNumber;
+          localStorage.setItem('minsook_orders', JSON.stringify(localOrders));
+          
+          showToast(`📋 주문 #${orderId}의 상태가 [택배사]로 업데이트되고 송장번호(${courier} ${trackingNumber})가 카카오톡으로 전송되었습니다. (로컬)`);
+          loadOrders();
+        } else {
+          showToast('❌ 해당 주문을 로컬 저장소에서 찾을 수 없습니다.');
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/admin/orders/${orderId}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: '택배사', trackingNumber: trackingNumber, courier: courier })
+        });
+        if (res.ok) {
+          showToast(`📋 주문 #${orderId}의 상태가 [택배사 전달]로 변경되었으며, 고객님께 카카오톡 알림톡(${courier} ${trackingNumber})이 전송되었습니다.`);
+          loadOrders();
+        } else {
+          showToast('❌ 상태 변경 처리에 실패하였습니다.');
+          loadOrders();
+        }
+      } catch (err) {
+        // Fallback to local storage if offline
+        const localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
+        const idx = localOrders.findIndex(o => o.id === orderId);
+        if (idx !== -1) {
+          localOrders[idx].status = '택배사';
+          localOrders[idx].courier = courier;
+          localOrders[idx].tracking_number = trackingNumber;
+          localStorage.setItem('minsook_orders', JSON.stringify(localOrders));
+          showToast(`📋 주문 #${orderId}의 상태가 [택배사]로 업데이트되었습니다. (로컬 저장소)`);
+          loadOrders();
+        } else {
+          showToast('❌ 서버 통신 오류가 발생했습니다.');
+          loadOrders();
+        }
+      }
+    }
+
+    // Toggle check/uncheck all orders
+    function toggleSelectAll(masterCheckbox) {
+      const checkboxes = document.querySelectorAll('.order-checkbox');
+      checkboxes.forEach(cb => {
+        cb.checked = masterCheckbox.checked;
+      });
+      updateDeleteButtonVisibility();
+    }
+
+    // Called on individual checkbox state change
+    function onOrderCheckboxChange() {
+      const totalCheckboxes = document.querySelectorAll('.order-checkbox').length;
+      const checkedCheckboxes = document.querySelectorAll('.order-checkbox:checked').length;
+      const masterCheckbox = document.getElementById('checkAllOrders');
+      
+      if (masterCheckbox) {
+        masterCheckbox.checked = (totalCheckboxes === checkedCheckboxes) && totalCheckboxes > 0;
+      }
+      updateDeleteButtonVisibility();
+    }
+
+    // Toggle Delete Selected button visibility
+    function updateDeleteButtonVisibility() {
+      const checkedCount = document.querySelectorAll('.order-checkbox:checked').length;
+      const deleteBtn = document.getElementById('btnDeleteSelected');
+      if (deleteBtn) {
+        if (checkedCount > 0) {
+          deleteBtn.style.display = 'inline-block';
+          deleteBtn.textContent = `🗑️ 선택 삭제 (${checkedCount})`;
+        } else {
+          deleteBtn.style.display = 'none';
+        }
+      }
+    }
+
+    // Batch Delete Selected Orders
+    async function deleteSelectedOrders() {
+      const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+      if (checkedBoxes.length === 0) return;
+
+      const ids = Array.from(checkedBoxes).map(cb => parseInt(cb.getAttribute('data-id'), 10));
+
+      if (!confirm(`선택한 ${ids.length}건의 주문을 정말로 영구 삭제하시겠습니까?`)) {
+        return;
+      }
+
+      if (window.location.protocol === 'file:') {
+        let localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
+        localOrders = localOrders.filter(o => !ids.includes(o.id));
+        localStorage.setItem('minsook_orders', JSON.stringify(localOrders));
+        showToast(`🗑️ 선택하신 ${ids.length}건의 주문이 삭제되었습니다. (로컬)`);
+        loadOrders();
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/orders/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast(`🗑️ 선택하신 ${ids.length}건의 주문이 성공적으로 삭제되었습니다.`);
+          loadOrders();
+        } else {
+          showToast(`❌ 삭제 실패: ${data.error || '주문을 삭제할 수 없습니다.'}`);
+        }
+      } catch (err) {
+        // Offline local storage fallback delete
+        let localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
+        localOrders = localOrders.filter(o => !ids.includes(o.id));
+        localStorage.setItem('minsook_orders', JSON.stringify(localOrders));
+        showToast(`🗑️ 선택하신 ${ids.length}건의 주문이 삭제되었습니다. (로컬 저장소)`);
+        loadOrders();
+      }
+    }
+
+    // --- Product Management Logic ---
+
+    let allProducts = [];
+
+    // Fetch products from server and render table
+    async function loadProducts() {
+      if (window.location.protocol === 'file:') {
+        // Fallback to local storage when running directly from file
+        allProducts = JSON.parse(localStorage.getItem('minsook_products') || '[]');
+        if (allProducts.length === 0) {
+          allProducts = [
+            { id: 1, name: '특품 오이 (무게)', description: '생식/샐러드용', image_url: 'minsook_main.jpg', price: 7900, unit: 'kg', step: 1.0, badge_text: '최상급 선물용', badge_class: 'badge-special', is_bite: 0, is_qty: 0 },
+            { id: 2, name: '특품 오이 (개수)', description: '10개 묶음', image_url: 'minsook_main.jpg', price: 7500, unit: '개', step: 10.0, badge_text: '최상급 선물용', badge_class: 'badge-special', is_bite: 0, is_qty: 1 },
+            { id: 3, name: '상품 오이 (무게)', description: '가정 반찬용', image_url: 'minsook_detail_2.jpg', price: 5900, unit: 'kg', step: 1.0, badge_text: '가정용 추천', badge_class: 'badge-good', is_bite: 0, is_qty: 0 },
+            { id: 4, name: '상품 오이 (개수)', description: '10개 묶음', image_url: 'minsook_detail_2.jpg', price: 5500, unit: '개', step: 10.0, badge_text: '가정용 추천', badge_class: 'badge-good', is_bite: 0, is_qty: 1 },
+            { id: 5, name: '공품 오이 (못난이)', description: '오이지/대용량용', image_url: 'minsook_detail_1.jpg', price: 3900, unit: 'kg', step: 1.0, badge_text: '실속형 대용량', badge_class: 'badge-value', is_bite: 0, is_qty: 0 },
+            { id: 6, name: '한입 오이', description: '등산/나들이용 500g 팩', image_url: 'minsook_main.jpg', price: 5800, unit: 'kg', step: 0.5, badge_text: '농장 시그니처', badge_class: 'badge-signature', is_bite: 1, is_qty: 0 }
+          ];
+          localStorage.setItem('minsook_products', JSON.stringify(allProducts));
+        }
+        renderProductsTable(allProducts);
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/products');
+        if (res.status === 401) {
+          showToast('⚠️ 세션이 만료되었습니다. 다시 로그인해 주세요.');
+          showLogin();
+          return;
+        }
+
+        const data = await res.json();
+        allProducts = data.products || [];
+        renderProductsTable(allProducts);
+      } catch (err) {
+        console.error('Failed to load products:', err);
+        showToast('❌ 품목 데이터를 불러오지 못했습니다.');
+      }
+    }
+
+    function renderProductsTable(products) {
+      const tbody = document.getElementById('productsTableBody');
+      if (!tbody) return;
+
+      if (products.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px 0;">등록된 품목이 없습니다.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      products.forEach(p => {
+        const tr = document.createElement('tr');
+        
+        const imgPath = p.image_url ? p.image_url : '민숙농장로고가로형-배경없음.png';
+        const badgeHTML = p.badge_text ? `<span class="status-badge ${p.badge_class || 'status-order'}">${p.badge_text}</span>` : '-';
+        
+        tr.innerHTML = `
+          <td style="vertical-align: middle; text-align: center;">
+            <img src="${imgPath}" alt="${p.name}" style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+          </td>
+          <td style="font-weight: bold; vertical-align: middle;">${escapeHtml(p.name)}</td>
+          <td style="font-weight: bold; color: var(--primary); vertical-align: middle;">${p.price.toLocaleString()}원</td>
+          <td style="vertical-align: middle; text-align: center;"><span class="status-badge status-pay">${p.unit}</span></td>
+          <td style="vertical-align: middle; text-align: center;">${p.step}</td>
+          <td style="vertical-align: middle; text-align: center;">${badgeHTML}</td>
+          <td style="font-size: 0.8rem; color: var(--text-muted); max-width: 200px; white-space: normal; word-break: keep-all; vertical-align: middle;">${escapeHtml(p.description || '')}</td>
+          <td style="vertical-align: middle; text-align: center;">
+            <div style="display: flex; gap: 6px; justify-content: center;">
+              <button type="button" class="btn-action btn-action-secondary" onclick="openProductModal(${p.id})" style="padding: 4px 8px; font-size: 0.75rem;">수정</button>
+              <button type="button" class="btn-action btn-action-danger" onclick="handleDeleteProduct(${p.id})" style="padding: 4px 8px; font-size: 0.75rem;">삭제</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    let currentProductIsBite = 0;
+
+    // Modal Control
+    function openProductModal(id = null) {
+      const modal = document.getElementById('productModal');
+      const form = document.getElementById('productForm');
+      const title = document.getElementById('productModalTitle');
+      
+      form.reset();
+      
+      // Reset image file input and UI elements
+      document.getElementById('modalProductImageFile').value = '';
+      document.getElementById('modalProductImageName').textContent = '선택된 파일 없음';
+      document.getElementById('modalProductImagePreview').src = '';
+      document.getElementById('imagePreviewContainer').style.display = 'none';
+      
+      if (id) {
+        title.textContent = '품목 수정';
+        const p = allProducts.find(prod => prod.id === id);
+        if (p) {
+          document.getElementById('modalProductId').value = p.id;
+          document.getElementById('modalProductName').value = p.name;
+          document.getElementById('modalProductPrice').value = p.price;
+          
+          const unitRadios = document.getElementsByName('modalProductUnit');
+          for (const radio of unitRadios) {
+            if (radio.value === p.unit) {
+              radio.checked = true;
+            }
+          }
+          
+          document.getElementById('modalProductStep').value = p.step;
+          document.getElementById('modalProductImageUrl').value = p.image_url || '';
+          
+          const imgUrl = p.image_url || '';
+          if (imgUrl) {
+            document.getElementById('modalProductImageName').textContent = imgUrl;
+            document.getElementById('modalProductImagePreview').src = imgUrl;
+            document.getElementById('imagePreviewContainer').style.display = 'block';
+          }
+          
+          document.getElementById('modalProductBadgeText').value = p.badge_text || '';
+          document.getElementById('modalProductBadgeClass').value = p.badge_class || 'badge-good';
+          document.getElementById('modalProductDescription').value = p.description || '';
+          currentProductIsBite = (p.is_bite === 1 || p.is_bite === true) ? 1 : 0;
+        }
+      } else {
+        title.textContent = '품목 추가';
+        document.getElementById('modalProductId').value = '';
+        currentProductIsBite = 0;
+      }
+      
+      modal.classList.remove('hidden');
+      toggleUnitSettings();
+    }
+
+    function closeProductModal() {
+      document.getElementById('productModal').classList.add('hidden');
+    }
+
+    function toggleUnitSettings() {
+      const unitVal = document.querySelector('input[name="modalProductUnit"]:checked').value;
+      const stepInput = document.getElementById('modalProductStep');
+      
+      if (unitVal === '개') {
+        if (stepInput.value === '1' || stepInput.value === '1.0' || !stepInput.value) {
+          stepInput.value = '10';
+        }
+      } else {
+        if (stepInput.value === '10') {
+          stepInput.value = '1';
+        }
+      }
+    }
+
+    // Image Upload Handler (Base64 encoding for Supabase DB storage)
+    async function handleImageUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const nameLabel = document.getElementById('modalProductImageName');
+      nameLabel.textContent = `처리 중: ${file.name}`;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64Data = e.target.result;
+        
+        // Preview 설정
+        document.getElementById('modalProductImagePreview').src = base64Data;
+        document.getElementById('imagePreviewContainer').style.display = 'block';
+        
+        // input value에 Base64 주소 세팅 (이 값이 Supabase DB로 들어가게 됨)
+        document.getElementById('modalProductImageUrl').value = base64Data;
+        nameLabel.textContent = `${file.name} (DB 저장 대기)`;
+        showToast('✅ 사진이 DB 저장용으로 준비되었습니다. 저장하기를 누르시면 완료됩니다.');
+      };
+      reader.onerror = function(err) {
+        console.error('FileReader error:', err);
+        nameLabel.textContent = '이미지 처리 실패';
+        showToast('❌ 이미지 파일을 읽는 데 실패했습니다.');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Clear Selected Image Function
+    function clearSelectedImage() {
+      document.getElementById('modalProductImageFile').value = '';
+      document.getElementById('modalProductImageUrl').value = '';
+      document.getElementById('modalProductImagePreview').src = '';
+      document.getElementById('imagePreviewContainer').style.display = 'none';
+      document.getElementById('modalProductImageName').textContent = '선택된 파일 없음';
+    }
+
+    async function handleSaveProduct(e) {
+      e.preventDefault();
+      
+      const id = document.getElementById('modalProductId').value;
+      const name = document.getElementById('modalProductName').value.trim();
+      const price = parseInt(document.getElementById('modalProductPrice').value, 10);
+      const unit = document.querySelector('input[name="modalProductUnit"]:checked').value;
+      const step = parseFloat(document.getElementById('modalProductStep').value) || 1.0;
+      const image_url = document.getElementById('modalProductImageUrl').value.trim();
+      const badge_text = document.getElementById('modalProductBadgeText').value.trim();
+      const badge_class = document.getElementById('modalProductBadgeClass').value;
+      const description = document.getElementById('modalProductDescription').value.trim();
+      const is_bite = currentProductIsBite;
+      const is_qty = (unit === '개') ? 1 : 0;
+
+      const payload = { name, price, unit, step, image_url, badge_text, badge_class, description, is_bite, is_qty };
+
+      if (window.location.protocol === 'file:') {
+        let localProducts = JSON.parse(localStorage.getItem('minsook_products') || '[]');
+        if (id) {
+          localProducts = localProducts.map(p => p.id == id ? { ...p, ...payload } : p);
+          showToast('📦 품목이 로컬(브라우저)에 성공적으로 수정되었습니다.');
+        } else {
+          const nextId = localProducts.reduce((max, p) => p.id > max ? p.id : max, 0) + 1;
+          localProducts.push({ id: nextId, ...payload });
+          showToast('📦 품목이 로컬(브라우저)에 성공적으로 추가되었습니다.');
+        }
+        localStorage.setItem('minsook_products', JSON.stringify(localProducts));
+        closeProductModal();
+        loadProducts();
+        return;
+      }
+
+      try {
+        const url = id ? `/api/admin/products/${id}` : '/api/admin/products';
+        const method = id ? 'PUT' : 'POST';
+        
+        const res = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          showToast(id ? '📦 품목이 수정되었습니다!' : '📦 새 품목이 추가되었습니다!');
+          closeProductModal();
+          loadProducts();
+        } else {
+          const data = await res.json();
+          showToast(`❌ 저장 실패: ${data.error || '품목 정보를 저장할 수 없습니다.'}`);
+        }
+      } catch (err) {
+        console.error('Error saving product:', err);
+        showToast('❌ 서버 통신 오류가 발생했습니다.');
+      }
+    }
+
+    async function handleDeleteProduct(id) {
+      if (!confirm('정말로 이 품목을 삭제하시겠습니까?\n삭제하면 메인 페이지 및 계산기에서도 즉시 제거됩니다.')) return;
+
+      if (window.location.protocol === 'file:') {
+        let localProducts = JSON.parse(localStorage.getItem('minsook_products') || '[]');
+        localProducts = localProducts.filter(p => p.id != id);
+        localStorage.setItem('minsook_products', JSON.stringify(localProducts));
+        showToast('🗑️ 품목이 로컬(브라우저)에서 삭제되었습니다.');
+        loadProducts();
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/admin/products/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (res.ok) {
+          showToast('🗑️ 품목이 삭제되었습니다.');
+          loadProducts();
+        } else {
+          const data = await res.json();
+          showToast(`❌ 삭제 실패: ${data.error || '품목을 삭제할 수 없습니다.'}`);
+        }
+      } catch (err) {
+        console.error('Error deleting product:', err);
+        showToast('❌ 서버 통신 오류가 발생했습니다.');
+      }
+    }
+
+    // --- Local Storage Migration Functions ---
+    function checkPendingMigration() {
+      if (window.location.protocol === 'file:') return;
+
+      const localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
+      const localPrices = JSON.parse(localStorage.getItem('minsook_prices') || '{}');
+      const hasPrices = Object.keys(localPrices).length > 0;
+
+      if (localOrders.length > 0 || hasPrices) {
+        const banner = document.getElementById('migrationBanner');
+        const msg = document.getElementById('migrationMessage');
+        
+        let detailMsg = "로컬 브라우저에 저장된 ";
+        if (localOrders.length > 0 && hasPrices) {
+          detailMsg += `주문 ${localOrders.length}건과 품목 가격 설정`;
+        } else if (localOrders.length > 0) {
+          detailMsg += `주문 ${localOrders.length}건`;
+        } else {
+          detailMsg += `품목 가격 설정`;
+        }
+        detailMsg += " 데이터가 감지되었습니다. 데이터 유실 방지를 위해 원격 Supabase DB로 마이그레이션해 주세요.";
+
+        msg.textContent = detailMsg;
+        banner.style.display = 'flex';
+      }
+    }
+
+    function closeMigrationBanner() {
+      const banner = document.getElementById('migrationBanner');
+      if (banner) banner.style.display = 'none';
+    }
+
+    async function runLocalStorageMigration() {
+      const localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
+      const localPrices = JSON.parse(localStorage.getItem('minsook_prices') || '{}');
+
+      try {
+        showToast('🔄 Supabase DB로 데이터를 전송하고 마이그레이션을 진행 중입니다...');
+        const res = await fetch('/api/admin/migrate-local-data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orders: localOrders, prices: localPrices })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast(`✅ 마이그레이션 완료! (신규 주문 ${data.migratedOrders}건 이관, 중복 ${data.skippedOrders}건 제외)`);
+          
+          if (localOrders.length > 0) {
+            localStorage.setItem('minsook_orders_migrated_backup', JSON.stringify(localOrders));
+            localStorage.removeItem('minsook_orders');
+          }
+          if (Object.keys(localPrices).length > 0) {
+            localStorage.setItem('minsook_prices_migrated_backup', JSON.stringify(localPrices));
+            localStorage.removeItem('minsook_prices');
+          }
+
+          closeMigrationBanner();
+          loadOrders();
+        } else {
+          showToast(`❌ 마이그레이션 실패: ${data.error || '알 수 없는 서버 오류'}`);
+        }
+      } catch (err) {
+        showToast('❌ 마이그레이션 실패: 네트워크 연결 상태를 확인해 주세요.');
+        console.error(err);
+      }
+    }
+
+    // Change Password API
+    async function handleChangePassword(e) {
+      e.preventDefault();
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (newPassword !== confirmPassword) {
+        showToast('⚠️ 입력하신 비밀번호 두 개가 일치하지 않습니다.');
+        return;
+      }
+
+      if (window.location.protocol === 'file:') {
+        localStorage.setItem('minsook_admin_password', newPassword);
+        showToast('⚙️ 비밀번호가 성공적으로 변경되었습니다! (로컬 저장소)');
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/change-password', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newPassword })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast('⚙️ 비밀번호가 성공적으로 변경되었습니다!');
+          document.getElementById('newPassword').value = '';
+          document.getElementById('confirmPassword').value = '';
+        } else {
+          showToast(`❌ 수정 실패: ${data.error || '비밀번호를 설정할 수 없습니다.'}`);
+        }
+      } catch (err) {
+        // Fallback offline
+        localStorage.setItem('minsook_admin_password', newPassword);
+        showToast('⚙️ 비밀번호가 성공적으로 변경되었습니다! (로컬 저장소)');
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+      }
+    }
+
+    // HTML sanitizer
+    function escapeHtml(text) {
+      if (!text) return '';
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    // Verify session state on first load
+    async function checkAuthOnLoad() {
+      if (window.location.protocol === 'file:') {
+        const sessionLoggedIn = sessionStorage.getItem('minsook_admin_logged_in');
+        if (sessionLoggedIn === 'true') {
+          currentUserRole = 'admin';
+          currentUsername = 'admin';
+          showDashboard();
+        } else {
+          showLogin();
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/orders');
+        if (res.ok) {
+          currentUserRole = 'admin';
+          currentUsername = 'admin'; 
+          showDashboard();
+        } else {
+          showLogin();
+        }
+      } catch (err) {
+        showLogin();
+      }
+    }
+
+    window.onload = checkAuthOnLoad;
+  </script>
+</body>
+</html>

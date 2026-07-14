@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- SEO Tags -->
+  <title>민숙농장 - 신선함 그대로, 당일수확 백다다기 오이 직거래</title>
+  <meta name="description" content="자연에서 건강하게 길러낸 신선한 민숙농장의 백다다기 오이. 당일 수확 산지직송, 친환경 포장, 높은 고객 만족도로 보답합니다.">
+  <meta name="keywords" content="민숙농장, 백다다기오이, 오이지오이, 고흥오이, 못난이오이, 공품오이, 특품오이, 한입오이, 오이직거래, 샐러드오이">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="민숙농장 - 신선한 당일 수확 백다다기 오이 직거래">
+  <meta property="og:description" content="자연에서 기르고 당일 수확해 더욱 아삭하고 싱그러운 민숙농장 오이. 원하는 수량만큼 신선하고 친환경 포장으로 만나보세요.">
+  <meta property="og:image" content="https://minsook-farm.vercel.app/minsook_main.jpg">
+  <meta property="og:url" content="https://minsook-farm.vercel.app">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="민숙농장">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="민숙농장 - 신선함 그대로, 당일수확 백다다기 오이 직거래">
+  <meta name="twitter:description" content="자연에서 건강하게 길러낸 신선한 민숙농장의 백다다기 오이. 당일 수확 산지직송, 친환경 포장, 높은 고객 만족도로 보답합니다.">
+  <meta name="twitter:image" content="https://minsook-farm.vercel.app/minsook_main.jpg">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="styles_new.css">
+
+  <!-- Daum Postcode SDK -->
+  <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+</head>
+<body>
+
+  <!-- Toast Notification System -->
+  <div id="toast" class="toast-msg"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="nav-container">
+      <a href="#" class="logo">
+        <img src="민숙농장로고가로형-배경없음.png" alt="민숙농장 로고">
+      </a>
+      
+      <div class="menu-toggle" id="menuToggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <nav id="mainNav">
+        <ul>
+          <li><a href="#intro" class="active">농장 소개</a></li>
+          <li><a href="#products">대표 상품</a></li>
+          <li><a href="#strengths">농장의 약속</a></li>
+          <li><a href="#orderForm">간편 주문</a></li>
+          <li><a href="#reviews">고객 후기</a></li>
+          <li><a href="#faq">자주 묻는 질문</a></li>
+          <li><a href="#order" class="cta-btn">
+            <svg class="btn-icon" viewBox="0 0 24 24">
+              <path d="M17,18C15.89,18 15,18.89 15,20A2,2 0 0,0 17,22A2,2 0 0,0 19,20C19,18.89 18.1,18 17,18M7,18C5.89,18 5,18.89 5,20A2,2 0 0,0 7,22A2,2 0 0,0 9,20C9,18.89 8.1,18 7,18M7.2,16.6C7.26,16.48 7.3,16.35 7.3,16.2C7.3,15.89 7.05,15.6 6.75,15.6H17.25C18,15.6 18.68,15.17 19,14.54L22.78,7.7C22.92,7.44 23,7.15 23,6.85A1,1 0 0,0 22,5.85H5.21L4.27,3.85H1V5.85H3L6.6,13.39L5.25,15.83C5.09,16.12 5,16.46 5,16.85A2,2 0 0,0 7,18.85H19V16.85H7.56C7.36,16.85 7.2,16.69 7.2,16.6Z" />
+            </svg>
+            <span>주문하기</span>
+          </a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section id="hero" class="hero">
+    <div class="hero-container">
+      <div class="hero-content load-animate fade-in-up delay-1">
+        <div class="hero-badge">
+          <span class="pulse-dot"></span>
+          <span>100% 산지직송 당일 수확 배송</span>
+        </div>
+        <h1>
+          받는 순간 <span>기분좋은 오이만</span> 담겠습니다
+        </h1>
+        <p class="hero-sub-desc">
+          소비자의 마음으로 하나하나 꼼꼼히 선별하여 받는 순간 기분 좋을 수 있도록 정성을 담아 포장합니다.<br>
+          지구를 위한 작은 실천으로 종이 포장을 선택하고, 신선한 오이를 합리적인 가격에 전하는 것이 민숙농장의 약속입니다.
+        </p>
+        <div class="hero-ctas">
+          <a href="#order" class="cta-btn hero-cta">
+            <span>주문 수량 계산하기</span>
+          </a>
+          <a href="https://smartstore.naver.com/minsook_farm" target="_blank" rel="noopener noreferrer" class="btn-secondary hero-cta">
+            <span>네이버 스마트스토어</span>
+          </a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <h4>4.94 ★</h4>
+            <p>스마트스토어 평점</p>
+          </div>
+          <div class="stat-item">
+            <h4>0건</h4>
+            <p>리뷰 불만 건수</p>
+          </div>
+          <div class="stat-item">
+            <h4>100%</h4>
+            <p>친환경 종이 포장</p>
+          </div>
+        </div>
+      </div>
+      <div class="hero-image-wrapper load-animate scale-in delay-3">
+        <img src="minsook_main.jpg" alt="민숙농장 백다다기 오이" class="hero-img">
+      </div>
+    </div>
+  </section>
+
+  <!-- Farm Intro Section -->
+  <section id="intro">
+    <div class="section-title-wrapper load-animate fade-in-up delay-1">
+      <span class="section-subtitle">민숙농장 이야기</span>
+      <h2 class="section-title">아침의 이슬을 머금고 자란 <br class="mobile-only"><span>백다다기 오이</span></h2>
+      <p class="section-desc">건강한 토양과 정성으로 길러낸 오이의 아삭하고 시원한 수분을 그대로 전합니다. 자연을 위해 종이 위주의 친환경 포장을 고집하며, 당신의 식탁에 닿는 모든 과정에 신선함과 진심을 가득 채웠습니다.</p>
+    </div>
+    
+    <div class="product-features-detail">
+      <div class="detail-gallery load-animate scale-in delay-2">
+        <img src="minsook_detail_1.jpg" alt="오이 재배 모습" class="detail-img large">
+        <img src="minsook_detail_2.jpg" alt="신선한 백다다기 오이" class="detail-img">
+        <img src="minsook_main.jpg" alt="민숙농장 오이 직거래" class="detail-img">
+      </div>
+      <div class="detail-info load-animate fade-in-up delay-3">
+        <h3>오직 신선함과 품질로만 <br class="mobile-only">증명합니다</h3>
+        <p class="intro-p">
+          중간 도매상을 거치지 않는 다이렉트 직거래를 통해 합리적인 가격으로 최상의 농산물을 제공합니다. 
+          네이버 스마트스토어와 농라카페에서 검증된 고품질 오이를 지금 바로 주문하세요.
+        </p>
+        <ul>
+          <li><strong>당일 수확 및 당일 발송:</strong> 매일 이른 아침 수확한 오이 중 신선한 상품만 골라 당일 오후 발송합니다.</li>
+          <li><strong>세심한 선별 작업:</strong> 기호에 따라 골라 먹을 수 있도록 특품부터 시그니처 한입오이까지 4가지 등급으로 상세 선별합니다.</li>
+          <li><strong>자유로운 주문 수량:</strong> 내 식탁에 딱 맞는 양만큼, 무게나 개수 단위를 선택해 자유롭게 주문 가능합니다. 품목별로 묶음 배송까지 지원하여, 더욱 다양하게 우리 농장의 먹거리들을 만나보실 수 있습니다.</li>
+          <li><strong>많이 담을수록 커지는 혜택:</strong> 주문 수량이 늘어날수록 할인율이 커지며, 품목별 합배송으로 배송비 부담까지 덜어드립니다.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Products Section -->
+  <section id="products" class="products">
+    <div class="section-title-wrapper">
+      <span class="section-subtitle">상품 등급 안내</span>
+      <h2 class="section-title">용도에 맞게 <span>골라보세요</span></h2>
+      <p class="section-desc">좋은 오이는 수확에서 끝나지 않습니다.<br>민숙농장은 판매자인 동시에 택배를 받아보는 소비자의 마음으로, 선별부터 포장까지 모든 과정을 꼼꼼하게 살펴 가장 만족스러운 상태로 보내드립니다.</p>
+    </div>
+
+    <div class="product-grid" id="mainProductGrid">
+      <!-- Dynamic products list injected here -->
+    </div>
+  </section>
+
+  <!-- Strengths Section -->
+  <section id="strengths" class="strengths">
+    <div class="section-title-wrapper">
+      <span class="section-subtitle">민숙농장의 3대 핵심 약속</span>
+      <h2 class="section-title">소비자가 감동하는 <br class="mobile-only"><span>정직한 먹거리</span></h2>
+      <p class="section-desc">오이의 신선함은 기본, 고객의 마음까지 먼저 생각하는 민숙농장의 원칙입니다.</p>
+    </div>
+
+    <div class="strengths-grid">
+      <!-- A/S 보장 -->
+      <div class="strength-card service">
+        <div class="icon-box">
+          <svg class="btn-icon" viewBox="0 0 24 24">
+            <path d="M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M15.59,11.59L17,13L12,18L7,13L8.41,11.59L11,14.17V8H13V14.17L15.59,11.59Z" />
+          </svg>
+        </div>
+        <h3>불만 제로, 즉각적 A/S</h3>
+        <p>배송 중 간혹 오이가 파손되거나 상처를 입었다면 사진과 함께 농장 번호로 바로 연락 주세요. 고민 없이 즉각 보상/재발송 조치를 취해 드립니다.</p>
+        <ul>
+          <li>신속한 고객 응대 and 처리</li>
+          <li>배송 중 100% 안심 파손 보상</li>
+          <li>품질 불만족 시 무조건 책임 조치</li>
+        </ul>
+      </div>
+
+      <!-- 친환경 포장 -->
+      <div class="strength-card eco">
+        <div class="icon-box">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="fill: none;">
+            <rect x="3" y="3" width="18" height="18" rx="4" />
+            <circle cx="12" cy="12" r="6" />
+            <path d="M12 6a10 10 0 0 0 0 12 10 10 0 0 0 0-12" />
+            <path d="M6 12h12" />
+          </svg>
+        </div>
+        <h3>100% 친환경 종이 포장 배송</h3>
+        <p>지구를 살리고 건강도 지키는 지속 가능한 포장을 약속합니다. 배송 중 수분 유지용 내포장 비닐(분리배출 가능)을 제외하고, 외부 박스, 완충재, 마감 테이프까지 모두 종이 재질을 사용합니다.</p>
+        <ul>
+          <li><strong>황토 종이박스:</strong> 통기성이 뛰어나 오이의 아삭함을 유지합니다.</li>
+          <li><strong>종이 완충재:</strong> 오이가 서로 부딪혀 상처 입지 않도록 촘촘히 감싸 안아줍니다.</li>
+          <li><strong>종이 테이프:</strong> 비닐 박스테이프 대신 분해가 쉬운 친환경 종이 테이프로 밀봉합니다.</li>
+        </ul>
+      </div>
+
+      <!-- 직거래 합리성 -->
+      <div class="strength-card service">
+        <div class="icon-box">
+          <svg class="btn-icon" viewBox="0 0 24 24">
+            <path d="M12,18C11.11,18 10.26,17.8 9.5,17.45L11.56,15.39C11.71,15.4 11.85,15.4 12,15.4C13.88,15.4 15.4,13.88 15.4,12C15.4,11.85 15.4,11.71 15.39,15.56L17.45,9.5C17.8,10.26 18,11.11 18,12C18,15.31 15.31,18 12,18M12,6C12.89,6 13.74,6.2 14.5,6.55L12.44,8.61C12.29,8.6 12.15,8.6 12,8.6C10.12,8.6 8.6,10.12 8.6,12C8.6,12.15 8.6,12.29 8.61,12.44L6.55,18.5C6.2,17.74 6,16.89 6,16C6,12.69 8.69,10 12,6M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2Z" />
+          </svg>
+        </div>
+        <h3>다양하고 유연한 주문</h3>
+        <p>소량부터 대량까지 유연하게 선택하세요. 맛보기용 소량 주문부터 대형 음식점용 박스 주문까지 원하는 만큼 조절하여 신선하게 받아볼 수 있습니다.</p>
+        <ul>
+          <li>1kg 단위의 자유로운 주문 구성</li>
+          <li>한입오이는 0.5kg 팩 단위 세밀한 선택 가능</li>
+          <li>카카오톡 복사 템플릿을 통한 빠른 주문</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Calculator & Order Form Section -->
+  <section id="order" class="order-section">
+    <div class="section-title-wrapper">
+      <span class="section-subtitle">간편 주문 도우미</span>
+      <h2 class="section-title">실시간 수량 계산 및 <span>주문 생성</span></h2>
+      <p class="section-desc">원하는 오이 등급을 선택하여 주문서에 담고, 금액 확인 후 카톡으로 전송해보세요</p>
+    </div>
+
+    <div class="order-container">
+      <!-- Left Panel: Calculator (Dropdown Style) -->
+      <div class="calc-panel load-animate fade-in-up delay-2">
+        <h3>주문 수량 계산기</h3>
+        
+        <!-- Calculator Notice Box -->
+        <div class="calculator-notice-box">
+          <div class="notice-item discount-notice">
+            <span class="notice-icon">🎁</span>
+            <p class="notice-text">
+              <strong>주문 수량이 늘어날수록 할인율이 커집니다!</strong><br>
+              (1kg 또는 10개당 1% 추가 할인, 최대 12% 할인)
+            </p>
+          </div>
+          <div class="notice-item limit-notice">
+            <span class="notice-icon">⚠️</span>
+            <p class="notice-text">
+              <strong>한입오이 주문 안내</strong><br>
+              한입오이는 부피가 커서 상자 크기에 제한이 있습니다.<br>
+              단독으로 구매하실 때는 최대 6kg까지, 다른 오이와 함께 구매하실 때는 총 9kg까지만 주문이 가능합니다. 고객님의 양해 부탁드립니다.
+            </p>
+          </div>
+        </div>
+
+        <!-- 주문 유형 선택 탭 -->
+        <div class="order-type-tabs">
+          <button type="button" id="btnTypeDelivery" class="order-tab active">택배 주문</button>
+          <button type="button" id="btnTypePickup" class="order-tab">픽업 주문</button>
+        </div>
+
+        <!-- Dropdown Selection -->
+        <div class="form-group">
+          <label for="productSelect" class="form-label">오이 종류 선택</label>
+          <div class="dropdown-add-group">
+            <select id="productSelect" class="select-box">
+              <option value="" disabled selected>구매하실 품목을 선택 후 추가하기를 눌러주세요</option>
+            </select>
+            <button type="button" id="btnAddProduct" class="cta-btn">추가하기</button>
+          </div>
+        </div>
+
+        <!-- Selected Products List (Basket) -->
+        <div id="selectedProductsList" class="selected-products-list">
+          <div class="empty-basket-msg">선택된 상품이 없습니다. 위에서 상품을 추가해주세요.</div>
+        </div>
+
+        <!-- Limit Indicators -->
+        <div class="limit-section">
+          <div class="limit-item">
+            <div class="limit-info">
+              <span>총 무게 제한 (최대 12kg)</span>
+              <strong id="limitWeightText">0 kg / 12 kg</strong>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" id="weightBar" style="width: 0%;"></div>
+            </div>
+          </div>
+          <div id="limitAlert" class="limit-alert-box" style="display: none;">
+            ⚠️ 최대 주문 한도(12kg)에 도달했습니다. 더 이상 수량을 늘릴 수 없습니다.
+          </div>
+        </div>
+
+        <!-- Calculation Display -->
+        <div class="calc-summary">
+          <div class="summary-row">
+            <span>선택한 등급</span>
+            <span id="calcGrade">선택된 등급 없음</span>
+          </div>
+          <div class="summary-row">
+            <span>총 주문 무게</span>
+            <span id="calcQty">0 kg</span>
+          </div>
+          <div class="summary-row">
+            <span>총 상품 금액</span>
+            <span id="calcPrice">0원</span>
+          </div>
+          <div class="summary-row">
+            <span>추가 할인</span>
+            <span id="calcDiscount" style="color: #15803d; font-weight: 800;">-0% (0원)</span>
+          </div>
+          <div class="summary-row">
+            <span>배송비</span>
+            <span id="calcShipping">0원</span>
+          </div>
+          <div class="summary-row">
+            <span>총 결제 예정 금액</span>
+            <span id="calcTotal" class="summary-total">0원</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: KakaoTalk Form Helper -->
+      <div id="orderForm" class="sms-panel load-animate fade-in-up delay-3">
+        <h3>카카오톡 주문 양식 생성기</h3>
+        
+        <div class="sms-guide">
+          <div class="sms-guide-step">
+            <span class="step-num">1</span>
+            <span class="step-text">정보 입력</span>
+          </div>
+          <div class="sms-guide-step">
+            <span class="step-num">2</span>
+            <span class="step-text">주문서 확인</span>
+          </div>
+          <div class="sms-guide-step">
+            <span class="step-num">3</span>
+            <span class="step-text">카톡 전송</span>
+          </div>
+        </div>
+
+        <p class="sms-desc">주문서 정보를 아래 입력하시면 계산기 내역이 포함된 카카오톡 주문서 템플릿이 자동으로 작성됩니다.</p>
+        
+        <input type="text" id="orderName" class="sms-input" placeholder="받으실 분 성함 (예: 홍길동)" required>
+        <input type="tel" id="orderPhone" class="sms-input" placeholder="연락처 (예: 010-1234-5678)" required>
+        
+        <!-- 택배 주문 영역 -->
+        <div id="deliverySection">
+          <div class="form-group address-group" style="width: 100%; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="text" id="orderPostcode" class="sms-input" placeholder="우편번호" readonly style="flex: 1; margin-bottom: 0;">
+              <button type="button" id="btnSearchAddress" class="btn-secondary" style="padding: 10px 16px; white-space: nowrap; height: 48px; border-radius: var(--radius-sm); font-weight: 700; border: 1px solid var(--border-light); cursor: pointer; background: #ffffff; color: var(--primary-dark);">우편번호 찾기</button>
+            </div>
+            <input type="text" id="orderAddress" class="sms-input" placeholder="기본 주소 (도로명)" readonly required style="margin-bottom: 0;">
+            <input type="text" id="orderAddressDetail" class="sms-input" placeholder="상세 주소 입력 (동, 호수 등)" required style="margin-bottom: 0;">
+          </div>
+          <select id="orderMemoSelect" class="sms-input" style="margin-bottom: 12px; height: 48px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); padding: 0 12px; background-color: #ffffff; color: var(--text-dark); font-weight: 500; cursor: pointer; width: 100%;">
+            <option value="" disabled selected>배송 요청 사항을 선택해 주세요</option>
+            <option value="문 앞에 놓아주세요">문 앞에 놓아주세요</option>
+            <option value="부재 시 연락 부탁드려요">부재 시 연락 부탁드려요</option>
+            <option value="배송 전 미리 연락해 주세요">배송 전 미리 연락해 주세요</option>
+            <option value="직접 입력하기">직접 입력하기</option>
+          </select>
+          <input type="text" id="orderMemo" class="sms-input" placeholder="배송 요청 사항을 직접 입력해 주세요" style="margin-top: -4px; display: none;">
+        </div>
+
+        <!-- 픽업 주문 영역 -->
+        <div id="pickupSection" style="display: none; flex-direction: column; gap: 12px; margin-bottom: 12px;">
+          <div class="pickup-datetime-container">
+            <label for="pickupDate">픽업 날짜 선택</label>
+            <input type="date" id="pickupDate" class="sms-input" style="margin-bottom: 0; width: 100%;">
+          </div>
+          
+          <div class="pickup-datetime-container">
+            <label for="pickupTime">픽업 시간 선택</label>
+            <select id="pickupTime" class="sms-input" style="margin-bottom: 0; height: 48px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); padding: 0 12px; background-color: #ffffff; color: var(--text-dark); font-weight: 500; cursor: pointer; width: 100%;">
+              <option value="" disabled selected>픽업 시간을 선택해 주세요</option>
+              <option value="13:00">13:00</option>
+              <option value="13:30">13:30</option>
+              <option value="14:00">14:00</option>
+              <option value="14:30">14:30</option>
+              <option value="15:00">15:00</option>
+              <option value="15:30">15:30</option>
+              <option value="16:00">16:00</option>
+              <option value="16:30">16:30</option>
+              <option value="17:00">17:00</option>
+              <option value="17:30">17:30</option>
+              <option value="18:00">18:00</option>
+            </select>
+          </div>
+
+          <div class="pickup-datetime-container">
+            <label style="font-weight: 700;">결제 방식 선택</label>
+            <div class="payment-tabs">
+              <button type="button" id="btnPayBank" class="payment-tab active">계좌이체</button>
+              <button type="button" id="btnPayOnsite" class="payment-tab">현장결제</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="smsPreview" class="sms-preview-box"></div>
+
+        <!-- Bank Copy Box -->
+        <div class="bank-account-box" style="flex-direction: column; gap: 10px; align-items: stretch; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div>
+              <span class="bank-title">입금 계좌 안내</span>
+              <strong class="bank-number">농협 312-0219-8388-41</strong> <span class="bank-holder">최정민(민숙농장)</span>
+            </div>
+            <button type="button" id="btnCopyBank" class="btn-secondary bank-copy-btn" style="padding: 6px 12px; font-size: 0.85rem;">계좌 복사</button>
+          </div>
+        </div>
+
+        <button type="button" id="btnSendSms" class="btn-sms-send" style="background-color: #fee500; color: #191919; border: none; box-shadow: 0 4px 12px rgba(254, 229, 0, 0.2); margin-bottom: 12px;">
+          <svg class="btn-icon" viewBox="0 0 24 24" style="fill: #191919;">
+            <path d="M12,2C6.48,2 2,5.52 2,9.88c0,2.83 1.89,5.32 4.74,6.67l-1.2,4.42c-0.1,0.36 0.3,0.67 0.61,0.47l5.21-3.44 c0.21,0.02 0.43,0.03 0.64,0.03c5.52,0 10-3.52 10-9.88C22,5.52 17.52,2 12,2z" />
+          </svg>
+          <strong>카카오톡으로 주문서 전송하기</strong>
+        </button>
+
+        <button type="button" id="btnCopyKakaoId" class="btn-sms-send" style="background-color: #ffffff; color: #191919; border: 2px solid #fee500; box-shadow: var(--shadow-sm);">
+          <svg class="btn-icon" viewBox="0 0 24 24" style="fill: #191919;">
+            <path d="M12,2C6.48,2 2,5.52 2,9.88c0,2.83 1.89,5.32 4.74,6.67l-1.2,4.42c-0.1,0.36 0.3,0.67 0.61,0.47l5.21-3.44 c0.21,0.02 0.43,0.03 0.64,0.03c5.52,0 10-3.52 10-9.88C22,5.52 17.52,2 12,2z" />
+          </svg>
+          <strong>민숙농장 채널로 문의하기</strong>
+        </button>
+        <div class="sms-store-link">
+          <a href="https://smartstore.naver.com/minsook_farm" target="_blank" rel="noopener noreferrer">
+            스마트스토어에서 결제하기 →
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials Section -->
+  <section id="reviews" class="testimonials">
+    <div class="section-title-wrapper">
+      <span class="section-subtitle">고객 후기</span>
+      <h2 class="section-title">평점 4.94가 말해주는 <span>만족도</span></h2>
+      <p class="section-desc">불만족 리뷰 ZERO, 정직하게 당일 수확해서 보내는 아삭한 오이에 고객님들께서 보내주신 진짜 마음입니다.</p>
+    </div>
+
+    <div class="slider-container">
+      <div class="testimonial-track" id="testimonialTrack">
+        <!-- Slide 1 -->
+        <div class="testimonial-slide">
+          <div class="rating-stars">★★★★★</div>
+          <p class="quote-text">오이지 담그려고 공품 5kg 샀는데 못난이라고 해서 걱정했더니 모양만 좀 휘었지 오이가 너무 싱싱해요! 물러 터진 것 하나 없이 신선해서 대만족입니다.</p>
+          <div class="client-info">
+            <h4>김민지 님</h4>
+            <p>네이버 스마트스토어 구매 고객</p>
+          </div>
+        </div>
+        <!-- Slide 2 -->
+        <div class="testimonial-slide">
+          <div class="rating-stars">★★★★★</div>
+          <p class="quote-text">한입오이 주문해서 등산 갈 때마다 배낭에 넣어 다녀요. 씻어서 그냥 들고만 가도 되니 너무 편하고 다른 오이들보다 아삭하고 엄청 달아요! 재구매 의사 200% 입니다.</p>
+          <div class="client-info">
+            <h4>박상민 님</h4>
+            <p>네이버 스마트스토어 구매 고객</p>
+          </div>
+        </div>
+        <!-- Slide 3 -->
+        <div class="testimonial-slide">
+          <div class="rating-stars">★★★★★</div>
+          <p class="quote-text">농라카페에서 특품 20개 사서 부모님 댁에 보내드렸는데 밭에서 바로 딴 것처럼 가시도 살아있고 맛있다고 하셔서 보낸 자식 마음이 너무 흐뭇하네요. 친환경 포장도 최고입니다.</p>
+          <div class="client-info">
+            <h4>이정은 님</h4>
+            <p>농라카페 문자 주문 고객</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="slider-controls">
+        <button class="slider-btn" id="prevSlide" aria-label="이전 슬라이드">
+          <svg style="width:24px; height:24px; fill:currentColor" viewBox="0 0 24 24">
+            <path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z" />
+          </svg>
+        </button>
+        <button class="slider-btn" id="nextSlide" aria-label="다음 슬라이드">
+          <svg style="width:24px; height:24px; fill:currentColor" viewBox="0 0 24 24">
+            <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section id="faq" class="faq">
+    <div class="section-title-wrapper">
+      <span class="section-subtitle">자주 묻는 질문</span>
+      <h2 class="section-title">궁금한 점을 <span>해결해 드립니다</span></h2>
+      <p class="section-desc">민숙농장에 대해 궁금해하시는 사항들을 친절하게 정리했습니다.</p>
+    </div>
+
+    <div class="faq-container">
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>당일 수확 오이는 언제 발송되나요?</span>
+          <svg viewBox="0 0 24 24"><path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/></svg>
+        </div>
+        <div class="faq-answer">
+          <p>매일 아침 6시부터 수확 및 정밀 선별 작업을 시작합니다. 오전까지 주문 완료된 물량은 신선도를 위해 당일 오전에 수확된 아이들로 오후에 택배 발송되어 다음 날 수령 가능합니다.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>공품오이(못난이)는 특품오이와 어떤 점이 다른가요?</span>
+          <svg viewBox="0 0 24 24"><path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/></svg>
+        </div>
+        <div class="faq-answer">
+          <p>공품오이는 모양이 곧지 않고 약간 굽었거나, 표면에 사소한 흠집이 있어 상품 기준을 아쉽게 벗어난 등급입니다. 하지만 수확 시기와 신선도, 맛, 당도, 수분감은 특품오이와 완전히 동일하므로, 직접 오이지를 담그시거나 가정에서 부담 없이 무침용 등으로 드시기 매우 실속 있습니다.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>오이가 배송 중에 파손되었거나 상했는데 어떻게 하나요?</span>
+          <svg viewBox="0 0 24 24"><path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/></svg>
+        </div>
+        <div class="faq-answer">
+          <p>민숙농장은 불만율 ZERO에 도전하며 완벽한 A/S 정책을 펼치고 있습니다. 배송 수령 즉시 오이의 파손이나 상처가 난 상태를 휴대폰 사진으로 찍어 농장 대표 번호(010-8990-4046)로 보내주시면 확인 후 바로 재발송 혹은 신속하게 부분 환불 보상해 드립니다.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>포장 박스나 자재들은 정말 다 종이인가요?</span>
+          <svg viewBox="0 0 24 24"><path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/></svg>
+        </div>
+        <div class="faq-answer">
+          <p>네, 맞습니다. 농장주 역시 환경 문제에 깊이 동감하여 황토 종이박스, 종이 테이프, 그리고 충격 완화용 종이 패드까지 모든 자재를 100% 종이로 사용하고 있습니다. 택배 수령 후 상자 채로 재활용 쓰레기통에 바로 분리수거하실 수 있어 처리도 간편합니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-container">
+      <div class="footer-brand">
+        <a href="#" class="logo">
+          <img src="민숙농장로고가로형-배경없음.png" alt="민숙농장 로고">
+        </a>
+        <p>전라남도 고흥의 청정 자연 속에서 대를 이어 건강한 백다다기 오이를 길러냅니다. 늘 최고의 신선함과 투명함으로 소비자의 식탁에 다가가겠습니다.</p>
+      </div>
+
+      <div class="footer-links">
+        <h4>바로가기</h4>
+        <ul>
+          <li><a href="#hero">처음으로</a></li>
+          <li><a href="#intro">농장 소개</a></li>
+          <li><a href="#products">오이 등급</a></li>
+          <li><a href="#order">실시간 주문서</a></li>
+          <li><a href="/admin">관리자 페이지</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-contact">
+        <h4>연락처 및 채널 정보</h4>
+        <p>
+          <svg class="footer-icon" viewBox="0 0 24 24">
+            <path d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z" />
+          </svg>
+          <span>대표 연락처: 010-8990-4046</span>
+        </p>
+        <p>
+          <svg class="footer-icon" viewBox="0 0 24 24">
+            <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,17H13V11H11V17M11,7H13V9H11V7Z" />
+          </svg>
+          <a href="https://smartstore.naver.com/minsook_farm" target="_blank" rel="noopener noreferrer">네이버 스마트스토어 바로가기</a>
+        </p>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2026 민숙농장. All Rights Reserved. (본 랜딩페이지는 직거래 안내 목적의 시안 페이지입니다.)</p>
+      <p>주소 : 전남광주통합특별시 고흥군 고흥읍 백련장전길 65-87 | 상호: 민숙농장 | 대표 : 최정민</p>
+    </div>
+  </footer>
+
+  <!-- Gemini Chatbot Widget -->
+  <div id="chatbotWidget" class="chatbot-widget">
+    <!-- Floating Bubble Button -->
+    <button id="chatbotBubble" class="chatbot-bubble" aria-label="챗봇 열기">
+      <div class="bubble-icon-container">
+        <svg class="bubble-icon" viewBox="0 0 24 24">
+          <path fill="currentColor" d="M12,2A10,10 0 0,1 22,12C22,15.22 20.47,18.09 18.09,19.93L19,22L16.22,21.1C14.93,21.68 13.5,22 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,6A1.5,1.5 0 0,0 10.5,7.5A1.5,1.5 0 0,0 12,9A1.5,1.5 0 0,0 13.5,7.5A1.5,1.5 0 0,0 12,6M12,11A1.5,1.5 0 0,0 10.5,12.5A1.5,1.5 0 0,0 12,14A1.5,1.5 0 0,0 13.5,12.5A1.5,1.5 0 0,0 12,11M12,16A1.5,1.5 0 0,0 10.5,17.5A1.5,1.5 0 0,0 12,19A1.5,1.5 0 0,0 13.5,17.5A1.5,1.5 0 0,0 12,16Z" />
+        </svg>
+      </div>
+      <span class="chatbot-badge">1</span>
+    </button>
+
+    <!-- Chat Window Container -->
+    <div id="chatbotWindow" class="chatbot-window hidden">
+      <!-- Chat Header -->
+      <div class="chatbot-header">
+        <div class="chatbot-profile">
+          <div class="avatar-bg">
+            <svg class="avatar-icon" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L7.33,18C13,17.5 19,13 22,8C22,8 20,8 17,8Z" />
+            </svg>
+          </div>
+          <div class="profile-info">
+            <span class="profile-name">농장지기 민숙 씨</span>
+            <span class="profile-status">아삭하게 대답 중 🥒</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button id="btnChatbotReset" class="chatbot-action-btn" title="대화 초기화" aria-label="대화 초기화">
+            <svg viewBox="0 0 24 24">
+              <path fill="currentColor" d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z" />
+            </svg>
+          </button>
+          <button id="btnChatbotClose" class="chatbot-close-btn" aria-label="챗봇 닫기">
+            <svg viewBox="0 0 24 24">
+              <path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Chat Body -->
+      <div class="chatbot-body">
+        <div id="chatbotMessages" class="chatbot-messages">
+          <!-- Initial welcome message from bot -->
+          <div class="chat-message bot">
+            <div class="msg-bubble">
+              안녕하세요! 민숙농장에 방문해 주셔서 진심으로 감사드립니다. 🥒 고흥에서 매일 아침 당일 수확해서 보내드리는 아삭한 백다다기 오이 직거래 전문 농장입니다. 궁금하신 점이 있으시면 언제든지 편하게 문의해 주세요.
+            </div>
+          </div>
+          
+          <!-- Suggested Quick Questions chips -->
+          <div class="quick-questions" id="quickQuestions">
+            <button class="qq-chip" data-question="오이 등급 차이를 알려줘">오이 등급은 어떻게 다른가요?</button>
+            <button class="qq-chip" data-question="배송비랑 배송 기간은 어떻게 돼?">배송은 언제 발송되나요?</button>
+            <button class="qq-chip" data-question="주문은 어떻게 해?">오이를 주문하고 싶어요</button>
+            <button class="qq-chip" data-question="파손 보상(A/S) 기준이 뭐야?">오이가 상해서 왔어요</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Footer -->
+      <div class="chatbot-footer">
+        <input type="text" id="chatbotInput" placeholder="민숙 씨에게 물어보세요..." maxlength="500">
+        <button id="btnChatbotSend" aria-label="메시지 전송" class="chatbot-send-btn">
+          <svg viewBox="0 0 24 24">
+            <path fill="currentColor" d="M2,21L23,12L2,3V10L17,12L2,14V21Z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KakaoTalk Instruction Modal -->
+  <div id="kakaoModal" class="kakao-modal hidden">
+    <div class="kakao-modal-overlay" id="kakaoModalOverlay"></div>
+    <div class="kakao-modal-content">
+      <button type="button" class="kakao-modal-close" id="btnKakaoModalClose" aria-label="닫기">&times;</button>
+      <div class="kakao-modal-header">
+        <svg viewBox="0 0 24 24" class="kakao-modal-icon">
+          <path d="M12,2C6.48,2 2,5.52 2,9.88c0,2.83 1.89,5.32 4.74,6.67l-1.2,4.42c-0.1,0.36 0.3,0.67 0.61,0.47l5.21-3.44 c0.21,0.02 0.43,0.03 0.64,0.03c5.52,0 10-3.52 10-9.88C22,5.52 17.52,2 12,2z" />
+        </svg>
+        <h3>카카오톡 주문 완료 가이드</h3>
+      </div>
+      <div class="kakao-modal-body">
+        <div class="modal-alert-box">
+          🎉 주문서와 판매자 카톡 ID가 모두 복사되었습니다!
+        </div>
+        <p class="modal-info-text">
+          아래 순서대로 판매자 카카오톡으로 주문서를 전송해 주세요.
+        </p>
+        <div class="step-guide-list">
+          <div class="step-guide-item">
+            <span class="step-guide-num">1</span>
+            <div class="step-guide-desc">
+              <strong>카카오톡 앱 실행</strong>
+              <p>모바일은 아래 실행 버튼을 누르거나 PC에서는 카카오톡을 열어주세요.</p>
+            </div>
+          </div>
+          <div class="step-guide-item">
+            <span class="step-guide-num">2</span>
+            <div class="step-guide-desc">
+              <strong>친구 추가 (ID로 추가)</strong>
+              <p>친구 찾기(ID 검색)에서 <strong>free592@naver.com</strong>을 입력해 등록해주세요.</p>
+            </div>
+          </div>
+          <div class="step-guide-item">
+            <span class="step-guide-num">3</span>
+            <div class="step-guide-desc">
+              <strong>주문서 붙여넣기 & 전송</strong>
+              <p>대화창에 주문서 내용을 붙여넣어(Ctrl+V) 전송하면 신청이 완료됩니다!</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-copy-status">
+          <div class="copy-status-row">
+            <span>주문서 양식 복사 상태</span>
+            <span class="status-badge success">복사 완료</span>
+          </div>
+          <div class="copy-status-row">
+            <span>판매자 카톡 ID</span>
+            <span class="status-badge success">복사 완료 (free592@naver.com)</span>
+          </div>
+        </div>
+      </div>
+      <div class="kakao-modal-footer">
+        <button type="button" class="btn-modal-action" id="btnOpenKakaoTalk">
+          <span>카카오톡 앱 바로 열기</span>
+        </button>
+        <button type="button" class="btn-modal-close-large" id="btnKakaoModalCloseLarge">확인 완료</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="script_new.js"></script>
+  <script src="chatbot_new.js"></script>
+</body>
+</html>
