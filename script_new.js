@@ -473,13 +473,31 @@ document.addEventListener('DOMContentLoaded', () => {
       limitWeightText.textContent = `${formatWeight(totalWeight)} kg / ${formatWeight(maxLimit)} kg`;
     }
 
-    // Cumulative discount rate: Math.floor(totalWeight)%, maximum 12%
-    const discountRate = Math.min(12, Math.floor(totalWeight));
-    const discountAmount = Math.round(totalOriginalPrice * (discountRate / 100));
+    // Calculate total units for discount logic
+    // (weight: 1kg = 1 unit, quantity: 10 cucumbers = 1 unit)
+    let totalUnits = 0;
+    for (const g in orderState) {
+      const qty = orderState[g];
+      if (qty > 0 && priceConfig[g]) {
+        if (priceConfig[g].isQty) {
+          totalUnits += qty / 10.0;
+        } else {
+          totalUnits += qty;
+        }
+      }
+    }
+    const integerUnits = Math.floor(totalUnits);
+    const discountRate = integerUnits >= 2 ? Math.min(12, integerUnits) : 0;
     
+    // Apply 1-won unit drop (truncation to 10-won units) after applying discount
+    const baseDiscountAmount = Math.round(totalOriginalPrice * (discountRate / 100));
+    let discountedPrice = totalOriginalPrice - baseDiscountAmount;
+    discountedPrice = Math.floor(discountedPrice / 10) * 10;
+    const discountAmount = totalOriginalPrice - discountedPrice; // actual discount amount (including won truncation)
+
     // Shipping fee is 4,000 KRW if delivery, 0 if pickup
     const shipping = (orderType === 'delivery' && totalOriginalPrice > 0) ? 4000 : 0;
-    const finalTotal = totalOriginalPrice - discountAmount + shipping;
+    const finalTotal = discountedPrice + shipping;
     currentFinalTotal = finalTotal; // save to DOMContentLoaded scope
 
     // Update summary panels
@@ -597,15 +615,15 @@ ${itemsText}■ 배송지 주소: ${address}
 ■ 상품 금액 합계: ${origPrice.toLocaleString()}원
 ■ 추가 할인: -${discRate}% (-${discAmount.toLocaleString()}원)
 ■ 배송비: ${shipFee.toLocaleString()}원
-■ 총 입금 예정 금액: ${finalTotal.toLocaleString()}원
+■ 총 결제금액: ${finalTotal.toLocaleString()}원
 ■ 입금 계좌: 농협 312-0219-8388-41 최정민(민숙농장)
 ■ 배송 메모: ${memo}
 
-※ [카카오톡으로 주문서 전송하기] 버튼을 누르시면 주문이 접수되며, 카카오톡 채널로 이동하여 입금 확인 즉시 배송이 시작됩니다.`;
+※ [카카오톡으로 주문서 전송하기] 버튼을 누르시면 주문이 접수됩니다.`;
     } else {
       const pickupDateVal = (pickupDate && pickupDate.value) ? pickupDate.value : '날짜 선택 안됨';
       const pickupTimeVal = (pickupTime && pickupTime.value) ? pickupTime.value : '시간 선택 안됨';
-      const paymentText = paymentMethod === 'bank' ? '계좌이체 (농협 312-0219-8388-41 최정민/민숙농장)' : '현장결제 (카드 또는 현금)';
+      const paymentText = paymentMethod === 'bank' ? '계좌이체 (농협 312-0219-8388-41 최정민/민숙농장)' : '현장결제 (카드, 현금, 고흥사랑상품권 결제 가능)';
 
       template = `[민숙농장 직거래 픽업 주문 신청]
 ■ 주문자명: ${name}
@@ -615,10 +633,10 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
 ■ 상품 금액 합계: ${origPrice.toLocaleString()}원
 ■ 추가 할인: -${discRate}% (-${discAmount.toLocaleString()}원)
 ■ 배송비: 0원 (직접 픽업)
-■ 총 결제 예정 금액: ${finalTotal.toLocaleString()}원
+■ 총 결제금액: ${finalTotal.toLocaleString()}원
 ■ 결제 방식: ${paymentText}
 
-※ [카카오톡으로 주문서 전송하기] 버튼을 누르시면 주문이 접수되며, 카카오톡 채널로 이동하여 픽업 일정 확인 및 조율을 진행합니다.`;
+※ [카카오톡으로 주문서 전송하기] 버튼을 누르시면 주문이 접수됩니다.`;
     }
 
     previewBox.textContent = template;
