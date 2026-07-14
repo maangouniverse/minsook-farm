@@ -733,6 +733,16 @@
       white-space: nowrap;
     }
     
+    .orders-table tr.order-main-row td {
+      border-bottom: none;
+    }
+    .orders-table tr.order-address-row td {
+      border-bottom: 2px solid var(--border-light);
+    }
+    .orders-table tr.order-main-row td[rowspan="2"] {
+      border-bottom: 2px solid var(--border-light);
+    }
+    
     .orders-table td.cell-address {
       white-space: normal;
       word-break: keep-all;
@@ -1099,7 +1109,7 @@
 
           <!-- 🔍 상세 검색 및 날짜 기간 필터 바 -->
           <div class="filter-bar" style="background: #fafbfc; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 18px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: end;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: end;">
               <!-- 기간 필터 -->
               <div class="filter-group">
                 <label class="admin-form-label" style="margin-bottom: 6px; font-weight: 800; font-size: 0.8rem;">📅 주문 조회 기간</label>
@@ -1159,7 +1169,6 @@
                     <th style="width: 100px; text-align: center;">일시</th>
                     <th style="width: 85px;">고객명</th>
                     <th style="width: 110px;">연락처</th>
-                    <th>픽업 일정 및 상세 정보</th>
                     <th style="width: 170px;">구매 내역</th>
                     <th style="width: 90px;">총 금액</th>
                     <th style="width: 160px;">메모 및 결제방식</th>
@@ -1168,7 +1177,7 @@
                 </thead>
                 <tbody id="pickupOrdersTableBody">
                   <tr>
-                    <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 40px 0;">주문 데이터를 로드하는 중입니다...</td>
+                    <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 40px 0;">주문 데이터를 로드하는 중입니다...</td>
                   </tr>
                 </tbody>
               </table>
@@ -1190,7 +1199,6 @@
                     <th style="width: 100px; text-align: center;">일시</th>
                     <th style="width: 85px;">고객명</th>
                     <th style="width: 110px;">연락처</th>
-                    <th>배송지 주소</th>
                     <th style="width: 170px;">구매 내역</th>
                     <th style="width: 90px;">총 금액</th>
                     <th style="width: 160px;">배송 메모 및 송장번호</th>
@@ -1199,7 +1207,7 @@
                 </thead>
                 <tbody id="deliveryOrdersTableBody">
                   <tr>
-                    <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 40px 0;">주문 데이터를 로드하는 중입니다...</td>
+                    <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 40px 0;">주문 데이터를 로드하는 중입니다...</td>
                   </tr>
                 </tbody>
               </table>
@@ -1394,7 +1402,7 @@
     async function loadOrders() {
       const pickupTbody = document.getElementById('pickupOrdersTableBody');
       const deliveryTbody = document.getElementById('deliveryOrdersTableBody');
-      const loadingHtml = `<tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 40px 0;">주문 리스트를 로드 중...</td></tr>`;
+      const loadingHtml = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 40px 0;">주문 리스트를 로드 중...</td></tr>`;
       if (pickupTbody) pickupTbody.innerHTML = loadingHtml;
       if (deliveryTbody) deliveryTbody.innerHTML = loadingHtml;
 
@@ -1457,7 +1465,7 @@
 
       // 픽업 주문 렌더링
       if (pickupOrders.length === 0) {
-        pickupTbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 30px 0;">조건에 맞는 직접 픽업 주문이 없습니다.</td></tr>`;
+        pickupTbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px 0;">조건에 맞는 직접 픽업 주문이 없습니다.</td></tr>`;
       } else {
         pickupTbody.innerHTML = '';
         pickupOrders.forEach(order => {
@@ -1467,7 +1475,7 @@
 
       // 택배 주문 렌더링
       if (deliveryOrders.length === 0) {
-        deliveryTbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 30px 0;">조건에 맞는 택배 배송 주문이 없습니다.</td></tr>`;
+        deliveryTbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px 0;">조건에 맞는 택배 배송 주문이 없습니다.</td></tr>`;
       } else {
         deliveryTbody.innerHTML = '';
         deliveryOrders.forEach(order => {
@@ -1549,14 +1557,21 @@
 
     // Create Order Table Row Element
     function createOrderRow(order) {
-      const dateStr = new Date(order.created_at).toLocaleString('ko-KR', {
-        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      const fragment = document.createDocumentFragment();
+
+      const dateObj = new Date(order.created_at);
+      const dateStr = dateObj.toLocaleDateString('ko-KR', {
+        month: 'short', day: 'numeric'
+      });
+      const timeStr = dateObj.toLocaleTimeString('ko-KR', {
+        hour: '2-digit', minute: '2-digit', hour12: false
       });
 
-      // Formatting items
+      // Formatting items (무게/개수/못난이 괄호 및 수량 단위 제거하여 자연스럽게 포맷팅)
       let itemsHtml = '<ul class="ordered-items-list">';
       order.items.forEach(item => {
-        itemsHtml += `<li>${item.name} (${item.quantity}${item.unit})</li>`;
+        const cleanName = item.name.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+        itemsHtml += `<li>${cleanName} ${item.quantity}${item.unit}</li>`;
       });
       itemsHtml += '</ul>';
 
@@ -1566,23 +1581,29 @@
       if (order.status === '택배사') statusClass = 'status-delivery';
       if (order.status === '주문취소') statusClass = 'status-cancel';
 
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="text-align: center; vertical-align: middle;">
+      const isPickup = order.address.includes('[직접 픽업]');
+
+      // Row 1: Main Order Info (rowspan="2" on non-split fields)
+      const tr1 = document.createElement('tr');
+      tr1.className = 'order-main-row';
+      tr1.innerHTML = `
+        <td rowspan="2" style="text-align: center; vertical-align: middle;">
           <input type="checkbox" class="order-checkbox" data-id="${order.id}" onchange="onOrderCheckboxChange()">
         </td>
-        <td style="text-align: center;"><strong>#${order.id}</strong></td>
-        <td style="font-size: 0.8rem; color: var(--text-muted); text-align: center;">${dateStr}</td>
-        <td><strong>${escapeHtml(order.name)}</strong></td>
-        <td style="font-size: 0.82rem;">${escapeHtml(order.phone)}</td>
-        <td class="cell-address">${escapeHtml(order.address)}</td>
-        <td class="cell-items">${itemsHtml}</td>
-        <td><strong style="color: var(--primary);">${order.total_price.toLocaleString()}원</strong></td>
-        <td class="cell-memo">
+        <td rowspan="2" style="text-align: center; vertical-align: middle;"><strong>#${order.id}</strong></td>
+        <td rowspan="2" style="font-size: 0.8rem; color: var(--text-muted); text-align: center; vertical-align: middle; line-height: 1.3;">
+          <div style="font-weight: 700; color: var(--text-dark);">${dateStr}</div>
+          <div style="font-size: 0.72rem; margin-top: 2px;">${timeStr}</div>
+        </td>
+        <td style="vertical-align: middle;"><strong>${escapeHtml(order.name)}</strong></td>
+        <td style="font-size: 0.82rem; vertical-align: middle;">${escapeHtml(order.phone)}</td>
+        <td rowspan="2" class="cell-items" style="vertical-align: middle;">${itemsHtml}</td>
+        <td rowspan="2" style="vertical-align: middle;"><strong style="color: var(--primary);">${order.total_price.toLocaleString()}원</strong></td>
+        <td rowspan="2" class="cell-memo" style="vertical-align: middle;">
           ${escapeHtml(order.memo || '-')}
           ${order.tracking_number ? `<div style="margin-top: 6px; padding: 2px 6px; font-size: 0.72rem; color: var(--primary); font-weight: bold; background-color: var(--primary-light); border-radius: var(--radius-sm); display: inline-block; white-space: nowrap;">송장: ${order.courier ? escapeHtml(order.courier) + ' ' : ''}${escapeHtml(order.tracking_number)}</div>` : ''}
         </td>
-        <td>
+        <td rowspan="2" style="vertical-align: middle;">
           <div style="display: flex; flex-direction: column; gap: 8px; align-items: start;">
             <span class="status-badge ${statusClass}">${order.status}</span>
             <select class="status-select" onchange="updateOrderStatus(${order.id}, this.value, this)">
@@ -1594,7 +1615,24 @@
           </div>
         </td>
       `;
-      return tr;
+
+      // Row 2: Address / Pickup Detail (colspan="2" to span under name and phone columns)
+      const tr2 = document.createElement('tr');
+      tr2.className = 'order-address-row';
+      tr2.innerHTML = `
+        <td colspan="2" class="cell-address" style="padding: 6px 8px 10px 8px; background-color: #fafbfc; vertical-align: top;">
+          <div style="display: flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 800; color: ${isPickup ? '#3b82f6' : 'var(--primary)'}; margin-bottom: 3px;">
+            <span>${isPickup ? '🚗 직접 픽업 일정' : '📍 배송지 주소'}</span>
+          </div>
+          <div style="font-size: 0.78rem; font-weight: 600; color: var(--text-dark); line-height: 1.35;">
+            ${escapeHtml(order.address)}
+          </div>
+        </td>
+      `;
+
+      fragment.appendChild(tr1);
+      fragment.appendChild(tr2);
+      return fragment;
     }
 
     // Download Order List as XLS format
@@ -1657,8 +1695,11 @@
       `;
 
       sortedOrders.forEach((order, idx) => {
-        // 포맷팅 상품: "오이 (10개) (1 개)" 처럼 구성하되, 뒤에 '개'를 붙임
-        const itemsStr = order.items.map(item => `${item.name} (${item.quantity} 개)`).join(', ');
+        // 포맷팅 상품: (무게)/(개수) 괄호 제거 후 "특품 오이 10개" 형태로 노출
+        const itemsStr = order.items.map(item => {
+          const cleanName = item.name.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+          return `${cleanName} ${item.quantity}${item.unit}`;
+        }).join(', ');
         
         html += `
           <tr>
@@ -1705,7 +1746,10 @@
         const dateStr = new Date(order.created_at).toLocaleString('ko-KR', {
           year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
         });
-        const itemsHtml = order.items.map(item => `<li>${item.name} - <strong>${item.quantity}${item.unit}</strong></li>`).join('');
+        const itemsHtml = order.items.map(item => {
+          const cleanName = item.name.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+          return `<li>${cleanName} - <strong>${item.quantity}${item.unit}</strong></li>`;
+        }).join('');
         
         const statusDetail = order.status === '택배사' && order.tracking_number
           ? `${order.status}<br><span style="font-size: 0.8em; color: #166534; font-weight: normal; white-space: nowrap;">${order.courier || ''} ${order.tracking_number}</span>`
