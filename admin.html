@@ -1659,16 +1659,28 @@
 
     // Download Order List as XLS format
     function downloadExcel() {
-      const orders = window.filteredOrders || window.allOrders || [];
-      if (orders.length === 0) {
-        showToast('📋 다운로드할 주문 데이터가 없습니다.');
-        return;
+      const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+      let targetOrders = [];
+      
+      if (checkedBoxes.length > 0) {
+        // 선택(클릭)한 주문이 있는 경우 해당 주문들만
+        const selectedIds = Array.from(checkedBoxes).map(cb => parseInt(cb.getAttribute('data-id'), 10));
+        const sourceOrders = window.allOrders || [];
+        targetOrders = sourceOrders.filter(o => selectedIds.includes(o.id));
+        showToast(`📋 선택한 주문 ${targetOrders.length}건을 다운로드합니다.`);
+      } else {
+        // 선택한 주문이 없는 경우 현재 필터링되어 화면에 보이는 주문들
+        targetOrders = window.filteredOrders || window.allOrders || [];
+        if (targetOrders.length === 0) {
+          showToast('📋 다운로드할 주문 데이터가 없습니다.');
+          return;
+        }
+        showToast(`📋 화면에 보이는 주문 ${targetOrders.length}건을 다운로드합니다.`);
       }
 
-      // 픽업 주문 상단, 택배 주문 하단으로 재정렬
-      const pickupOrders = orders.filter(o => o.address.includes('[직접 픽업]'));
-      const deliveryOrders = orders.filter(o => !o.address.includes('[직접 픽업]'));
-      const sortedOrders = [...pickupOrders, ...deliveryOrders];
+      // 픽업 주문과 택배 주문 분류
+      const pickupOrders = targetOrders.filter(o => o.address.includes('[직접 픽업]'));
+      const deliveryOrders = targetOrders.filter(o => !o.address.includes('[직접 픽업]'));
 
       const now = new Date();
       const year = now.getFullYear();
@@ -1676,73 +1688,12 @@
       const day = String(now.getDate()).padStart(2, '0');
       const dateStr = `${year}${month}${day}`;
       
-      const fileName = `${dateStr} 민숙농장 ${sortedOrders.length}건.xls`;
+      const fileName = `${dateStr} 민숙농장 ${targetOrders.length}건.xls`;
+      
+      // XML Spreadsheet 2003 포맷 생성
+      const xmlContent = buildExcelXml(pickupOrders, deliveryOrders);
 
-      let html = `
-        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-        <head>
-          <meta charset="utf-8">
-          <!--[if gte mso 9]>
-          <xml>
-            <x:ExcelWorkbook>
-              <x:ExcelWorksheets>
-                <x:ExcelWorksheet>
-                  <x:Name>주문대장</x:Name>
-                  <x:WorksheetOptions>
-                    <x:DisplayGridlines/>
-                  </x:WorksheetOptions>
-                </x:ExcelWorksheet>
-              </x:ExcelWorksheets>
-            </x:ExcelWorkbook>
-          </xml>
-          <![endif]-->
-          <style>
-            td { mso-number-format:"\\@"; }
-            th { background: #f3f4f6; font-weight: bold; }
-          </style>
-        </head>
-        <body>
-          <table>
-            <thead>
-              <tr>
-                <th></th>
-                <th>수령인성함</th>
-                <th>수령인주소</th>
-                <th>핸드폰번호</th>
-                <th>상품</th>
-                <th>배송 메모</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
-
-      sortedOrders.forEach((order, idx) => {
-        // 포맷팅 상품: (무게)/(개수) 괄호 제거 후 "특품 오이 10개" 형태로 노출
-        const itemsStr = order.items.map(item => {
-          const cleanName = cleanItemName(item.name);
-          return `${cleanName} ${item.quantity}${item.unit}`;
-        }).join(', ');
-        
-        html += `
-          <tr>
-            <td>${idx + 1}</td>
-            <td>${escapeHtml(order.name)}</td>
-            <td>${escapeHtml(order.address)}</td>
-            <td>${escapeHtml(order.phone)}</td>
-            <td>${escapeHtml(itemsStr)}</td>
-            <td>${escapeHtml(order.memo || '')}</td>
-          </tr>
-        `;
-      });
-
-      html += `
-            </tbody>
-          </table>
-        </body>
-        </html>
-      `;
-
-      const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+      const blob = new Blob([xmlContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -1750,7 +1701,145 @@
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      showToast(`📊 엑셀 다운로드 완료: ${fileName}`);
+    }
+
+    // XML Spreadsheet 2003을 빌드하는 헬퍼 함수
+    function buildExcelXml(pickupOrders, deliveryOrders) {
+      let xml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+  <Author>민숙농장</Author>
+  <Created>${new Date().toISOString()}</Created>
+ </DocumentProperties>
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Center"/>
+   <Borders/>
+   <Font ss:FontName="맑은 고딕" x:CharSet="129" x:Family="Modern" ss:Size="11" ss:Color="#000000"/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="Header">
+   <Font ss:FontName="맑은 고딕" ss:Size="11" ss:Bold="1" ss:Color="#000000"/>
+   <Interior ss:Color="#F3F4F6" ss:Pattern="Solid"/>
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D1D5DB"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D1D5DB"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D1D5DB"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D1D5DB"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="Data">
+   <Alignment ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E7EB"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E7EB"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E7EB"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E7EB"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="TextData">
+   <Alignment ss:Vertical="Center"/>
+   <NumberFormat ss:Format="@"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E7EB"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E7EB"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E7EB"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E7EB"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="CenterTextData">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <NumberFormat ss:Format="@"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E7EB"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E7EB"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E7EB"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E7EB"/>
+   </Borders>
+  </Style>
+ </Styles>`;
+
+      // 택배 배송 시트 작성
+      xml += generateWorksheetXml("택배 배송", deliveryOrders);
+
+      // 직접 픽업 시트 작성
+      xml += generateWorksheetXml("직접 픽업", pickupOrders);
+
+      xml += `</Workbook>`;
+      return xml;
+    }
+
+    // 워크시트 단위를 렌더링하는 헬퍼 함수
+    function generateWorksheetXml(sheetName, orders) {
+      let sheetXml = `
+ <Worksheet ss:Name="${sheetName}">
+  <Table>
+   <Column ss:Width="40"/>
+   <Column ss:Width="100"/>
+   <Column ss:Width="300"/>
+   <Column ss:Width="120"/>
+   <Column ss:Width="250"/>
+   <Column ss:Width="150"/>
+   <Row ss:Height="26">
+    <Cell ss:StyleID="Header"><Data ss:Type="String">번호</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">수령인성함</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">수령인주소</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">핸드폰번호</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">상품</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">배송 메모</Data></Cell>
+   </Row>`;
+
+      if (orders.length === 0) {
+        sheetXml += `
+   <Row ss:Height="22">
+    <Cell ss:StyleID="CenterTextData" ss:MergeAcross="5"><Data ss:Type="String">주문 데이터가 없습니다.</Data></Cell>
+   </Row>`;
+      } else {
+        orders.forEach((order, idx) => {
+          const itemsStr = order.items.map(item => {
+            const cleanName = cleanItemName(item.name);
+            return `${cleanName} ${item.quantity}${item.unit}`;
+          }).join(', ');
+
+          sheetXml += `
+   <Row ss:Height="22">
+    <Cell ss:StyleID="CenterTextData"><Data ss:Type="Number">${idx + 1}</Data></Cell>
+    <Cell ss:StyleID="CenterTextData"><Data ss:Type="String">${escapeXml(order.name)}</Data></Cell>
+    <Cell ss:StyleID="TextData"><Data ss:Type="String">${escapeXml(order.address)}</Data></Cell>
+    <Cell ss:StyleID="CenterTextData"><Data ss:Type="String">${escapeXml(order.phone)}</Data></Cell>
+    <Cell ss:StyleID="TextData"><Data ss:Type="String">${escapeXml(itemsStr)}</Data></Cell>
+    <Cell ss:StyleID="TextData"><Data ss:Type="String">${escapeXml(order.memo || '')}</Data></Cell>
+   </Row>`;
+        });
+      }
+
+      sheetXml += `
+  </Table>
+ </Worksheet>`;
+      return sheetXml;
+    }
+
+    // XML에 안전하게 데이터를 기입하기 위한 에스케이프 함수
+    function escapeXml(unsafe) {
+      if (!unsafe) return '';
+      return unsafe.toString().replace(/[<>&'"]/g, function (c) {
+        switch (c) {
+          case '<': return '&lt;';
+          case '>': return '&gt;';
+          case '&': return '&amp;';
+          case '\'': return '&apos;';
+          case '"': return '&quot;';
+          default: return c;
+        }
+      });
     }
 
     // Open a printable popup with order manifest template
