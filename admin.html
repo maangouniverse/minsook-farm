@@ -329,27 +329,36 @@
       overflow-x: auto;
       border: 1px solid var(--border-light);
       border-radius: var(--radius-md);
+      margin-bottom: 24px;
+      background: white;
+      -webkit-overflow-scrolling: touch;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       text-align: left;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
+    }
+
+    @media (min-width: 1200px) {
+      table.orders-table {
+        table-layout: fixed;
+      }
     }
 
     th {
       background-color: #f8fafc;
-      padding: 14px 16px;
+      padding: 10px 8px;
       font-weight: 800;
       color: var(--primary-dark);
       border-bottom: 2px solid var(--border-light);
     }
 
     td {
-      padding: 16px;
+      padding: 10px 8px;
       border-bottom: 1px solid var(--border-light);
-      vertical-align: top;
+      vertical-align: middle;
       font-weight: 500;
     }
 
@@ -719,36 +728,30 @@
       max-height: calc(100vh - 40px);
     }
 
-    .table-container {
-      width: 100%;
-      overflow-x: auto;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-md);
-      -webkit-overflow-scrolling: touch;
-    }
-    
-    #ordersTable th,
-    #ordersTable td {
+    .orders-table th,
+    .orders-table td {
       white-space: nowrap;
     }
     
-    #ordersTable td.cell-address {
+    .orders-table td.cell-address {
       white-space: normal;
       word-break: keep-all;
       overflow-wrap: break-word;
-      min-width: 200px;
-      max-width: 280px;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
     }
     
-    #ordersTable td.cell-memo {
+    .orders-table td.cell-memo {
       white-space: normal;
       word-break: keep-all;
       overflow-wrap: break-word;
-      min-width: 150px;
-      max-width: 220px;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
+    }
+    
+    .orders-table td.cell-items {
+      white-space: normal;
+      word-break: keep-all;
+      overflow-wrap: break-word;
     }
     @keyframes modalSlideUp {
       from { transform: translateY(30px); opacity: 0; }
@@ -1064,7 +1067,7 @@
             <span>주문 항목 및 진행 단계</span>
             <div>
               <button type="button" class="btn-action btn-action-danger" id="btnDeleteSelected" onclick="deleteSelectedOrders()" style="display: none;">🗑️ 선택 삭제</button>
-              <button type="button" class="btn-action btn-action-secondary" onclick="copyOrdersToClipboard()">📋 엑셀 복사</button>
+              <button type="button" class="btn-action btn-action-secondary" onclick="downloadExcel()">📋 엑셀 다운로드</button>
               <button type="button" class="btn-action btn-action-secondary" onclick="openPrintTemplate()">🖨️ 주문 상황 인쇄</button>
               <button type="button" class="btn-action btn-action-primary" onclick="loadOrders()">새로고침</button>
             </div>
@@ -1094,29 +1097,113 @@
             </div>
           </div>
 
-          <div class="table-container">
-            <table id="ordersTable">
-              <thead>
-                <tr>
-                  <th style="width: 40px; text-align: center;"><input type="checkbox" id="checkAllOrders" onchange="toggleSelectAll(this)"></th>
-                  <th>주문번호</th>
-                  <th>일시</th>
-                  <th>고객명</th>
-                  <th>연락처</th>
-                  <th>배송지 주소</th>
-                  <th>구매 내역</th>
-                  <th>총 금액</th>
-                  <th>배송 메모</th>
-                  <th>상태 관리</th>
-                </tr>
-              </thead>
-              <tbody id="ordersTableBody">
-                <!-- Row template inserted dynamically -->
-                <tr>
-                  <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 40px 0;">주문 데이터를 로드하는 중입니다...</td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- 🔍 상세 검색 및 날짜 기간 필터 바 -->
+          <div class="filter-bar" style="background: #fafbfc; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 18px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: end;">
+              <!-- 기간 필터 -->
+              <div class="filter-group">
+                <label class="admin-form-label" style="margin-bottom: 6px; font-weight: 800; font-size: 0.8rem;">📅 주문 조회 기간</label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="date" id="filterStartDate" class="input-field" style="padding: 8px 10px; font-size: 0.85rem; height: 38px;">
+                  <span style="font-weight: bold; color: var(--text-muted);">~</span>
+                  <input type="date" id="filterEndDate" class="input-field" style="padding: 8px 10px; font-size: 0.85rem; height: 38px;">
+                </div>
+              </div>
+              
+              <!-- 검색 필터 -->
+              <div class="filter-group">
+                <label class="admin-form-label" style="margin-bottom: 6px; font-weight: 800; font-size: 0.8rem;">👤 주문자 상세 검색</label>
+                <div style="display: flex; gap: 8px;">
+                  <select id="filterSearchType" class="input-field" style="padding: 8px 10px; font-size: 0.85rem; width: 100px; flex-shrink: 0; font-weight: 700; height: 38px;">
+                    <option value="all">전체</option>
+                    <option value="name">주문자명</option>
+                    <option value="phone">연락처</option>
+                    <option value="address">배송주소</option>
+                  </select>
+                  <input type="text" id="filterSearchKeyword" class="input-field" placeholder="검색어 입력" style="padding: 8px 10px; font-size: 0.85rem; height: 38px;">
+                </div>
+              </div>
+
+              <!-- 상태 필터 -->
+              <div class="filter-group">
+                <label class="admin-form-label" style="margin-bottom: 6px; font-weight: 800; font-size: 0.8rem;">🚦 상태별 구분</label>
+                <select id="filterStatus" class="input-field" style="padding: 8px 10px; font-size: 0.85rem; font-weight: 700; height: 38px;">
+                  <option value="all">전체 주문 상태</option>
+                  <option value="주문">주문완료 (접수)</option>
+                  <option value="결제">입금완료 (결제)</option>
+                  <option value="택배사">택배발송 (택배사)</option>
+                  <option value="주문취소">주문취소</option>
+                </select>
+              </div>
+
+              <!-- 버튼 그룹 -->
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn-action btn-action-secondary" onclick="resetFilters()" style="flex: 1; height: 38px; font-weight: bold; border-radius: var(--radius-sm);">초기화</button>
+                <button type="button" class="btn-action btn-action-primary" onclick="applyFilters()" style="flex: 1; height: 38px; font-weight: bold; border-radius: var(--radius-sm);">조회하기</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 🚗 1. 직접 픽업 주문 목록 -->
+          <div style="margin-bottom: 30px;">
+            <div style="font-size: 1.05rem; font-weight: 900; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: var(--primary-dark);">
+              <span>🚗 직접 픽업 주문 목록</span>
+              <span id="pickupCountBadge" style="background-color: var(--primary-light); color: var(--primary); font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: 800;">0건</span>
+            </div>
+            <div class="table-container">
+              <table id="pickupOrdersTable" class="orders-table">
+                <thead>
+                  <tr>
+                    <th style="width: 40px; text-align: center;"><input type="checkbox" id="checkAllPickupOrders" onchange="toggleSelectAllPickup(this)"></th>
+                    <th style="width: 70px; text-align: center;">주문번호</th>
+                    <th style="width: 100px; text-align: center;">일시</th>
+                    <th style="width: 85px;">고객명</th>
+                    <th style="width: 110px;">연락처</th>
+                    <th>픽업 일정 및 상세 정보</th>
+                    <th style="width: 170px;">구매 내역</th>
+                    <th style="width: 90px;">총 금액</th>
+                    <th style="width: 160px;">메모 및 결제방식</th>
+                    <th style="width: 115px;">상태 관리</th>
+                  </tr>
+                </thead>
+                <tbody id="pickupOrdersTableBody">
+                  <tr>
+                    <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 40px 0;">주문 데이터를 로드하는 중입니다...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 📦 2. 택배 배송 주문 목록 -->
+          <div>
+            <div style="font-size: 1.05rem; font-weight: 900; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: var(--primary-dark);">
+              <span>📦 택배 배송 주문 목록</span>
+              <span id="deliveryCountBadge" style="background-color: var(--primary-light); color: var(--primary); font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: 800;">0건</span>
+            </div>
+            <div class="table-container">
+              <table id="deliveryOrdersTable" class="orders-table">
+                <thead>
+                  <tr>
+                    <th style="width: 40px; text-align: center;"><input type="checkbox" id="checkAllDeliveryOrders" onchange="toggleSelectAllDelivery(this)"></th>
+                    <th style="width: 70px; text-align: center;">주문번호</th>
+                    <th style="width: 100px; text-align: center;">일시</th>
+                    <th style="width: 85px;">고객명</th>
+                    <th style="width: 110px;">연락처</th>
+                    <th>배송지 주소</th>
+                    <th style="width: 170px;">구매 내역</th>
+                    <th style="width: 90px;">총 금액</th>
+                    <th style="width: 160px;">배송 메모 및 송장번호</th>
+                    <th style="width: 115px;">상태 관리</th>
+                  </tr>
+                </thead>
+                <tbody id="deliveryOrdersTableBody">
+                  <tr>
+                    <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 40px 0;">주문 데이터를 로드하는 중입니다...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 
@@ -1305,11 +1392,15 @@
 
     // Fetch and render orders from DB
     async function loadOrders() {
-      const tbody = document.getElementById('ordersTableBody');
-      tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 40px 0;">주문 리스트를 로드 중...</td></tr>`;
+      const pickupTbody = document.getElementById('pickupOrdersTableBody');
+      const deliveryTbody = document.getElementById('deliveryOrdersTableBody');
+      const loadingHtml = `<tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 40px 0;">주문 리스트를 로드 중...</td></tr>`;
+      if (pickupTbody) pickupTbody.innerHTML = loadingHtml;
+      if (deliveryTbody) deliveryTbody.innerHTML = loadingHtml;
 
       if (window.location.protocol === 'file:') {
         const localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
+        window.allOrders = localOrders;
         renderOrdersTable(localOrders);
         return;
       }
@@ -1324,104 +1415,279 @@
 
         const data = await res.json();
         const orders = data.orders || [];
+        window.allOrders = orders;
         renderOrdersTable(orders);
 
       } catch (err) {
         // Fallback to local storage if API call fails
         const localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
+        window.allOrders = localOrders;
         renderOrdersTable(localOrders);
       }
     }
 
+    // Filter and Render Orders Table
     function renderOrdersTable(orders) {
-      const tbody = document.getElementById('ordersTableBody');
-      window.loadedOrders = orders; // Save to global variable for copy/print templates
+      const pickupTbody = document.getElementById('pickupOrdersTableBody');
+      const deliveryTbody = document.getElementById('deliveryOrdersTableBody');
       
-      // Reset main check box and delete button
-      const checkAll = document.getElementById('checkAllOrders');
-      if (checkAll) checkAll.checked = false;
+      // Reset main check boxes and delete button
+      const pickupCheckAll = document.getElementById('checkAllPickupOrders');
+      if (pickupCheckAll) pickupCheckAll.checked = false;
+      const deliveryCheckAll = document.getElementById('checkAllDeliveryOrders');
+      if (deliveryCheckAll) deliveryCheckAll.checked = false;
+      
       const deleteBtn = document.getElementById('btnDeleteSelected');
       if (deleteBtn) deleteBtn.style.display = 'none';
 
-      if (orders.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 40px 0;">접수된 주문 내역이 존재하지 않습니다.</td></tr>`;
-        updateStats(orders);
-        return;
+      // 1차 필터링
+      const filteredOrders = filterOrdersData(orders);
+      window.filteredOrders = filteredOrders; // Save for print & excel
+      
+      // 픽업 / 택배 분류
+      const pickupOrders = filteredOrders.filter(o => o.address.includes('[직접 픽업]'));
+      const deliveryOrders = filteredOrders.filter(o => !o.address.includes('[직접 픽업]'));
+      
+      // 뱃지 건수 업데이트
+      document.getElementById('pickupCountBadge').textContent = `${pickupOrders.length}건`;
+      document.getElementById('deliveryCountBadge').textContent = `${deliveryOrders.length}건`;
+
+      // 통계 요약 카드 갱신
+      updateStats(filteredOrders);
+
+      // 픽업 주문 렌더링
+      if (pickupOrders.length === 0) {
+        pickupTbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 30px 0;">조건에 맞는 직접 픽업 주문이 없습니다.</td></tr>`;
+      } else {
+        pickupTbody.innerHTML = '';
+        pickupOrders.forEach(order => {
+          pickupTbody.appendChild(createOrderRow(order));
+        });
       }
 
-      tbody.innerHTML = '';
-      orders.forEach(order => {
-        const dateStr = new Date(order.created_at).toLocaleString('ko-KR', {
-          month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      // 택배 주문 렌더링
+      if (deliveryOrders.length === 0) {
+        deliveryTbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 30px 0;">조건에 맞는 택배 배송 주문이 없습니다.</td></tr>`;
+      } else {
+        deliveryTbody.innerHTML = '';
+        deliveryOrders.forEach(order => {
+          deliveryTbody.appendChild(createOrderRow(order));
         });
-
-        // Formatting items
-        let itemsHtml = '<ul class="ordered-items-list">';
-        order.items.forEach(item => {
-          itemsHtml += `<li>${item.name} (${item.quantity}${item.unit})</li>`;
-        });
-        itemsHtml += '</ul>';
-
-        // Status class badge mapper
-        let statusClass = 'status-order';
-        if (order.status === '결제') statusClass = 'status-pay';
-        if (order.status === '택배사') statusClass = 'status-delivery';
-        if (order.status === '주문취소') statusClass = 'status-cancel';
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td style="text-align: center; vertical-align: middle;">
-            <input type="checkbox" class="order-checkbox" data-id="${order.id}" onchange="onOrderCheckboxChange()">
-          </td>
-          <td><strong>#${order.id}</strong></td>
-          <td style="font-size: 0.8rem; color: var(--text-muted);">${dateStr}</td>
-          <td><strong>${escapeHtml(order.name)}</strong></td>
-          <td style="font-size: 0.82rem;">${escapeHtml(order.phone)}</td>
-          <td class="cell-address">${escapeHtml(order.address)}</td>
-          <td>${itemsHtml}</td>
-          <td><strong style="color: var(--primary);">${order.total_price.toLocaleString()}원</strong></td>
-          <td class="cell-memo">
-            ${escapeHtml(order.memo || '-')}
-            ${order.tracking_number ? `<div style="margin-top: 6px; padding: 2px 6px; font-size: 0.72rem; color: var(--primary); font-weight: bold; background-color: var(--primary-light); border-radius: var(--radius-sm); display: inline-block; white-space: nowrap;">송장: ${order.courier ? escapeHtml(order.courier) + ' ' : ''}${escapeHtml(order.tracking_number)}</div>` : ''}
-          </td>
-          <td>
-            <div style="display: flex; flex-direction: column; gap: 8px; align-items: start;">
-              <span class="status-badge ${statusClass}">${order.status}</span>
-              <select class="status-select" onchange="updateOrderStatus(${order.id}, this.value, this)">
-                <option value="주문" ${order.status === '주문' ? 'selected' : ''}>주문 (접수)</option>
-                <option value="결제" ${order.status === '결제' ? 'selected' : ''}>결제 완료</option>
-                <option value="택배사" ${order.status === '택배사' ? 'selected' : ''}>택배사 전달</option>
-                <option value="주문취소" ${order.status === '주문취소' ? 'selected' : ''}>주문취소</option>
-              </select>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      updateStats(orders);
+      }
     }
 
-    // Copy active orders as TSV for Excel pasting
-    function copyOrdersToClipboard() {
-      const orders = window.loadedOrders || [];
+    // Filter Logic
+    function filterOrdersData(orders) {
+      const startDateVal = document.getElementById('filterStartDate').value;
+      const endDateVal = document.getElementById('filterEndDate').value;
+      const searchType = document.getElementById('filterSearchType').value;
+      const keyword = document.getElementById('filterSearchKeyword').value.trim().toLowerCase();
+      const statusVal = document.getElementById('filterStatus').value;
+
+      return orders.filter(order => {
+        // 1. 날짜 기간 필터
+        if (startDateVal || endDateVal) {
+          const orderDate = new Date(order.created_at);
+          orderDate.setHours(0, 0, 0, 0);
+          
+          if (startDateVal) {
+            const sDate = new Date(startDateVal);
+            sDate.setHours(0, 0, 0, 0);
+            if (orderDate < sDate) return false;
+          }
+          if (endDateVal) {
+            const eDate = new Date(endDateVal);
+            eDate.setHours(0, 0, 0, 0);
+            if (orderDate > eDate) return false;
+          }
+        }
+
+        // 2. 상태 필터
+        if (statusVal !== 'all') {
+          if (order.status !== statusVal) return false;
+        }
+
+        // 3. 키워드 상세 검색 필터
+        if (keyword) {
+          const nameMatch = order.name.toLowerCase().includes(keyword);
+          const phoneMatch = order.phone.toLowerCase().includes(keyword);
+          const addressMatch = order.address.toLowerCase().includes(keyword);
+          
+          if (searchType === 'all') {
+            if (!nameMatch && !phoneMatch && !addressMatch) return false;
+          } else if (searchType === 'name') {
+            if (!nameMatch) return false;
+          } else if (searchType === 'phone') {
+            if (!phoneMatch) return false;
+          } else if (searchType === 'address') {
+            if (!addressMatch) return false;
+          }
+        }
+
+        return true;
+      });
+    }
+
+    // Filter Action Functions
+    function applyFilters() {
+      if (!window.allOrders) return;
+      renderOrdersTable(window.allOrders);
+      showToast('🔍 필터가 적용되었습니다.');
+    }
+
+    function resetFilters() {
+      document.getElementById('filterStartDate').value = '';
+      document.getElementById('filterEndDate').value = '';
+      document.getElementById('filterSearchType').value = 'all';
+      document.getElementById('filterSearchKeyword').value = '';
+      document.getElementById('filterStatus').value = 'all';
+      
+      if (!window.allOrders) return;
+      renderOrdersTable(window.allOrders);
+      showToast('🔄 필터가 초기화되었습니다.');
+    }
+
+    // Create Order Table Row Element
+    function createOrderRow(order) {
+      const dateStr = new Date(order.created_at).toLocaleString('ko-KR', {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+
+      // Formatting items
+      let itemsHtml = '<ul class="ordered-items-list">';
+      order.items.forEach(item => {
+        itemsHtml += `<li>${item.name} (${item.quantity}${item.unit})</li>`;
+      });
+      itemsHtml += '</ul>';
+
+      // Status class badge mapper
+      let statusClass = 'status-order';
+      if (order.status === '결제') statusClass = 'status-pay';
+      if (order.status === '택배사') statusClass = 'status-delivery';
+      if (order.status === '주문취소') statusClass = 'status-cancel';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="text-align: center; vertical-align: middle;">
+          <input type="checkbox" class="order-checkbox" data-id="${order.id}" onchange="onOrderCheckboxChange()">
+        </td>
+        <td style="text-align: center;"><strong>#${order.id}</strong></td>
+        <td style="font-size: 0.8rem; color: var(--text-muted); text-align: center;">${dateStr}</td>
+        <td><strong>${escapeHtml(order.name)}</strong></td>
+        <td style="font-size: 0.82rem;">${escapeHtml(order.phone)}</td>
+        <td class="cell-address">${escapeHtml(order.address)}</td>
+        <td class="cell-items">${itemsHtml}</td>
+        <td><strong style="color: var(--primary);">${order.total_price.toLocaleString()}원</strong></td>
+        <td class="cell-memo">
+          ${escapeHtml(order.memo || '-')}
+          ${order.tracking_number ? `<div style="margin-top: 6px; padding: 2px 6px; font-size: 0.72rem; color: var(--primary); font-weight: bold; background-color: var(--primary-light); border-radius: var(--radius-sm); display: inline-block; white-space: nowrap;">송장: ${order.courier ? escapeHtml(order.courier) + ' ' : ''}${escapeHtml(order.tracking_number)}</div>` : ''}
+        </td>
+        <td>
+          <div style="display: flex; flex-direction: column; gap: 8px; align-items: start;">
+            <span class="status-badge ${statusClass}">${order.status}</span>
+            <select class="status-select" onchange="updateOrderStatus(${order.id}, this.value, this)">
+              <option value="주문" ${order.status === '주문' ? 'selected' : ''}>주문완료 (접수)</option>
+              <option value="결제" ${order.status === '결제' ? 'selected' : ''}>입금완료 (결제)</option>
+              <option value="택배사" ${order.status === '택배사' ? 'selected' : ''}>택배발송 (택배사)</option>
+              <option value="주문취소" ${order.status === '주문취소' ? 'selected' : ''}>주문취소</option>
+            </select>
+          </div>
+        </td>
+      `;
+      return tr;
+    }
+
+    // Download Order List as XLS format
+    function downloadExcel() {
+      const orders = window.filteredOrders || window.allOrders || [];
       if (orders.length === 0) {
-        showToast('📋 복사할 주문 데이터가 없습니다.');
+        showToast('📋 다운로드할 주문 데이터가 없습니다.');
         return;
       }
 
-      let tsv = '주문번호\t접수일시\t주문자명\t연락처\t배송지 주소\t구매 내역\t결제 금액\t배송 요청사항\t주문상태\n';
-      orders.forEach(order => {
-        const dateStr = new Date(order.created_at).toLocaleString('ko-KR');
-        const itemsStr = order.items.map(item => `${item.name} (${item.quantity}${item.unit})`).join(', ');
-        tsv += `#${order.id}\t${dateStr}\t${order.name}\t${order.phone}\t${order.address}\t${itemsStr}\t${order.total_price}\t${order.memo || ''}\t${order.status}\n`;
+      // 픽업 주문 상단, 택배 주문 하단으로 재정렬
+      const pickupOrders = orders.filter(o => o.address.includes('[직접 픽업]'));
+      const deliveryOrders = orders.filter(o => !o.address.includes('[직접 픽업]'));
+      const sortedOrders = [...pickupOrders, ...deliveryOrders];
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const dateStr = `${year}${month}${day}`;
+      
+      const fileName = `${dateStr} 민숙농장 ${sortedOrders.length}건.xls`;
+
+      let html = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="utf-8">
+          <!--[if gte mso 9]>
+          <xml>
+            <x:ExcelWorkbook>
+              <x:ExcelWorksheets>
+                <x:ExcelWorksheet>
+                  <x:Name>주문대장</x:Name>
+                  <x:WorksheetOptions>
+                    <x:DisplayGridlines/>
+                  </x:WorksheetOptions>
+                </x:ExcelWorksheet>
+              </x:ExcelWorksheets>
+            </x:ExcelWorkbook>
+          </xml>
+          <![endif]-->
+          <style>
+            td { mso-number-format:"\\@"; }
+            th { background: #f3f4f6; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>수령인성함</th>
+                <th>수령인주소</th>
+                <th>핸드폰번호</th>
+                <th>상품</th>
+                <th>배송 메모</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      sortedOrders.forEach((order, idx) => {
+        // 포맷팅 상품: "오이 (10개) (1 개)" 처럼 구성하되, 뒤에 '개'를 붙임
+        const itemsStr = order.items.map(item => `${item.name} (${item.quantity} 개)`).join(', ');
+        
+        html += `
+          <tr>
+            <td>${idx + 1}</td>
+            <td>${escapeHtml(order.name)}</td>
+            <td>${escapeHtml(order.address)}</td>
+            <td>${escapeHtml(order.phone)}</td>
+            <td>${escapeHtml(itemsStr)}</td>
+            <td>${escapeHtml(order.memo || '')}</td>
+          </tr>
+        `;
       });
 
-      navigator.clipboard.writeText(tsv).then(() => {
-        showToast('📋 엑셀 붙여넣기용 주문 데이터가 클립보드에 복사되었습니다! (엑셀에서 Ctrl+V 하시면 표로 들어갑니다)');
-      }).catch(err => {
-        showToast('클립보드 복사에 실패했습니다.');
-      });
+      html += `
+            </tbody>
+          </table>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast(`📊 엑셀 다운로드 완료: ${fileName}`);
     }
 
     // Open a printable popup with order manifest template
@@ -1691,9 +1957,18 @@
       }
     }
 
-    // Toggle check/uncheck all orders
-    function toggleSelectAll(masterCheckbox) {
-      const checkboxes = document.querySelectorAll('.order-checkbox');
+    // Toggle check/uncheck all orders for Pickup
+    function toggleSelectAllPickup(masterCheckbox) {
+      const checkboxes = document.querySelectorAll('#pickupOrdersTableBody .order-checkbox');
+      checkboxes.forEach(cb => {
+        cb.checked = masterCheckbox.checked;
+      });
+      updateDeleteButtonVisibility();
+    }
+
+    // Toggle check/uncheck all orders for Delivery
+    function toggleSelectAllDelivery(masterCheckbox) {
+      const checkboxes = document.querySelectorAll('#deliveryOrdersTableBody .order-checkbox');
       checkboxes.forEach(cb => {
         cb.checked = masterCheckbox.checked;
       });
@@ -1702,13 +1977,22 @@
 
     // Called on individual checkbox state change
     function onOrderCheckboxChange() {
-      const totalCheckboxes = document.querySelectorAll('.order-checkbox').length;
-      const checkedCheckboxes = document.querySelectorAll('.order-checkbox:checked').length;
-      const masterCheckbox = document.getElementById('checkAllOrders');
-      
-      if (masterCheckbox) {
-        masterCheckbox.checked = (totalCheckboxes === checkedCheckboxes) && totalCheckboxes > 0;
+      // Update Pickup Master Checkbox
+      const totalPickup = document.querySelectorAll('#pickupOrdersTableBody .order-checkbox').length;
+      const checkedPickup = document.querySelectorAll('#pickupOrdersTableBody .order-checkbox:checked').length;
+      const pickupMaster = document.getElementById('checkAllPickupOrders');
+      if (pickupMaster) {
+        pickupMaster.checked = (totalPickup === checkedPickup) && totalPickup > 0;
       }
+      
+      // Update Delivery Master Checkbox
+      const totalDelivery = document.querySelectorAll('#deliveryOrdersTableBody .order-checkbox').length;
+      const checkedDelivery = document.querySelectorAll('#deliveryOrdersTableBody .order-checkbox:checked').length;
+      const deliveryMaster = document.getElementById('checkAllDeliveryOrders');
+      if (deliveryMaster) {
+        deliveryMaster.checked = (totalDelivery === checkedDelivery) && totalDelivery > 0;
+      }
+      
       updateDeleteButtonVisibility();
     }
 
