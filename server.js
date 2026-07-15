@@ -12,15 +12,17 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'minsook_farm_jwt_secure_secret_2026';
 const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'minsook123!';
 
-// Middleware
-app.use(express.json());
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname)));
-
 // Custom server routes mapping
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index_new.html'));
 });
+
+// Middleware
+// Product images are sent as data URLs from the admin page. Keep the request
+// limit above Express's small default so several selected photos can be saved.
+app.use(express.json({ limit: '100mb' }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname)));
 
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
@@ -257,8 +259,11 @@ function initializeDatabase() {
         return;
       }
 
-      db.get("SELECT COUNT(*) as count FROM products", (err, row) => {
-        if (!err && row && (row.count === 0 || row.count === '0')) {
+      // Add price_qty and step_qty columns for multi-unit feature if they don't exist
+      db.run("ALTER TABLE products ADD COLUMN price_qty INTEGER", () => {
+        db.run("ALTER TABLE products ADD COLUMN step_qty REAL", () => {
+          db.get("SELECT COUNT(*) as count FROM products", (err, row) => {
+            if (!err && row && (row.count === 0 || row.count === '0')) {
           console.log("Initializing products table with default cucumber items...");
           db.all("SELECT key, value FROM configs WHERE key LIKE 'price_%'", (err, rows) => {
             const currentPrices = {
@@ -372,6 +377,8 @@ function initializeDatabase() {
             insertProduct(0);
           });
         }
+      });
+        });
       });
     });
   });
@@ -678,7 +685,7 @@ app.get('/api/products', (req, res) => {
 
 // 2. Add New Product (Protected)
 app.post('/api/admin/products', authenticateAdmin, (req, res) => {
-  const { name, description, image_url, price, unit, step, badge_text, badge_class, is_bite, is_qty } = req.body;
+  const { name, description, image_url, price, unit, step, badge_text, badge_class, is_bite, is_qty, price_qty, step_qty } = req.body;
 
   if (!name || price === undefined || !unit) {
     return res.status(400).json({ error: 'Missing required product fields.' });
@@ -688,11 +695,13 @@ app.post('/api/admin/products', authenticateAdmin, (req, res) => {
   const numStep = parseFloat(step) || 1.0;
   const bitVal = is_bite ? 1 : 0;
   const qtyVal = is_qty ? 1 : 0;
+  const numPriceQty = (price_qty !== undefined && price_qty !== null && price_qty !== '') ? parseInt(price_qty, 10) : null;
+  const numStepQty = (step_qty !== undefined && step_qty !== null && step_qty !== '') ? parseFloat(step_qty) : null;
 
   db.run(
-    `INSERT INTO products (name, description, image_url, price, unit, step, badge_text, badge_class, is_bite, is_qty)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [name, description || '', image_url || '', numPrice, unit, numStep, badge_text || '', badge_class || '', bitVal, qtyVal],
+    `INSERT INTO products (name, description, image_url, price, unit, step, badge_text, badge_class, is_bite, is_qty, price_qty, step_qty)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [name, description || '', image_url || '', numPrice, unit, numStep, badge_text || '', badge_class || '', bitVal, qtyVal, numPriceQty, numStepQty],
     function (err) {
       if (err) {
         console.error('Product insertion failed:', err);
@@ -706,7 +715,7 @@ app.post('/api/admin/products', authenticateAdmin, (req, res) => {
 // 3. Update Product (Protected)
 app.put('/api/admin/products/:id', authenticateAdmin, (req, res) => {
   const { id } = req.params;
-  const { name, description, image_url, price, unit, step, badge_text, badge_class, is_bite, is_qty } = req.body;
+  const { name, description, image_url, price, unit, step, badge_text, badge_class, is_bite, is_qty, price_qty, step_qty } = req.body;
 
   if (!name || price === undefined || !unit) {
     return res.status(400).json({ error: 'Missing required product fields.' });
@@ -716,10 +725,12 @@ app.put('/api/admin/products/:id', authenticateAdmin, (req, res) => {
   const numStep = parseFloat(step) || 1.0;
   const bitVal = is_bite ? 1 : 0;
   const qtyVal = is_qty ? 1 : 0;
+  const numPriceQty = (price_qty !== undefined && price_qty !== null && price_qty !== '') ? parseInt(price_qty, 10) : null;
+  const numStepQty = (step_qty !== undefined && step_qty !== null && step_qty !== '') ? parseFloat(step_qty) : null;
 
   db.run(
-    `UPDATE products SET name = ?, description = ?, image_url = ?, price = ?, unit = ?, step = ?, badge_text = ?, badge_class = ?, is_bite = ?, is_qty = ? WHERE id = ?`,
-    [name, description || '', image_url || '', numPrice, unit, numStep, badge_text || '', badge_class || '', bitVal, qtyVal, id],
+    `UPDATE products SET name = ?, description = ?, image_url = ?, price = ?, unit = ?, step = ?, badge_text = ?, badge_class = ?, is_bite = ?, is_qty = ?, price_qty = ?, step_qty = ? WHERE id = ?`,
+    [name, description || '', image_url || '', numPrice, unit, numStep, badge_text || '', badge_class || '', bitVal, qtyVal, numPriceQty, numStepQty, id],
     function (err) {
       if (err) {
         console.error('Product update failed:', err);
@@ -813,8 +824,8 @@ async function migrateLocalSqliteToSupabase(pool) {
 
       if (checkRes.rows.length === 0) {
         await pool.query(
-          `INSERT INTO products (name, description, image_url, price, unit, step, badge_text, badge_class, is_bite, is_qty, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          `INSERT INTO products (name, description, image_url, price, unit, step, badge_text, badge_class, is_bite, is_qty, created_at, price_qty, step_qty)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
           [
             prod.name,
             prod.description,
@@ -826,7 +837,9 @@ async function migrateLocalSqliteToSupabase(pool) {
             prod.badge_class,
             prod.is_bite,
             prod.is_qty,
-            prod.created_at ? new Date(prod.created_at) : new Date()
+            prod.created_at ? new Date(prod.created_at) : new Date(),
+            prod.price_qty !== undefined ? prod.price_qty : null,
+            prod.step_qty !== undefined ? prod.step_qty : null
           ]
         );
         migratedProductsCount++;

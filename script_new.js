@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Apply rounding guidelines
         if (config.isQty) {
-          val = Math.round(val / 10) * 10; // snap to 10 pieces
+          val = Math.round(val / config.step) * config.step;
         } else if (config.isBite) {
           val = Math.round(val * 2) / 2; // snap to 0.5kg
         } else {
@@ -1117,31 +1117,39 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
     applyProducts(localProducts);
   }
 
+  function getProductUnits(product) {
+    return String(product.unit || '').split(',').map(unit => unit.trim()).filter(Boolean);
+  }
+
+  function getProductImages(value) {
+    if (!value) return [];
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean);
+    } catch (_) {}
+    return String(value).split(',').map(image => image.trim()).filter(Boolean);
+  }
+
   function applyProducts(products) {
-    for (const key in priceConfig) {
-      delete priceConfig[key];
-    }
+    for (const key in priceConfig) delete priceConfig[key];
 
     products.forEach(p => {
-      let descStr = `${p.unit}당 ${p.price.toLocaleString()}원`;
-      if (p.is_bite === 1 || p.is_bite === true) {
-        const halfPrice = Math.round(p.price / 2);
-        descStr = `500g 팩 ${halfPrice.toLocaleString()}원 (1kg 환산: ${p.price.toLocaleString()}원)`;
-      } else if (p.is_qty === 1 || p.is_qty === true) {
-        descStr = `${p.step}개당 ${p.price.toLocaleString()}원`;
-      }
-      
-      priceConfig[p.id] = {
-        name: p.name,
-        desc: descStr,
-        price: p.price,
-        isBite: p.is_bite === 1 || p.is_bite === true,
-        isQty: p.is_qty === 1 || p.is_qty === true,
-        unit: p.unit,
-        step: p.step,
-        badgeClass: p.badge_class || 'badge-good',
-        badgeText: p.badge_text || ''
-      };
+      const units = getProductUnits(p);
+      units.forEach(unit => {
+        const isQty = unit === '개';
+        const price = isQty && p.price_qty != null ? p.price_qty : p.price;
+        const step = isQty && p.step_qty != null ? p.step_qty : p.step;
+        const isBite = !isQty && (p.is_bite === 1 || p.is_bite === true);
+        const key = `${p.id}:${unit}`;
+        const desc = isBite
+          ? `500g 팩 ${Math.round(price / 2).toLocaleString()}원 (1kg 환산: ${price.toLocaleString()}원)`
+          : isQty ? `${step}개당 ${price.toLocaleString()}원` : `1kg당 ${price.toLocaleString()}원`;
+        priceConfig[key] = {
+          name: `${p.name}${units.length > 1 ? ` (${isQty ? '개수' : '무게'})` : ''}`,
+          desc, price, isBite, isQty, unit, step,
+          badgeClass: p.badge_class || 'badge-good', badgeText: p.badge_text || ''
+        };
+      });
     });
 
     renderProductSelectOptions(products);
@@ -1151,26 +1159,16 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
   function renderProductSelectOptions(products) {
     const select = document.getElementById('productSelect');
     if (!select) return;
-
     select.innerHTML = '<option value="" disabled selected>구매하실 품목을 선택 후 추가하기를 눌러주세요</option>';
 
-    products.forEach(p => {
+    products.forEach(p => getProductUnits(p).forEach(unit => {
+      const key = `${p.id}:${unit}`;
+      const config = priceConfig[key];
       const option = document.createElement('option');
-      option.value = p.id;
-      
-      let priceText = '';
-      if (p.is_bite === 1 || p.is_bite === true) {
-        const halfPrice = Math.round(p.price / 2);
-        priceText = `500g 팩 ${halfPrice.toLocaleString()}원`;
-      } else if (p.is_qty === 1 || p.is_qty === true) {
-        priceText = `${p.step}개당 ${p.price.toLocaleString()}원`;
-      } else {
-        priceText = `1${p.unit}당 ${p.price.toLocaleString()}원`;
-      }
-
-      option.textContent = `${p.name} (${p.unit} 단위 - ${priceText})`;
+      option.value = key;
+      option.textContent = `${config.name} - ${config.desc}`;
       select.appendChild(option);
-    });
+    }));
   }
 
   function escapeHtml(text) {
@@ -1200,7 +1198,9 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
 
     products.forEach(p => {
       const name = p.name || '';
-      if (p.is_bite === 1 || p.is_bite === true || name.includes('한입')) {
+      if (getProductUnits(p).length > 1) {
+        customProducts.push(p);
+      } else if (p.is_bite === 1 || p.is_bite === true || name.includes('한입')) {
         biteProduct = p;
       } else if (name.includes('특품')) {
         if (p.is_qty === 1 || p.is_qty === true || p.unit === '개') {
@@ -1303,7 +1303,15 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
     // 5. 기타 추가 상품들
     customProducts.forEach(p => {
       let priceHTML = '';
-      if (p.is_bite === 1 || p.is_bite === true) {
+      const units = getProductUnits(p);
+      if (units.includes('kg') && units.includes('개')) {
+        const qtyPrice = p.price_qty != null ? p.price_qty : p.price;
+        const qtyStep = p.step_qty != null ? p.step_qty : p.step;
+        priceHTML = `
+          무게: <span class="price-val">${p.price.toLocaleString()}</span>원 <span class="price-unit-inline">(1kg당)</span><br>
+          개수: <span class="price-val">${qtyPrice.toLocaleString()}</span>원 <span class="price-unit-inline">(${qtyStep}개당)</span>
+        `;
+      } else if (p.is_bite === 1 || p.is_bite === true) {
         const halfPrice = Math.round(p.price / 2);
         priceHTML = `
           <span class="price-val">${halfPrice.toLocaleString()}</span>원 <span class="price-unit-inline">(무게 500g 1팩당)</span><br>
@@ -1358,9 +1366,11 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
       
       const badgeHTML = card.badgeText ? `<span class="product-badge ${card.badgeClass || 'badge-good'}">${escapeHtml(card.badgeText)}</span>` : '';
       
-      let images = [];
+      let images = getProductImages(card.imageUrl);
       const title = card.title || '';
-      if (title.includes('한입')) {
+      if (images.length > 0) {
+        // Use every image selected in 품목관리. This also supports data URLs.
+      } else if (title.includes('한입')) {
         images = sliderImagesMap['한입'];
       } else if (title.includes('특품')) {
         images = sliderImagesMap['특품'];

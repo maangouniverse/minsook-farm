@@ -3,7 +3,7 @@
  * Focus: High Readability, Punchy Typography, Crisp Outlines, High Energy Accents
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Song+Myung&family=Noto+Sans+KR:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
 
 :root {
   /* Color System - Slate + Neon Green */
@@ -1141,46 +1141,44 @@ section {
 
 /* Footer Section */
 footer {
-  background-color: var(--primary-dark);
-  color: rgba(255, 255, 255, 0.65);
-  padding: 64px 24px 32px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: #0e262c;
+  color: rgba(255, 255, 255, 0.55);
+  padding: 64px 28px 40px;
 }
 
 .footer-container {
   max-width: 1200px;
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 48px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding-bottom: 36px;
-  margin-bottom: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 40px;
 }
 
 .footer-info {
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
 .footer-logo {
   color: #ffffff;
   font-size: 1.25rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
+  margin-bottom: 12px;
 }
 
 .footer-text {
-  font-size: 0.85rem;
-  line-height: 1.65;
-  max-width: 600px;
+  font-size: 0.8rem;
+  line-height: 1.85;
+  max-width: 40ch;
 }
 
 .footer-biz {
-  font-size: 0.8rem;
-  line-height: 1.7;
-  color: rgba(255, 255, 255, 0.5);
+  margin-top: 14px;
+  font-size: 0.74rem;
+  line-height: 1.9;
+  color: rgba(255, 255, 255, 0.38);
 }
 
 .footer-biz span {
@@ -1190,40 +1188,42 @@ footer {
 .footer-links {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 9px;
   align-items: flex-start;
 }
 
 .footer-link-head {
-  color: #ffffff;
-  font-size: 0.85rem;
-  font-weight: 800;
-  margin-bottom: 4px;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
 }
 
 .footer-link {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.55);
   transition: var(--transition-smooth);
 }
 
 .footer-link:hover {
   color: #ffffff;
-  text-decoration: underline;
 }
 
 .footer-bottom {
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 44px auto 0;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 8px 20px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.35);
 }
 
 /* Toast Message */
@@ -2843,6 +2843,87 @@ footer {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--text-dark);
+}
+
+/* Footer Styles - Inspired by Shingi Haewon */
+.footer {
+  background: #0e262c;
+  color: rgba(255, 255, 255, 0.55);
+  padding: 64px 28px 40px;
+  font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+}
+
+.footer-inner {
+  max-width: 1180px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 40px;
+  margin: 0 auto;
+  display: flex;
+}
+
+.footer-logo {
+  font-family: 'Song Myung', serif;
+  color: #ffffff;
+  margin-bottom: 12px;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.footer-text {
+  max-width: 40ch;
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.85;
+}
+
+.footer-biz {
+  color: rgba(255, 255, 255, 0.38);
+  margin: 14px 0 0;
+  font-size: 0.74rem;
+  line-height: 1.9;
+}
+
+.footer-biz span {
+  display: block;
+}
+
+.footer-links {
+  flex-direction: column;
+  gap: 9px;
+  display: flex;
+}
+
+.footer-link-head {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  margin-bottom: 3px;
+  font-size: 0.66rem;
+  font-weight: 600;
+}
+
+.footer-link {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.82rem;
+  transition: color 0.15s ease;
+}
+
+.footer-link:hover {
+  color: #ffffff;
+}
+
+.footer-bottom {
+  max-width: 1180px;
+  color: rgba(255, 255, 255, 0.35);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 20px;
+  margin: 44px auto 0;
+  padding-top: 22px;
+  font-size: 0.74rem;
+  display: flex;
 }
 
 

@@ -939,43 +939,59 @@
         </div>
         
         <div class="admin-form-group">
-          <label class="admin-form-label" for="modalProductPrice">가격 (원)</label>
-          <input type="number" id="modalProductPrice" class="input-field" placeholder="예: 7900" required min="0">
-        </div>
-        
-        <div class="admin-form-group">
-          <label class="admin-form-label">단위 선택</label>
+          <label class="admin-form-label">단위 선택 (복수 선택 가능)</label>
           <div style="display: flex; gap: 20px; margin-top: 6px;">
             <label style="cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 700;">
-              <input type="radio" name="modalProductUnit" value="kg" checked onchange="toggleUnitSettings()"> 무게 (kg)
+              <input type="checkbox" id="modalProductUnitKg" value="kg" onchange="toggleUnitSettings()"> 무게 (kg)
             </label>
             <label style="cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 700;">
-              <input type="radio" name="modalProductUnit" value="개" onchange="toggleUnitSettings()"> 갯수 (개)
+              <input type="checkbox" id="modalProductUnitQty" value="개" onchange="toggleUnitSettings()"> 갯수 (개)
             </label>
+          </div>
+        </div>
+
+        <!-- 무게(kg) 관련 설정 -->
+        <div id="kgSettingsGroup" style="display: none; border-left: 3px solid var(--primary); padding-left: 12px; margin-bottom: 16px;">
+          <div class="admin-form-group">
+            <label class="admin-form-label" for="modalProductPrice">무게 가격 (1kg당, 원)</label>
+            <input type="number" id="modalProductPrice" class="input-field" placeholder="예: 7900" min="0">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label" for="modalProductStep">무게 조절 단위 (Step, kg)</label>
+            <input type="number" id="modalProductStep" class="input-field" placeholder="예: 1 또는 0.5" min="0.01" step="any" value="1">
+          </div>
+        </div>
+
+        <!-- 갯수(개) 관련 설정 -->
+        <div id="qtySettingsGroup" style="display: none; border-left: 3px solid #3b82f6; padding-left: 12px; margin-bottom: 16px;">
+          <div class="admin-form-group">
+            <label class="admin-form-label" for="modalProductPriceQty">갯수 가격 (묶음 기준, 원)</label>
+            <input type="number" id="modalProductPriceQty" class="input-field" placeholder="예: 7500" min="0">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label" for="modalProductStepQty">갯수 조절 단위 (Step, 개)</label>
+            <input type="number" id="modalProductStepQty" class="input-field" placeholder="예: 10" min="1" step="1" value="10">
           </div>
         </div>
         
         <div class="admin-form-group">
-          <label class="admin-form-label" for="modalProductStep">수량 조절 단위 (Step)</label>
-          <input type="number" id="modalProductStep" class="input-field" placeholder="예: 1 (무게는 1 또는 0.5, 개수는 10 등)" required min="0.01" step="any" value="1">
-        </div>
-        
-        <div class="admin-form-group">
-          <label class="admin-form-label" for="modalProductImageFile">상품 사진</label>
+          <label class="admin-form-label" for="modalProductImageFile">상품 사진 (개수 제한 없이 다중 추가 가능)</label>
           <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
-            <input type="file" id="modalProductImageFile" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
+            <input type="file" id="modalProductImageFile" accept="image/*" style="display: none;" multiple onchange="handleImageUpload(this)">
             <button type="button" class="btn-action btn-action-secondary" onclick="document.getElementById('modalProductImageFile').click()" style="padding: 10px 16px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
-              <span>📁</span> 컴퓨터에서 찾기
+              <span>📁</span> 컴퓨터에서 찾기 (복수 선택 가능)
             </button>
             <span id="modalProductImageName" style="font-size: 0.85rem; color: var(--text-muted); word-break: break-all;">선택된 파일 없음</span>
           </div>
-          <div id="imagePreviewContainer" style="margin-top: 10px; display: none; position: relative; width: 100px; height: 100px;">
-            <img id="modalProductImagePreview" src="" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
-            <button type="button" onclick="clearSelectedImage()" style="position: absolute; top: -5px; right: -5px; width: 20px; height: 20px; border-radius: 50%; background: #ef4444; color: white; border: none; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;" title="이미지 삭제">&times;</button>
+          <div id="imagePreviewList" style="margin-top: 10px; display: none; flex-wrap: wrap; gap: 10px;">
+            <!-- 다중 이미지 썸네일들이 여기에 삽입됩니다 -->
           </div>
           <div style="margin-top: 10px;">
-            <label class="admin-form-label" for="modalProductImageUrl">이미지 URL 또는 데이터 (Supabase DB 저장값)</label>
-            <input type="text" id="modalProductImageUrl" class="input-field" placeholder="이미지 주소(URL)를 직접 입력하거나 컴퓨터에서 파일을 선택하세요" oninput="document.getElementById('modalProductImagePreview').src = this.value; document.getElementById('imagePreviewContainer').style.display = this.value ? 'block' : 'none';">
+            <label class="admin-form-label">이미지 URL</label>
+            <div id="imageUrlInputList" style="display: grid; gap: 8px;"></div>
+            <button type="button" class="btn-action btn-action-secondary" onclick="addImageUrlInput()" style="margin-top: 8px; padding: 8px 12px; font-size: 0.82rem;">
+              + URL 추가
+            </button>
           </div>
         </div>
 
@@ -2167,17 +2183,42 @@
       products.forEach(p => {
         const tr = document.createElement('tr');
         
-        const imgPath = p.image_url ? p.image_url : '민숙농장로고가로형-배경없음.png';
+        const imgList = parseProductImages(p.image_url);
+        const imgPath = imgList.length > 0 && imgList[0].trim() ? imgList[0].trim() : '민숙농장로고가로형-배경없음.png';
         const badgeHTML = p.badge_text ? `<span class="status-badge ${p.badge_class || 'status-order'}">${p.badge_text}</span>` : '-';
+        
+        let priceDisplay = '';
+        let unitDisplay = '';
+        let stepDisplay = '';
+        const units = p.unit ? p.unit.split(',') : [];
+        
+        if (units.includes('kg')) {
+          priceDisplay += `무게: ${p.price.toLocaleString()}원<br>`;
+          unitDisplay += `<span class="status-badge status-pay" style="margin: 2px;">kg</span>`;
+          stepDisplay += `무게: ${p.step}<br>`;
+        }
+        if (units.includes('개')) {
+          const qtyPrice = p.price_qty !== null && p.price_qty !== undefined ? p.price_qty : p.price;
+          const qtyStep = p.step_qty !== null && p.step_qty !== undefined ? p.step_qty : p.step;
+          priceDisplay += `갯수: ${qtyPrice.toLocaleString()}원<br>`;
+          unitDisplay += `<span class="status-badge status-order" style="margin: 2px; background-color: #3b82f6; color: white;">개</span>`;
+          stepDisplay += `갯수: ${qtyStep}<br>`;
+        }
+        
+        if (!priceDisplay) {
+          priceDisplay = `${p.price.toLocaleString()}원`;
+          unitDisplay = `<span class="status-badge status-pay">${p.unit}</span>`;
+          stepDisplay = `${p.step}`;
+        }
         
         tr.innerHTML = `
           <td style="vertical-align: middle; text-align: center;">
             <img src="${imgPath}" alt="${p.name}" style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
           </td>
           <td style="font-weight: bold; vertical-align: middle;">${escapeHtml(p.name)}</td>
-          <td style="font-weight: bold; color: var(--primary); vertical-align: middle;">${p.price.toLocaleString()}원</td>
-          <td style="vertical-align: middle; text-align: center;"><span class="status-badge status-pay">${p.unit}</span></td>
-          <td style="vertical-align: middle; text-align: center;">${p.step}</td>
+          <td style="font-weight: bold; color: var(--primary); vertical-align: middle; line-height: 1.4;">${priceDisplay}</td>
+          <td style="vertical-align: middle; text-align: center;">${unitDisplay}</td>
+          <td style="vertical-align: middle; text-align: center; font-size: 0.82rem; line-height: 1.4;">${stepDisplay}</td>
           <td style="vertical-align: middle; text-align: center;">${badgeHTML}</td>
           <td style="font-size: 0.8rem; color: var(--text-muted); max-width: 200px; white-space: normal; word-break: keep-all; vertical-align: middle;">${escapeHtml(p.description || '')}</td>
           <td style="vertical-align: middle; text-align: center;">
@@ -2201,6 +2242,104 @@
         .replace(/'/g, "&#039;");
     }
 
+    let uploadedImages = [];
+    let imageUrlInputs = [''];
+
+    // JSON preserves data-URL images, which contain a comma. Older products
+    // using comma-separated URLs remain supported.
+    function parseProductImages(value) {
+      if (!value) return [];
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) return parsed.filter(Boolean);
+      } catch (_) {}
+      return value.split(',').map(s => s.trim()).filter(Boolean);
+    }
+
+    function getUrlImages() {
+      return imageUrlInputs.map(url => url.trim()).filter(Boolean);
+    }
+
+    function getAllProductImages() {
+      return [...uploadedImages, ...getUrlImages()];
+    }
+
+    function renderImageUrlInputs() {
+      const list = document.getElementById('imageUrlInputList');
+      if (!list) return;
+      list.innerHTML = '';
+      imageUrlInputs.forEach((url, index) => {
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.gap = '8px';
+        row.innerHTML = `
+          <input type="url" class="input-field" placeholder="https:// 이미지 주소를 입력하세요" value="${escapeHtml(url)}" oninput="updateImageUrlInput(${index}, this.value)">
+          <button type="button" class="btn-action btn-action-danger" onclick="removeImageUrlInput(${index})" style="padding: 0 11px; flex: 0 0 auto;" title="URL 삭제">&times;</button>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function addImageUrlInput() {
+      imageUrlInputs.push('');
+      renderImageUrlInputs();
+      const inputs = document.querySelectorAll('#imageUrlInputList input');
+      inputs[inputs.length - 1]?.focus();
+    }
+
+    function updateImageUrlInput(index, value) {
+      imageUrlInputs[index] = value;
+      renderImagePreviews();
+    }
+
+    function removeImageUrlInput(index) {
+      imageUrlInputs.splice(index, 1);
+      if (imageUrlInputs.length === 0) imageUrlInputs.push('');
+      renderImageUrlInputs();
+      renderImagePreviews();
+    }
+
+    function renderImagePreviews() {
+      const list = document.getElementById('imagePreviewList');
+      const nameLabel = document.getElementById('modalProductImageName');
+      const allImages = getAllProductImages();
+      
+      if (allImages.length === 0) {
+        list.innerHTML = '';
+        list.style.display = 'none';
+        nameLabel.textContent = '선택된 파일 없음';
+        return;
+      }
+
+      list.innerHTML = '';
+      list.style.display = 'flex';
+      nameLabel.textContent = `사진 총 ${allImages.length}개`;
+
+      allImages.forEach((img, idx) => {
+        const item = document.createElement('div');
+        item.style.position = 'relative';
+        item.style.width = '80px';
+        item.style.height = '80px';
+        
+        item.innerHTML = `
+          <img src="${img}" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+          <button type="button" onclick="deleteUploadedImage(${idx})" style="position: absolute; top: -5px; right: -5px; width: 18px; height: 18px; border-radius: 50%; background: #ef4444; color: white; border: none; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;" title="이미지 삭제">&times;</button>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function deleteUploadedImage(index) {
+      if (index < uploadedImages.length) {
+        uploadedImages.splice(index, 1);
+      } else {
+        imageUrlInputs.splice(index - uploadedImages.length, 1);
+        if (imageUrlInputs.length === 0) imageUrlInputs.push('');
+        renderImageUrlInputs();
+      }
+      renderImagePreviews();
+    }
+
     let currentProductIsBite = 0;
 
     // Modal Control
@@ -2213,9 +2352,10 @@
       
       // Reset image file input and UI elements
       document.getElementById('modalProductImageFile').value = '';
-      document.getElementById('modalProductImageName').textContent = '선택된 파일 없음';
-      document.getElementById('modalProductImagePreview').src = '';
-      document.getElementById('imagePreviewContainer').style.display = 'none';
+      uploadedImages = [];
+      imageUrlInputs = [''];
+      renderImageUrlInputs();
+      renderImagePreviews();
       
       if (id) {
         title.textContent = '품목 수정';
@@ -2223,23 +2363,31 @@
         if (p) {
           document.getElementById('modalProductId').value = p.id;
           document.getElementById('modalProductName').value = p.name;
-          document.getElementById('modalProductPrice').value = p.price;
           
-          const unitRadios = document.getElementsByName('modalProductUnit');
-          for (const radio of unitRadios) {
-            if (radio.value === p.unit) {
-              radio.checked = true;
-            }
+          const units = p.unit ? p.unit.split(',') : [];
+          document.getElementById('modalProductUnitKg').checked = units.includes('kg');
+          document.getElementById('modalProductUnitQty').checked = units.includes('개');
+          
+          // 무게 값 채우기
+          document.getElementById('modalProductPrice').value = p.price || '';
+          document.getElementById('modalProductStep').value = p.step || '1';
+
+          // 개수 값 채우기
+          if (units.includes('개')) {
+            document.getElementById('modalProductPriceQty').value = (p.price_qty !== null && p.price_qty !== undefined) ? p.price_qty : p.price;
+            document.getElementById('modalProductStepQty').value = (p.step_qty !== null && p.step_qty !== undefined) ? p.step_qty : p.step;
+          } else {
+            document.getElementById('modalProductPriceQty').value = '';
+            document.getElementById('modalProductStepQty').value = '10';
           }
           
-          document.getElementById('modalProductStep').value = p.step;
-          document.getElementById('modalProductImageUrl').value = p.image_url || '';
-          
-          const imgUrl = p.image_url || '';
-          if (imgUrl) {
-            document.getElementById('modalProductImageName').textContent = imgUrl;
-            document.getElementById('modalProductImagePreview').src = imgUrl;
-            document.getElementById('imagePreviewContainer').style.display = 'block';
+          if (p.image_url) {
+            const images = parseProductImages(p.image_url);
+            uploadedImages = images.filter(image => image.startsWith('data:'));
+            imageUrlInputs = images.filter(image => !image.startsWith('data:'));
+            if (imageUrlInputs.length === 0) imageUrlInputs = [''];
+            renderImageUrlInputs();
+            renderImagePreviews();
           }
           
           document.getElementById('modalProductBadgeText').value = p.badge_text || '';
@@ -2250,6 +2398,12 @@
       } else {
         title.textContent = '품목 추가';
         document.getElementById('modalProductId').value = '';
+        document.getElementById('modalProductUnitKg').checked = true;
+        document.getElementById('modalProductUnitQty').checked = false;
+        document.getElementById('modalProductPrice').value = '';
+        document.getElementById('modalProductStep').value = '1';
+        document.getElementById('modalProductPriceQty').value = '';
+        document.getElementById('modalProductStepQty').value = '10';
         currentProductIsBite = 0;
       }
       
@@ -2262,56 +2416,69 @@
     }
 
     function toggleUnitSettings() {
-      const unitVal = document.querySelector('input[name="modalProductUnit"]:checked').value;
-      const stepInput = document.getElementById('modalProductStep');
+      const kgChecked = document.getElementById('modalProductUnitKg').checked;
+      const qtyChecked = document.getElementById('modalProductUnitQty').checked;
       
-      if (unitVal === '개') {
-        if (stepInput.value === '1' || stepInput.value === '1.0' || !stepInput.value) {
-          stepInput.value = '10';
-        }
+      const kgGroup = document.getElementById('kgSettingsGroup');
+      const qtyGroup = document.getElementById('qtySettingsGroup');
+      
+      const priceInput = document.getElementById('modalProductPrice');
+      const stepInput = document.getElementById('modalProductStep');
+      const priceQtyInput = document.getElementById('modalProductPriceQty');
+      const stepQtyInput = document.getElementById('modalProductStepQty');
+
+      if (kgChecked) {
+        kgGroup.style.display = 'block';
+        priceInput.required = true;
+        stepInput.required = true;
       } else {
-        if (stepInput.value === '10') {
-          stepInput.value = '1';
-        }
+        kgGroup.style.display = 'none';
+        priceInput.required = false;
+        stepInput.required = false;
+      }
+
+      if (qtyChecked) {
+        qtyGroup.style.display = 'block';
+        priceQtyInput.required = true;
+        stepQtyInput.required = true;
+      } else {
+        qtyGroup.style.display = 'none';
+        priceQtyInput.required = false;
+        stepQtyInput.required = false;
       }
     }
 
-    // Image Upload Handler (Base64 encoding for Supabase DB storage)
+    // Image Upload Handler (Supports multiple files and appends to uploadedImages array)
     async function handleImageUpload(input) {
-      const file = input.files[0];
-      if (!file) return;
+      const files = input.files;
+      if (!files || files.length === 0) return;
 
       const nameLabel = document.getElementById('modalProductImageName');
-      nameLabel.textContent = `처리 중: ${file.name}`;
+      nameLabel.textContent = `사진 ${files.length}개 업로드 중...`;
 
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const base64Data = e.target.result;
-        
-        // Preview 설정
-        document.getElementById('modalProductImagePreview').src = base64Data;
-        document.getElementById('imagePreviewContainer').style.display = 'block';
-        
-        // input value에 Base64 주소 세팅 (이 값이 Supabase DB로 들어가게 됨)
-        document.getElementById('modalProductImageUrl').value = base64Data;
-        nameLabel.textContent = `${file.name} (DB 저장 대기)`;
-        showToast('✅ 사진이 DB 저장용으로 준비되었습니다. 저장하기를 누르시면 완료됩니다.');
-      };
-      reader.onerror = function(err) {
-        console.error('FileReader error:', err);
-        nameLabel.textContent = '이미지 처리 실패';
-        showToast('❌ 이미지 파일을 읽는 데 실패했습니다.');
-      };
-      reader.readAsDataURL(file);
-    }
+      let processedCount = 0;
 
-    // Clear Selected Image Function
-    function clearSelectedImage() {
-      document.getElementById('modalProductImageFile').value = '';
-      document.getElementById('modalProductImageUrl').value = '';
-      document.getElementById('modalProductImagePreview').src = '';
-      document.getElementById('imagePreviewContainer').style.display = 'none';
-      document.getElementById('modalProductImageName').textContent = '선택된 파일 없음';
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+        
+        await new Promise((resolve) => {
+          reader.onload = function(e) {
+            const base64Data = e.target.result;
+            uploadedImages.push(base64Data);
+            processedCount++;
+            resolve();
+          };
+          reader.onerror = function(err) {
+            console.error('FileReader error:', err);
+            resolve();
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      renderImagePreviews();
+      showToast(`✅ 사진 ${processedCount}개가 정상적으로 준비되었습니다. 저장하기를 누르시면 완료됩니다.`);
     }
 
     async function handleSaveProduct(e) {
@@ -2319,17 +2486,42 @@
       
       const id = document.getElementById('modalProductId').value;
       const name = document.getElementById('modalProductName').value.trim();
-      const price = parseInt(document.getElementById('modalProductPrice').value, 10);
-      const unit = document.querySelector('input[name="modalProductUnit"]:checked').value;
-      const step = parseFloat(document.getElementById('modalProductStep').value) || 1.0;
-      const image_url = document.getElementById('modalProductImageUrl').value.trim();
+      
+      const kgChecked = document.getElementById('modalProductUnitKg').checked;
+      const qtyChecked = document.getElementById('modalProductUnitQty').checked;
+      
+      if (!kgChecked && !qtyChecked) {
+        showToast('⚠️ 무게(kg)와 갯수(개) 중 적어도 하나의 단위를 선택해 주세요.');
+        return;
+      }
+
+      const unitList = [];
+      if (kgChecked) unitList.push('kg');
+      if (qtyChecked) unitList.push('개');
+      const unit = unitList.join(',');
+
+      // Keep the primary price populated for single '개' products too. This
+      // preserves compatibility with existing product displays while the
+      // dedicated quantity fields support products offering both units.
+      const price = kgChecked
+        ? parseInt(document.getElementById('modalProductPrice').value, 10)
+        : parseInt(document.getElementById('modalProductPriceQty').value, 10);
+      const step = kgChecked
+        ? parseFloat(document.getElementById('modalProductStep').value)
+        : parseFloat(document.getElementById('modalProductStepQty').value);
+      
+      const price_qty = qtyChecked ? parseInt(document.getElementById('modalProductPriceQty').value, 10) : null;
+      const step_qty = qtyChecked ? parseFloat(document.getElementById('modalProductStepQty').value) : null;
+      
+      const image_url = JSON.stringify(getAllProductImages());
       const badge_text = document.getElementById('modalProductBadgeText').value.trim();
       const badge_class = document.getElementById('modalProductBadgeClass').value;
       const description = document.getElementById('modalProductDescription').value.trim();
+      
       const is_bite = currentProductIsBite;
-      const is_qty = (unit === '개') ? 1 : 0;
+      const is_qty = (qtyChecked && !kgChecked) ? 1 : 0; // 단일 개수 단위 시에만 1, 둘다 또는 kg만일 땐 0
 
-      const payload = { name, price, unit, step, image_url, badge_text, badge_class, description, is_bite, is_qty };
+      const payload = { name, price, unit, step, image_url, badge_text, badge_class, description, is_bite, is_qty, price_qty, step_qty };
 
       if (window.location.protocol === 'file:') {
         let localProducts = JSON.parse(localStorage.getItem('minsook_products') || '[]');
