@@ -1765,7 +1765,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
       heroSlides[currentSlideIndex].classList.remove('active');
       currentSlideIndex = (currentSlideIndex + 1) % heroSlides.length;
       heroSlides[currentSlideIndex].classList.add('active');
-    }, 2000);
+    }, 3000);
   }
 
 });
