@@ -50,13 +50,10 @@
 
       <nav id="mainNav">
         <ul>
-          <li><a href="#intro" class="active">농장 소개</a></li>
-          <li><a href="#products">대표 상품</a></li>
-          <li><a href="#strengths">농장의 약속</a></li>
-          <li><a href="#orderForm">간편 주문</a></li>
-          <li><a href="#reviews">고객 후기</a></li>
-          <li><a href="#faq">자주 묻는 질문</a></li>
-
+          <li><a href="#intro" class="active">농장소개</a></li>
+          <li><a href="#products">대표상품</a></li>
+          <li><a href="#order">장바구니</a></li>
+          <li><a href="#" id="btnHeaderOrderLookup">주문조회</a></li>
         </ul>
       </nav>
     </div>
@@ -64,6 +61,14 @@
 
   <!-- Hero Section -->
   <section id="hero" class="hero">
+    <!-- Background Image Slider -->
+    <div class="hero-slider">
+      <div class="hero-slide active" style="background-image: url('오이-홈페이지용사진/오이3종.jpg');"></div>
+      <div class="hero-slide" style="background-image: url('오이-홈페이지용사진/오이3종 정렬.jpg');"></div>
+      <div class="hero-slide" style="background-image: url('오이-홈페이지용사진/오이단면.jpg');"></div>
+      <div class="hero-overlay"></div>
+    </div>
+
     <div class="hero-container">
       <div class="hero-content load-animate fade-in-up delay-1">
         <div class="hero-badge">
@@ -85,23 +90,24 @@
             <span>네이버 스마트스토어(카드결제)</span>
           </a>
         </div>
-        <div class="hero-stats">
-          <div class="stat-item">
-            <h4>4.94 ★</h4>
-            <p>스마트스토어 평점</p>
-          </div>
-          <div class="stat-item">
-            <h4>0건</h4>
-            <p>리뷰 불만 건수</p>
-          </div>
-          <div class="stat-item">
-            <h4>100%</h4>
-            <p>친환경 종이 포장</p>
-          </div>
-        </div>
       </div>
-      <div class="hero-image-wrapper load-animate scale-in delay-3">
-        <img src="minsook_main.jpg" alt="민숙농장 백다다기 오이" class="hero-img">
+    </div>
+  </section>
+
+  <!-- Stats Strip (기존 hero-stats를 보존하여 히어로 하단에 슬림하게 배치) -->
+  <section class="stats-strip">
+    <div class="stats-strip-container">
+      <div class="stat-strip-item">
+        <h4>4.94 ★</h4>
+        <p>스마트스토어 평점</p>
+      </div>
+      <div class="stat-strip-item">
+        <h4>0건</h4>
+        <p>리뷰 불만 건수</p>
+      </div>
+      <div class="stat-strip-item">
+        <h4>100%</h4>
+        <p>친환경 종이 포장</p>
       </div>
     </div>
   </section>
@@ -532,9 +538,7 @@
   <footer class="footer">
     <div class="footer-inner">
       <div>
-        <div class="footer-logo-container">
-          <img src="민숙농장로고가로형-배경없음.png" alt="민숙농장 로고" class="footer-logo-img">
-        </div>
+        <p class="footer-logo">민숙농장</p>
         <p class="footer-text">
           전라남도 고흥의 청정 자연 속에서 건강한 백다다기 오이를 길러냅니다. 늘 최고의 신선함과 투명함으로 소비자의 식탁에 다가가겠습니다.<br>
           장바구니에서 주문 후 계좌이체로 결제하며, 입금이 확인되면 발송합니다.
@@ -694,6 +698,9 @@
         </button>
         <button type="button" class="btn-modal-close-large" id="btnKakaoModalCloseLarge">확인 완료</button>
       </div>
+    </div>
+  </div>
+
   <!-- Order Lookup Modal -->
   <div id="orderLookupModal" class="lookup-modal hidden">
     <div class="lookup-modal-overlay" id="orderLookupOverlay"></div>

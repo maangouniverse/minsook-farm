@@ -1740,4 +1740,32 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
     lookupResultsContainer.innerHTML = html;
   }
 
+  // --- Header Order Lookup Modal Integration ---
+  const btnHeaderOrderLookup = document.getElementById('btnHeaderOrderLookup');
+  if (btnHeaderOrderLookup) {
+    btnHeaderOrderLookup.addEventListener('click', (e) => {
+      e.preventDefault();
+      const orderLookupModal = document.getElementById('orderLookupModal');
+      const lookupPhoneInput = document.getElementById('lookupPhoneInput');
+      if (orderLookupModal) {
+        orderLookupModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        if (lookupPhoneInput) {
+          lookupPhoneInput.focus();
+        }
+      }
+    });
+  }
+
+  // --- Hero Slider Logic ---
+  const heroSlides = document.querySelectorAll('.hero-slide');
+  if (heroSlides.length > 0) {
+    let currentSlideIndex = 0;
+    setInterval(() => {
+      heroSlides[currentSlideIndex].classList.remove('active');
+      currentSlideIndex = (currentSlideIndex + 1) % heroSlides.length;
+      heroSlides[currentSlideIndex].classList.add('active');
+    }, 2000);
+  }
+
 });
