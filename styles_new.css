@@ -235,7 +235,7 @@ nav a:hover::after, nav a.active::after {
   left: 0;
   width: 100%;
   height: 100%;
-  background-size: 92%;
+  background-size: 88%;
   background-position: center;
   background-repeat: no-repeat;
   opacity: 0;
@@ -244,7 +244,7 @@ nav a:hover::after, nav a.active::after {
 
 @media (min-width: 769px) {
   .hero-slide {
-    background-size: 82%;
+    background-size: 74%;
   }
 }
 
@@ -330,7 +330,7 @@ nav a:hover::after, nav a.active::after {
 }
 
 .hero h1 span {
-  color: #facc15;
+  color: #d9f99d;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8), -1px -1px 0 rgba(0, 0, 0, 0.8), 1px -1px 0 rgba(0, 0, 0, 0.8), -1px 1px 0 rgba(0, 0, 0, 0.8), 1px 1px 0 rgba(0, 0, 0, 0.8);
 }
 
@@ -3371,3 +3371,150 @@ footer {
 
 
 
+
+/* Hero split layout: left copy area and right image slider */
+.hero {
+  --hero-tone: #e4e5ba;
+  justify-content: flex-start;
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0.48) 0%, rgba(15, 23, 42, 0.25) 42%, rgba(15, 23, 42, 0) 68%), var(--hero-tone);
+}
+
+.hero-slider {
+  left: auto;
+  right: 0;
+  width: 58%;
+  overflow: hidden;
+}
+
+.hero-slide {
+  background-size: cover;
+}
+
+.hero-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 6%;
+  text-align: left;
+  align-items: flex-start;
+}
+
+.hero-content {
+  width: min(100%, 500px);
+}
+
+.hero-sub-desc {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.hero-ctas {
+  justify-content: flex-start;
+}
+
+@media (max-width: 768px) {
+  .hero-slider { width: 100%; }
+  .hero-slide { background-size: 88%; }
+  .hero-container { padding: 0 24px; text-align: center; align-items: center; }
+  .hero-content { width: 100%; max-width: 620px; }
+  .hero-sub-desc { margin-left: auto; margin-right: auto; }
+  .hero-ctas { justify-content: center; }
+}
+/* Keep hero copy fully inside the left background area. */
+.hero-container {
+  max-width: none;
+  margin: 0;
+  padding-left: clamp(24px, 6vw, 96px);
+  padding-right: 24px;
+}
+
+.hero-content {
+  width: min(100%, 470px);
+}
+
+.hero h1 span {
+  color: var(--primary);
+  text-shadow: 0 2px 12px rgba(255, 255, 255, 0.28);
+}
+
+@media (max-width: 768px) {
+  .hero-container {
+    margin: 0 auto;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+/* Farm story gallery and sustainability section */
+.detail-gallery .detail-img {
+  aspect-ratio: 4 / 3;
+  height: auto;
+  margin: 0;
+}
+
+.sustainability-section {
+  background: #edf6ea;
+}
+
+.sustainability-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 56px;
+  align-items: center;
+}
+
+.sustainability-copy h2 {
+  margin: 8px 0 22px;
+  font-size: clamp(1.85rem, 3.2vw, 2.65rem);
+  color: var(--primary-dark);
+}
+
+.sustainability-copy p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1.85;
+}
+
+.sustainability-video {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  background: #0f172a;
+}
+
+.sustainability-video iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .sustainability-container {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+}
+.video-fallback-link {
+  display: block;
+  margin-top: 10px;
+  color: #ffffff;
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.video-fallback-link:hover {
+  text-decoration: underline;
+}
+
+.video-local-file::before {
+  content: '로컬 파일에서는 영상 재생이 제한될 수 있습니다. 아래 링크로 영상을 열어주세요.';
+  display: block;
+  padding: 12px 14px 0;
+  color: #ffffff;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}

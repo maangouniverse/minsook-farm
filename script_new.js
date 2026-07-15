@@ -1339,24 +1339,26 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
     // Render cards
     const sliderImagesMap = {
       '한입': [
-        '오이-홈페이지용사진/한입오이-바구니위.jpg',
+        '오이-홈페이지용사진/한입오이 나열.jpg',
         '오이-홈페이지용사진/한입오이-클로즈샷.jpg',
-        '오이-홈페이지용사진/한입오이-박스위.jpg'
+        '오이-홈페이지용사진/한입오이-포장지안.jpg',
+        '오이-홈페이지용사진/한입오이포장.jpg'
       ],
       '특품': [
+        '오이-홈페이지용사진/특품오이 (2).jpg',
         '오이-홈페이지용사진/특품오이-박스위.jpg',
-        '오이-홈페이지용사진/특품오이-박스안.jpg',
-        '오이-홈페이지용사진/특품오이-절단샷.jpg'
+        '오이-홈페이지용사진/특품오이-절단샷 (2).jpg',
+        '오이-홈페이지용사진/특품오이-절단샷 (3).jpg'
       ],
       '상품': [
-        '오이-홈페이지용사진/오이3종.jpg',
-        '오이-홈페이지용사진/오이단면.jpg',
-        '오이-홈페이지용사진/오이클로즈샷.jpg'
+        '오이-홈페이지용사진/공품오이.jpg',
+        '오이-홈페이지용사진/공품오이-박스위.jpg',
+        '오이-홈페이지용사진/공품오이-절단샷 (2).jpg',
+        '오이-홈페이지용사진/공품오이-절단샷 (3).jpg'
       ],
       '공품': [
-        '오이-홈페이지용사진/공품오이-박스위.jpg',
-        '오이-홈페이지용사진/공품오이.jpg',
-        '오이-홈페이지용사진/공품오이-박스안.jpg'
+        '오이-홈페이지용사진/박스.jpg',
+        '오이-홈페이지용사진/오이 절단샷.jpg'
       ]
     };
 
@@ -1366,11 +1368,9 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
       
       const badgeHTML = card.badgeText ? `<span class="product-badge ${card.badgeClass || 'badge-good'}">${escapeHtml(card.badgeText)}</span>` : '';
       
-      let images = getProductImages(card.imageUrl);
       const title = card.title || '';
-      if (images.length > 0) {
-        // Use every image selected in 품목관리. This also supports data URLs.
-      } else if (title.includes('한입')) {
+      let images;
+      if (title.includes('한입')) {
         images = sliderImagesMap['한입'];
       } else if (title.includes('특품')) {
         images = sliderImagesMap['특품'];
@@ -1379,9 +1379,11 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
       } else if (title.includes('공품') || title.includes('못난이')) {
         images = sliderImagesMap['공품'];
       } else {
-        images = card.imageUrl ? [card.imageUrl] : ['민숙농장로고가로형-배경없음.png'];
+        images = getProductImages(card.imageUrl);
+        if (images.length === 0) {
+          images = card.imageUrl ? [card.imageUrl] : ['민숙농장로고가로형-배경없음.png'];
+        }
       }
-
       let imageAreaHTML = '';
       if (images.length > 1) {
         let slidesHTML = '';
@@ -1438,7 +1440,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
         
         slides[currentIndex].classList.add('active');
         if (dots[currentIndex]) dots[currentIndex].classList.add('active');
-      }, 2000);
+      }, 3000);
     });
   }
 
@@ -1757,15 +1759,39 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
     });
   }
 
+  // Configure YouTube with the current page origin so embedded playback receives a valid referrer.
+  const sustainabilityVideo = document.getElementById('sustainabilityVideo');
+  if (sustainabilityVideo) {
+    const videoId = sustainabilityVideo.dataset.videoId;
+    if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+      const videoUrl = new URL(`https://www.youtube.com/embed/${videoId}`);
+      videoUrl.searchParams.set('rel', '0');
+      videoUrl.searchParams.set('modestbranding', '1');
+      videoUrl.searchParams.set('playsinline', '1');
+      videoUrl.searchParams.set('enablejsapi', '1');
+      videoUrl.searchParams.set('origin', window.location.origin);
+      sustainabilityVideo.src = videoUrl.toString();
+    } else {
+      sustainabilityVideo.closest('.sustainability-video')?.classList.add('video-local-file');
+    }
+  }
   // --- Hero Slider Logic ---
   const heroSlides = document.querySelectorAll('.hero-slide');
+  const heroSection = document.querySelector('.hero');
   if (heroSlides.length > 0) {
     let currentSlideIndex = 0;
+    const applyHeroTone = (slide) => {
+      if (heroSection && slide.dataset.tone) {
+        heroSection.style.setProperty('--hero-tone', slide.dataset.tone);
+      }
+    };
+
+    applyHeroTone(heroSlides[currentSlideIndex]);
     setInterval(() => {
       heroSlides[currentSlideIndex].classList.remove('active');
       currentSlideIndex = (currentSlideIndex + 1) % heroSlides.length;
       heroSlides[currentSlideIndex].classList.add('active');
+      applyHeroTone(heroSlides[currentSlideIndex]);
     }, 3000);
   }
-
 });
