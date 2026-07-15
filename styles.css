@@ -3,7 +3,8 @@
  * Focus: High Readability, Punchy Typography, Crisp Outlines, High Energy Accents
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Song+Myung&family=Noto+Sans+KR:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Song+Myung&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
 
 :root {
   /* Color System - Slate + Neon Green */
@@ -2907,11 +2908,11 @@ footer {
 }
 
 .footer-logo {
-  font-family: 'Song Myung', serif;
+  font-family: 'Song Myung', serif !important;
   color: #ffffff;
   margin-bottom: 12px;
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 400;
 }
 
 .footer-text {
