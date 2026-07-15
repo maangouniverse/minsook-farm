@@ -1144,73 +1144,71 @@ footer {
   background-color: var(--primary-dark);
   color: rgba(255, 255, 255, 0.65);
   padding: 64px 24px 32px;
-  border-top: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .footer-container {
   max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr;
   gap: 48px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding-bottom: 36px;
   margin-bottom: 28px;
 }
 
-.footer-brand .logo {
+.footer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.footer-logo {
   color: #ffffff;
-  margin-bottom: 16px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
-.footer-brand .logo svg {
-  fill: #ffffff;
-}
-
-.footer-brand p {
+.footer-text {
   font-size: 0.85rem;
   line-height: 1.65;
+  max-width: 600px;
 }
 
-.footer-links h4, .footer-contact h4 {
-  color: #ffffff;
-  font-size: 1rem;
-  font-weight: 800;
-  margin-bottom: 16px;
+.footer-biz {
+  font-size: 0.8rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.footer-links ul {
-  list-style: none;
+.footer-biz span {
+  display: inline-block;
 }
 
-.footer-links li {
-  margin-bottom: 10px;
-}
-
-.footer-links a {
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.footer-links a:hover {
-  color: #ffffff;
-  text-decoration: underline;
-}
-
-.footer-contact p {
-  margin-bottom: 10px;
-  font-size: 0.85rem;
+.footer-links {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
 }
 
-.footer-contact a {
+.footer-link-head {
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.footer-link {
+  font-size: 0.85rem;
+  font-weight: 500;
   color: rgba(255, 255, 255, 0.65);
+  transition: var(--transition-smooth);
 }
 
-.footer-contact a:hover {
+.footer-link:hover {
   color: #ffffff;
   text-decoration: underline;
 }
@@ -1220,10 +1218,12 @@ footer {
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 0.75rem;
   flex-wrap: wrap;
   gap: 16px;
   font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 /* Toast Message */
@@ -1361,10 +1361,6 @@ footer {
   .select-box {
     font-size: 0.72rem;
     padding: 12px 6px;
-  }
-
-  .footer-brand .logo {
-    display: none;
   }
   
   nav.open {
