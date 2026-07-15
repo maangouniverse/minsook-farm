@@ -501,6 +501,102 @@ ${itemsText}■ 배송지 주소: ${address}
   );
 });
 
+// 1-1. Query Order History by Phone Number (Public)
+app.post('/api/orders/query', (req, res) => {
+  const { phone } = req.body;
+
+  if (!phone) {
+    return res.status(400).json({ error: '전화번호를 입력해 주세요.' });
+  }
+
+  // 검색어 정제: 숫자만 남김
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+
+  if (cleanPhone.length < 9) {
+    return res.status(400).json({ error: '올바른 전화번호 형식이 아닙니다.' });
+  }
+
+  // SQLite와 PostgreSQL 모두에서 호환되는 replace 쿼리 사용
+  const query = `
+    SELECT id, name, phone, address, memo, items, total_price, status, tracking_number, courier, created_at
+    FROM orders
+    WHERE replace(phone, '-', '') = ? OR phone = ?
+    ORDER BY created_at DESC
+  `;
+
+  db.all(query, [cleanPhone, phone], (err, rows) => {
+    if (err) {
+      console.error('Order query failed:', err);
+      return res.status(500).json({ error: '주문 내역 조회 중 오류가 발생했습니다.' });
+    }
+
+    if (!rows || rows.length === 0) {
+      return res.json({ success: true, orders: [] });
+    }
+
+    // 개인정보 보호 마스킹 및 아이템 JSON 파싱
+    const maskedOrders = rows.map(row => {
+      // 1. 이름 마스킹 (예: 홍길동 -> 홍*동, 김철 -> 김*, 제갈민수 -> 제**수)
+      let maskedName = row.name;
+      if (row.name && row.name.length > 1) {
+        if (row.name.length === 2) {
+          maskedName = row.name[0] + '*';
+        } else {
+          const middleMask = '*'.repeat(row.name.length - 2);
+          maskedName = row.name[0] + middleMask + row.name[row.name.length - 1];
+        }
+      }
+
+      // 2. 전화번호 마스킹 (예: 010-1234-5678 -> 010-****-5678)
+      let maskedPhone = row.phone;
+      const parts = row.phone.split('-');
+      if (parts.length === 3) {
+        maskedPhone = `${parts[0]}-****-${parts[2]}`;
+      } else if (row.phone.length >= 10) {
+        // 하이픈이 없는 경우
+        maskedPhone = row.phone.substring(0, 3) + '****' + row.phone.substring(row.phone.length - 4);
+      } else {
+        maskedPhone = '***-****-****';
+      }
+
+      // 3. 주소 마스킹 (앞 3단어만 남김. 예: 전남 고흥군 고흥읍 백련장전길... -> 전남 고흥군 고흥읍 ***)
+      let maskedAddress = row.address;
+      if (row.address) {
+        const addrParts = row.address.trim().split(/\s+/);
+        if (addrParts.length > 3) {
+          maskedAddress = addrParts.slice(0, 3).join(' ') + ' ***';
+        } else {
+          maskedAddress = addrParts.join(' ') + ' ***';
+        }
+      }
+
+      // 4. 아이템 JSON 파싱
+      let parsedItems = [];
+      try {
+        parsedItems = JSON.parse(row.items);
+      } catch (e) {
+        console.error('Failed to parse order items json:', e);
+      }
+
+      return {
+        id: row.id,
+        name: maskedName,
+        phone: maskedPhone,
+        address: maskedAddress,
+        memo: row.memo ? '***' : '', // 메모도 개인정보가 있을 수 있으므로 마스킹
+        items: parsedItems,
+        totalPrice: row.total_price,
+        status: row.status,
+        trackingNumber: row.tracking_number,
+        courier: row.courier,
+        createdAt: row.created_at
+      };
+    });
+
+    res.json({ success: true, orders: maskedOrders });
+  });
+});
+
 // 2. Admin Login (Common admin login password only)
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;

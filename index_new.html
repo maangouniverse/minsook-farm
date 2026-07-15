@@ -532,7 +532,9 @@
   <footer class="footer">
     <div class="footer-inner">
       <div>
-        <p class="footer-logo">민숙농장</p>
+        <div class="footer-logo-container">
+          <img src="민숙농장로고가로형-배경없음.png" alt="민숙농장 로고" class="footer-logo-img">
+        </div>
         <p class="footer-text">
           전라남도 고흥의 청정 자연 속에서 건강한 백다다기 오이를 길러냅니다. 늘 최고의 신선함과 투명함으로 소비자의 식탁에 다가가겠습니다.<br>
           장바구니에서 주문 후 계좌이체로 결제하며, 입금이 확인되면 발송합니다.
@@ -548,7 +550,7 @@
 
       <nav class="footer-links">
         <span class="footer-link-head">안내</span>
-        <a class="footer-link" href="/admin">주문 조회</a>
+        <a class="footer-link" href="#" id="btnOrderLookup">주문 조회</a>
         <a class="footer-link" href="#">이용약관</a>
         <a class="footer-link" href="#">개인정보처리방침</a>
         <a class="footer-link" href="#">취소 및 환불규정</a>
@@ -691,6 +693,37 @@
           <span>카카오톡 앱 바로 열기</span>
         </button>
         <button type="button" class="btn-modal-close-large" id="btnKakaoModalCloseLarge">확인 완료</button>
+      </div>
+  <!-- Order Lookup Modal -->
+  <div id="orderLookupModal" class="lookup-modal hidden">
+    <div class="lookup-modal-overlay" id="orderLookupOverlay"></div>
+    <div class="lookup-modal-content">
+      <button type="button" class="lookup-modal-close" id="btnOrderLookupClose" aria-label="닫기">&times;</button>
+      <div class="lookup-modal-header">
+        <svg viewBox="0 0 24 24" class="lookup-modal-icon">
+          <path fill="currentColor" d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
+        </svg>
+        <h3>주문 내역 조회</h3>
+      </div>
+      <div class="lookup-modal-body">
+        <p class="modal-info-text">
+          주문하실 때 입력하신 휴대전화 번호를 넣어주세요.
+        </p>
+        <div class="lookup-input-group">
+          <input type="tel" id="lookupPhoneInput" placeholder="예: 010-1234-5678" maxlength="13">
+          <button type="button" id="btnLookupSubmit" class="btn-lookup-action">조회하기</button>
+        </div>
+        
+        <!-- Loading Spinner -->
+        <div id="lookupSpinner" class="lookup-spinner-container hidden">
+          <div class="spinner"></div>
+          <p>주문 내역을 검색 중입니다...</p>
+        </div>
+
+        <!-- Result Container -->
+        <div id="lookupResultsContainer" class="lookup-results-container">
+          <!-- Dynamically populated via JS -->
+        </div>
       </div>
     </div>
   </div>

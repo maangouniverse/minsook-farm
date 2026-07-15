@@ -1514,4 +1514,230 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
   // Initialize SMS preview content
   updateSMSPreview();
 
+  // --- Order Lookup Modal Interactivity ---
+  const btnOrderLookup = document.getElementById('btnOrderLookup');
+  const orderLookupModal = document.getElementById('orderLookupModal');
+  const btnOrderLookupClose = document.getElementById('btnOrderLookupClose');
+  const orderLookupOverlay = document.getElementById('orderLookupOverlay');
+  const lookupPhoneInput = document.getElementById('lookupPhoneInput');
+  const btnLookupSubmit = document.getElementById('btnLookupSubmit');
+  const lookupSpinner = document.getElementById('lookupSpinner');
+  const lookupResultsContainer = document.getElementById('lookupResultsContainer');
+
+  // Open lookup modal
+  if (btnOrderLookup) {
+    btnOrderLookup.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (orderLookupModal) {
+        orderLookupModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        if (lookupPhoneInput) {
+          lookupPhoneInput.focus();
+        }
+      }
+    });
+  }
+
+  // Close lookup modal function
+  function closeLookupModal() {
+    if (orderLookupModal) {
+      orderLookupModal.classList.add('hidden');
+      document.body.style.overflow = '';
+      if (lookupPhoneInput) lookupPhoneInput.value = '';
+      if (lookupResultsContainer) lookupResultsContainer.innerHTML = '';
+      if (lookupSpinner) lookupSpinner.classList.add('hidden');
+    }
+  }
+
+  // Close on close button or overlay click
+  if (btnOrderLookupClose) {
+    btnOrderLookupClose.addEventListener('click', closeLookupModal);
+  }
+  if (orderLookupOverlay) {
+    orderLookupOverlay.addEventListener('click', closeLookupModal);
+  }
+
+  // Auto-hyphenate phone input helper
+  if (lookupPhoneInput) {
+    lookupPhoneInput.addEventListener('input', (e) => {
+      let val = e.target.value.replace(/[^0-9]/g, '');
+      if (val.length > 3 && val.length <= 7) {
+        val = val.substring(0, 3) + '-' + val.substring(3);
+      } else if (val.length > 7) {
+        val = val.substring(0, 3) + '-' + val.substring(3, 7) + '-' + val.substring(7, 11);
+      }
+      e.target.value = val;
+    });
+
+    lookupPhoneInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (btnLookupSubmit) btnLookupSubmit.click();
+      }
+    });
+  }
+
+  // Submit lookup request
+  if (btnLookupSubmit) {
+    btnLookupSubmit.addEventListener('click', async () => {
+      const phone = lookupPhoneInput ? lookupPhoneInput.value.trim() : '';
+      if (!phone) {
+        showLookupError('휴대전화 번호를 입력해 주세요.');
+        return;
+      }
+
+      const cleanPhone = phone.replace(/[^0-9]/g, '');
+      if (cleanPhone.length < 9) {
+        showLookupError('올바른 휴대전화 번호 형식을 입력해 주세요.');
+        return;
+      }
+
+      // Start loading
+      if (lookupSpinner) lookupSpinner.classList.remove('hidden');
+      if (lookupResultsContainer) lookupResultsContainer.innerHTML = '';
+      if (btnLookupSubmit) btnLookupSubmit.disabled = true;
+
+      try {
+        const response = await fetch('/api/orders/query', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ phone }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          renderLookupResults(data.orders);
+        } else {
+          showLookupError(data.error || '조회 중 오류가 발생했습니다.');
+        }
+      } catch (err) {
+        console.error('Lookup request error:', err);
+        showLookupError('서버와의 통신에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      } finally {
+        if (lookupSpinner) lookupSpinner.classList.add('hidden');
+        if (btnLookupSubmit) btnLookupSubmit.disabled = false;
+      }
+    });
+  }
+
+  // Display errors inside modal
+  function showLookupError(message) {
+    if (lookupResultsContainer) {
+      lookupResultsContainer.innerHTML = `
+        <div class="lookup-error-message">
+          ⚠️ ${escapeHtml(message)}
+        </div>
+      `;
+    }
+  }
+
+  // Render lookup results in modal
+  function renderLookupResults(orders) {
+    if (!lookupResultsContainer) return;
+
+    if (!orders || orders.length === 0) {
+      lookupResultsContainer.innerHTML = `
+        <div class="lookup-empty-message">
+          입력하신 번호로 등록된 주문 내역이 없습니다. 🥒
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    orders.forEach(order => {
+      const itemsList = order.items.map(item => `${item.name} (${item.quantity}${item.unit})`).join(', ');
+
+      let readableDate = '';
+      if (order.createdAt) {
+        const d = new Date(order.createdAt);
+        readableDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      }
+
+      let statusClass = 'status-pending';
+      let statusText = '입금 대기 ⏳';
+      if (order.status === '결제') {
+        statusClass = 'status-completed';
+        statusText = '결제 완료 (배송 준비 중) 📦';
+      } else if (order.status === '택배사') {
+        statusClass = 'status-shipping';
+        statusText = '배송 중 🚚';
+      } else if (order.status === '주문취소') {
+        statusClass = 'status-cancelled';
+        statusText = '주문 취소 ❌';
+      }
+
+      let trackingHTML = '';
+      if (order.status === '택배사' && order.trackingNumber) {
+        const courierName = order.courier || '우체국택배';
+        let trackingUrl = '';
+
+        if (courierName.includes('우체국')) {
+          trackingUrl = `https://service.epost.go.kr/trace.RetrieveDomamDetailValList.comm?sid1=${order.trackingNumber}`;
+        } else if (courierName.includes('CJ') || courierName.includes('대한통운')) {
+          trackingUrl = `https://www.doortodoor.co.kr/link/tracking.jsp?QueryType=3&tongno=${order.trackingNumber}`;
+        } else if (courierName.includes('한진')) {
+          trackingUrl = `https://www.hanjin.com/ko/delivery/delivery/tracking.do?wblnum=${order.trackingNumber}`;
+        } else if (courierName.includes('롯데')) {
+          trackingUrl = `https://www.lotteglogis.com/home/personal/inquiry/track?InvNo=${order.trackingNumber}`;
+        }
+
+        if (trackingUrl) {
+          trackingHTML = `
+            <a href="${trackingUrl}" target="_blank" rel="noopener noreferrer" class="btn-delivery-tracking">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+              <span>배송 조회 (${escapeHtml(courierName)})</span>
+            </a>
+          `;
+        } else {
+          trackingHTML = `
+            <span class="btn-delivery-tracking" style="cursor: default;" title="${escapeHtml(courierName)}">
+              <span>송장: ${escapeHtml(order.trackingNumber)}</span>
+            </span>
+          `;
+        }
+      }
+
+      html += `
+        <div class="order-lookup-card">
+          <div class="order-card-header">
+            <span class="order-card-id">주문번호 #${order.id}</span>
+            <span class="order-card-date">${readableDate}</span>
+          </div>
+          <div class="order-card-details">
+            <div class="order-detail-row">
+              <span class="order-detail-label">주문자</span>
+              <span class="order-detail-value">${escapeHtml(order.name)}</span>
+            </div>
+            <div class="order-detail-row">
+              <span class="order-detail-label">연락처</span>
+              <span class="order-detail-value">${escapeHtml(order.phone)}</span>
+            </div>
+            <div class="order-detail-row">
+              <span class="order-detail-label">주문 상품</span>
+              <span class="order-detail-value items-list">${escapeHtml(itemsList)}</span>
+            </div>
+            <div class="order-detail-row">
+              <span class="order-detail-label">배송지 주소</span>
+              <span class="order-detail-value">${escapeHtml(order.address)}</span>
+            </div>
+            <div class="order-detail-row">
+              <span class="order-detail-label">총 결제금액</span>
+              <span class="order-detail-value price">${order.totalPrice.toLocaleString()}원</span>
+            </div>
+          </div>
+          <div class="order-card-footer">
+            <span class="order-status-badge ${statusClass}">${statusText}</span>
+            ${trackingHTML}
+          </div>
+        </div>
+      `;
+    });
+
+    lookupResultsContainer.innerHTML = html;
+  }
+
 });
