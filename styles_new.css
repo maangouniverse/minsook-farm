@@ -366,26 +366,26 @@ nav a:hover::after, nav a.active::after {
 }
 
 .hero .cta-btn {
-  background-color: var(--accent);
-  color: var(--primary-dark) !important;
-  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
+  background-color: #facc15; /* 주문하기: 노란색 */
+  color: #0f172a !important;
+  box-shadow: 0 8px 24px rgba(250, 204, 21, 0.3);
 }
 
 .hero .cta-btn:hover {
-  background-color: #4ade80;
+  background-color: #eab308;
   transform: translateY(-2px);
 }
 
 .hero .btn-secondary {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(8px);
+  background-color: #16a34a; /* 네이버스마트스토어: 초록색 */
+  color: #ffffff !important;
+  border: 1px solid #15803d;
+  box-shadow: 0 8px 24px rgba(22, 163, 74, 0.2);
 }
 
 .hero .btn-secondary:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
+  background-color: #15803d;
+  border-color: #166534;
   transform: translateY(-2px);
 }
 
@@ -3413,12 +3413,96 @@ footer {
 }
 
 @media (max-width: 768px) {
-  .hero-slider { width: 100%; }
-  .hero-slide { background-size: 88%; }
-  .hero-container { padding: 0 24px; text-align: center; align-items: center; }
-  .hero-content { width: 100%; max-width: 620px; }
-  .hero-sub-desc { margin-left: auto; margin-right: auto; }
-  .hero-ctas { justify-content: center; }
+  .hero {
+    flex-direction: column;
+    height: auto;
+    min-height: auto;
+    padding: 100px 0 0 0; /* 헤더 공간 확보 */
+    background: var(--bg-page);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .hero-container {
+    position: relative;
+    padding: 40px 24px 20px;
+    margin: 0 auto;
+    text-align: center;
+    align-items: center;
+    z-index: 3;
+    width: 100%;
+    order: 1; /* 글자를 상단으로 배치 */
+  }
+
+  .hero-content {
+    width: 100%;
+    max-width: 620px;
+  }
+
+  .hero h1 {
+    color: var(--text-dark);
+    text-shadow: none;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    margin-bottom: 16px;
+  }
+
+  .hero h1 span {
+    color: var(--primary);
+    text-shadow: none;
+  }
+
+  .hero-sub-desc {
+    color: var(--text-muted);
+    text-shadow: none;
+    margin-bottom: 24px;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-sub-title {
+    color: var(--primary);
+    margin-bottom: 6px;
+  }
+
+  .hero-badge {
+    background-color: var(--primary-light);
+    color: var(--primary);
+    border: 1px solid var(--border-light);
+    margin-bottom: 16px;
+  }
+
+  .hero-ctas {
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .hero-cta {
+    width: 100%;
+    max-width: 280px;
+    padding: 12px 20px !important;
+    font-size: 0.95rem !important;
+  }
+
+  .hero-slider {
+    position: relative;
+    width: 100%;
+    height: 380px; /* 모바일 사진 크기 */
+    left: 0;
+    right: 0;
+    margin-top: 16px;
+    z-index: 1;
+    order: 2; /* 사진을 하단으로 배치 */
+  }
+
+  .hero-slide {
+    background-size: cover; /* 가득 차게 */
+    background-position: center;
+  }
+
+  .hero-overlay {
+    background: linear-gradient(to bottom, rgba(15, 23, 42, 0.1) 0%, rgba(15, 23, 42, 0) 100%);
+  }
 }
 /* Keep hero copy fully inside the left background area. */
 .hero-container {
@@ -3437,13 +3521,7 @@ footer {
   text-shadow: 0 2px 12px rgba(255, 255, 255, 0.28);
 }
 
-@media (max-width: 768px) {
-  .hero-container {
-    margin: 0 auto;
-    padding-left: 24px;
-    padding-right: 24px;
-  }
-}
+/* Mobile hero duplicate container styles removed */
 /* Farm story gallery and sustainability section */
 .detail-gallery .detail-img {
   aspect-ratio: 4 / 3;
@@ -3517,4 +3595,31 @@ footer {
   color: #ffffff;
   font-size: 0.82rem;
   line-height: 1.5;
+}
+
+/* 추가된 상단 문구 및 로고 배지 스타일 */
+.hero-sub-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.logo-sub-text {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--primary);
+  background-color: var(--primary-light);
+  border: 1px solid var(--border-light);
+  padding: 3px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .logo-sub-text {
+    display: none; /* 모바일 아주 좁은 화면에서는 레이아웃 깨짐을 방지하기 위해 숨김 */
+  }
 }
