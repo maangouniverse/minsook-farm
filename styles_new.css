@@ -3636,7 +3636,7 @@ footer {
 }
 
 .hero h1 .hero-title-accent {
-  color: inherit;
+  color: var(--primary);
 }
 
 @media (min-width: 769px) {
@@ -3702,7 +3702,7 @@ footer {
   }
 
   .hero h1 .hero-title-accent {
-    color: inherit;
+    color: var(--primary);
   }
 
   .mobile-copy-line {
