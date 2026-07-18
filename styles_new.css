@@ -3625,6 +3625,20 @@ footer {
 }
 
 /* Mobile header and requested copy refinements */
+.hero h1,
+.hero-sub-desc {
+  text-align: left;
+}
+
+.hero h1 .hero-title-line {
+  color: inherit;
+  text-shadow: inherit;
+}
+
+.hero h1 .hero-title-accent {
+  color: var(--primary);
+}
+
 @media (max-width: 768px) {
   .nav-container {
     height: 64px;
@@ -3648,12 +3662,29 @@ footer {
   .hero-sub-desc {
     color: #111111 !important;
     text-shadow: none !important;
-    width: calc(100vw - 24px);
+    text-align: left;
+    width: calc(100vw - 48px);
     max-width: none;
-    margin-left: calc(50% - 50vw + 12px);
-    margin-right: calc(50% - 50vw + 12px);
+    margin-left: calc(50% - 50vw + 24px);
+    margin-right: calc(50% - 50vw + 24px);
     font-size: clamp(0.7rem, 3.2vw, 0.95rem) !important;
     letter-spacing: -0.045em;
+  }
+
+  .hero h1 {
+    width: calc(100vw - 48px);
+    max-width: none;
+    margin-left: calc(50% - 50vw + 24px);
+    margin-right: calc(50% - 50vw + 24px);
+    text-align: left;
+  }
+
+  .hero-title-line {
+    white-space: nowrap;
+  }
+
+  .hero h1 .hero-title-accent {
+    color: var(--primary);
   }
 
   .mobile-copy-line {
