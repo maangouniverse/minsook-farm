@@ -3648,11 +3648,25 @@ footer {
   .hero-sub-desc {
     color: #111111 !important;
     text-shadow: none !important;
+    width: calc(100vw - 24px);
+    max-width: none;
+    margin-left: calc(50% - 50vw + 12px);
+    margin-right: calc(50% - 50vw + 12px);
+    font-size: clamp(0.7rem, 3.2vw, 0.95rem) !important;
+    letter-spacing: -0.045em;
+  }
+
+  .mobile-copy-line {
+    white-space: nowrap;
   }
 
   .product-selection-desc {
-    font-size: clamp(0.68rem, 2.85vw, 0.9rem);
+    width: calc(100vw - 24px);
+    max-width: none;
+    margin-left: calc(50% - 50vw + 12px);
+    margin-right: calc(50% - 50vw + 12px);
+    font-size: clamp(0.78rem, 3.35vw, 0.95rem);
     line-height: 1.75;
-    letter-spacing: -0.045em;
+    letter-spacing: -0.065em;
   }
 }
