@@ -3424,7 +3424,7 @@ footer {
 
   .hero-container {
     position: relative;
-    padding: 40px 24px 20px;
+    padding: 28px 24px 20px;
     margin: 0 auto;
     text-align: center;
     align-items: center;
@@ -3636,7 +3636,7 @@ footer {
 }
 
 .hero h1 .hero-title-accent {
-  color: var(--primary);
+  color: inherit;
 }
 
 @media (min-width: 769px) {
@@ -3647,9 +3647,9 @@ footer {
 
   .hero {
     height: auto;
-    min-height: 760px;
-    padding-top: 140px;
-    padding-bottom: 64px;
+    min-height: 660px;
+    padding-top: 112px;
+    padding-bottom: 48px;
   }
 
   .hero-content {
@@ -3702,7 +3702,7 @@ footer {
   }
 
   .hero h1 .hero-title-accent {
-    color: var(--primary);
+    color: inherit;
   }
 
   .mobile-copy-line {
