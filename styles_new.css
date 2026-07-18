@@ -3639,6 +3639,24 @@ footer {
   color: var(--primary);
 }
 
+@media (min-width: 769px) {
+  .nav-container {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .hero {
+    height: auto;
+    min-height: 760px;
+    padding-top: 140px;
+    padding-bottom: 64px;
+  }
+
+  .hero-content {
+    width: min(100%, 560px);
+  }
+}
+
 @media (max-width: 768px) {
   .nav-container {
     height: 64px;
@@ -3662,7 +3680,7 @@ footer {
   .hero-sub-desc {
     color: #111111 !important;
     text-shadow: none !important;
-    text-align: left;
+    text-align: center;
     width: calc(100vw - 48px);
     max-width: none;
     margin-left: calc(50% - 50vw + 24px);
@@ -3676,7 +3694,7 @@ footer {
     max-width: none;
     margin-left: calc(50% - 50vw + 24px);
     margin-right: calc(50% - 50vw + 24px);
-    text-align: left;
+    text-align: center;
   }
 
   .hero-title-line {
