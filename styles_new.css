@@ -3623,3 +3623,36 @@ footer {
     display: none; /* 모바일 아주 좁은 화면에서는 레이아웃 깨짐을 방지하기 위해 숨김 */
   }
 }
+
+/* Mobile header and requested copy refinements */
+@media (max-width: 768px) {
+  .nav-container {
+    height: 64px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+
+  header .logo img {
+    height: 60px;
+  }
+
+  nav {
+    top: 64px;
+    height: calc(100vh - 64px);
+  }
+
+  .hero {
+    padding-top: 64px;
+  }
+
+  .hero-sub-desc {
+    color: #111111 !important;
+    text-shadow: none !important;
+  }
+
+  .product-selection-desc {
+    font-size: clamp(0.68rem, 2.85vw, 0.9rem);
+    line-height: 1.75;
+    letter-spacing: -0.045em;
+  }
+}
