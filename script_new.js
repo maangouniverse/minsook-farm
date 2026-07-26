@@ -1075,6 +1075,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
   // Fetch prices from DB and update configuration & page display
   // Fetch products from DB, build priceConfig, render product select and product cards
   async function fetchProductsAndInit() {
+    initSliders();
     let products = [];
     if (window.location.protocol === 'file:') {
       // Fallback local products if running as file
@@ -1184,8 +1185,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
   function renderMainPageProductCards(products) {
     const grid = document.getElementById('mainProductGrid');
     if (!grid) return;
-
-    grid.innerHTML = '';
+    if (!products || !Array.isArray(products) || products.length === 0) return;
 
     // Separate standard categories
     let biteProduct = null;
@@ -1360,7 +1360,8 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
         '오이-홈페이지용사진/박스.jpg',
         '오이-홈페이지용사진/오이 절단샷.jpg'
       ]
-    };
+    if (cardsToRender.length === 0) return;
+    grid.innerHTML = '';
 
     cardsToRender.forEach((card, idx) => {
       const cardEl = document.createElement('div');
