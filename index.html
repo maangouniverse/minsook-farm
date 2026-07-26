@@ -527,10 +527,10 @@
 
       <nav class="footer-links">
         <span class="footer-link-head">안내</span>
-        <a class="footer-link" href="/admin">주문 조회</a>
+        <a class="footer-link" href="#" id="btnOrderLookup">주문 조회</a>
         <a class="footer-link" href="#" id="btnOpenTermsModal">이용약관</a>
-        <a class="footer-link" href="#">개인정보처리방침</a>
-        <a class="footer-link" href="#">취소 및 환불규정</a>
+        <a class="footer-link" href="#" id="btnOpenPrivacyModal">개인정보처리방침</a>
+        <a class="footer-link" href="#" id="btnOpenRefundModal">취소 및 환불규정</a>
       </nav>
     </div>
 
@@ -734,6 +734,140 @@
       </div>
     </div>
   </div>
+
+  <!-- Privacy Policy Modal -->
+  <div id="privacyModal" class="terms-modal-overlay" aria-hidden="true">
+    <div class="terms-modal-card">
+      <div class="terms-modal-header">
+        <h2>개인정보처리방침</h2>
+        <button type="button" class="terms-close-btn" id="btnClosePrivacyX" aria-label="닫기">&times;</button>
+      </div>
+      <div class="terms-modal-body">
+        <h3>고객님의 개인정보 보호를 위한 수집 및 이용 방침</h3>
+        <p>민숙농장(이하 "회사")은 「개인정보 보호법」 등 관련 법령을 준수하며, 고객님의 개인정보를 안전하게 보호하기 위해 다음과 같이 개인정보처리방침을 수립·공개합니다.</p>
+        
+        <h4>1. 개인정보의 수집 및 이용 목적</h4>
+        <p>회사는 다음의 목적을 위하여 개인정보를 수집 및 이용합니다.</p>
+        <ul>
+          <li><strong>상품 주문 및 주문 확인:</strong> 주문 접수 및 입금 확인, 주문 내역 관리</li>
+          <li><strong>상품 배송:</strong> 상품 포장 및 배송, 배송지 확인 및 배송 관련 안내</li>
+          <li><strong>고객 상담 및 민원 처리:</strong> 문의사항 및 불만 처리, 교환·환불 및 AS 관련 업무, 본인 확인</li>
+        </ul>
+        <p>회사는 수집한 개인정보를 위 목적 외의 용도로 이용하지 않으며, 이용 목적이 변경되는 경우 관련 법령에 따라 필요한 절차를 거칩니다.</p>
+
+        <h4>2. 수집하는 개인정보 항목</h4>
+        <p>회사는 상품 주문 및 배송을 위하여 다음의 개인정보를 수집합니다.</p>
+        <ul>
+          <li><strong>주문자 정보:</strong> 이름, 휴대전화번호</li>
+          <li><strong>수령인 정보:</strong> 이름, 휴대전화번호, 배송지 주소, 배송 요청사항(선택)</li>
+          <li><strong>결제 정보:</strong> 입금자명, 입금 확인에 필요한 정보</li>
+        </ul>
+        <p>※ 민숙농장은 현재 무통장 입금(계좌이체) 방식으로만 결제를 받고 있으며, 신용카드 등 전자결제 정보는 수집하지 않습니다.</p>
+
+        <h4>3. 개인정보의 보유 및 이용기간</h4>
+        <p>회사는 관련 법령에서 정한 기간 동안 개인정보를 보관합니다.</p>
+        <ul>
+          <li><strong>주문 및 거래 기록:</strong> 5년 (전자상거래 등에서의 소비자보호에 관한 법률)</li>
+          <li><strong>소비자 불만 및 분쟁 처리 기록:</strong> 3년 (전자상거래 등에서의 소비자보호에 관한 법률)</li>
+          <li><strong>배송 정보:</strong> 배송 완료 및 계약 목적 달성 시까지</li>
+        </ul>
+        <p>보유기간이 경과하거나 처리 목적이 달성된 경우에는 지체 없이 개인정보를 파기합니다.</p>
+
+        <h4>4. 개인정보의 제3자 제공</h4>
+        <p>회사는 고객님의 개인정보를 원칙적으로 제3자에게 제공하지 않습니다. 다만 다음의 경우에는 예외로 합니다.</p>
+        <ul>
+          <li>고객이 사전에 동의한 경우</li>
+          <li>법령에 특별한 규정이 있는 경우</li>
+          <li><strong>상품 배송을 위한 개인정보 제공:</strong> 제공받는 자 - 상품 배송을 담당하는 택배사 / 제공 목적 - 상품 배송 및 배송 관련 안내 / 제공 항목 - 이름, 휴대전화번호, 배송지 주소 / 보유 및 이용기간 - 배송 완료 후 관련 법령에 따른 보관기간까지</li>
+        </ul>
+
+        <h4>5. 개인정보의 파기절차 및 방법</h4>
+        <p>회사는 개인정보 보유기간이 종료되거나 처리 목적이 달성된 경우 지체 없이 개인정보를 파기합니다.</p>
+        <ul>
+          <li>전자파일은 복구할 수 없는 방법으로 영구 삭제합니다.</li>
+          <li>종이 문서는 분쇄 또는 소각하여 파기합니다.</li>
+        </ul>
+
+        <h4>6. 개인정보의 안전성 확보조치</h4>
+        <p>회사는 개인정보 보호를 위해 개인정보 접근 권한 최소화, 개인정보가 포함된 자료의 안전한 보관, 개인정보 유출 방지를 위한 관리적·기술적 보호조치를 시행하고 있습니다.</p>
+
+        <h4>7. 이용자의 권리</h4>
+        <p>이용자는 언제든지 자신의 개인정보에 대해 열람, 정정, 삭제 및 처리정지를 요청할 수 있으며, 회사는 관련 법령에 따라 지체 없이 처리합니다.</p>
+      </div>
+      <div class="terms-modal-footer">
+        <button type="button" id="btnClosePrivacyModal" class="btn-terms-back">홈페이지로 돌아가기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Refund Policy Modal -->
+  <div id="refundModal" class="terms-modal-overlay" aria-hidden="true">
+    <div class="terms-modal-card">
+      <div class="terms-modal-header">
+        <h2>취소 및 환불규정</h2>
+        <button type="button" class="terms-close-btn" id="btnCloseRefundX" aria-label="닫기">&times;</button>
+      </div>
+      <div class="terms-modal-body">
+        <h3>민숙농장 신선 농산물 주문 및 교환·환불 안내</h3>
+
+        <h4>1. 주문 취소 안내</h4>
+        <ul>
+          <li><strong>입금 전 또는 발송 준비 전:</strong> 주문 취소를 원하시는 경우 전화 또는 문자로 연락해 주시면 즉시 취소해 드립니다.</li>
+          <li><strong>입금 완료 후 발송 준비 전:</strong> 상품 발송 전까지는 주문 취소가 가능하며, 입금하신 금액은 확인 후 환불해 드립니다.</li>
+          <li><strong>상품 발송 후:</strong> 민숙농장의 오이는 당일 수확하여 신선한 상태로 발송되는 농산물입니다. 상품이 출고된 이후에는 단순 변심에 의한 주문 취소가 어렵습니다.</li>
+        </ul>
+
+        <h4>2. 교환 및 환불 안내</h4>
+        <p>신선 농산물은 상품 특성상 재판매가 불가능하므로 아래의 경우에는 교환 및 환불이 어렵습니다.</p>
+        <ul>
+          <li>단순 변심</li>
+          <li>개인적인 맛이나 식감의 차이</li>
+          <li>보관 방법 미숙으로 인한 상품 변질</li>
+          <li>수령 후 장시간 방치로 인한 품질 저하</li>
+        </ul>
+        <p style="font-size:0.85rem; color:#666;">(전자상거래 등에서의 소비자보호에 관한 법률 제17조 제2항)</p>
+
+        <h4>3. 교환 또는 환불 가능 사유</h4>
+        <p>다음과 같은 경우에는 확인 후 교환 또는 환불을 진행해 드립니다.</p>
+        <ul>
+          <li>배송 중 상품이 심하게 파손된 경우</li>
+          <li>상품이 부패하거나 변질된 상태로 도착한 경우</li>
+          <li>주문한 상품과 다른 상품이 배송된 경우</li>
+          <li>배송 과정의 문제로 상품 가치가 현저히 훼손된 경우</li>
+        </ul>
+
+        <h4>4. 하자 접수 방법</h4>
+        <p>상품에 이상이 있는 경우 상품 수령 후 <strong>24시간 이내</strong>에 연락해 주시기 바랍니다. 보다 정확한 확인을 위해 아래 사진 3장을 함께 보내주시면 빠르게 처리해 드립니다.</p>
+        <ul>
+          <li>운송장이 보이는 택배 박스 사진</li>
+          <li>상품 전체 사진</li>
+          <li>이상 부위가 잘 보이는 사진</li>
+        </ul>
+        <p>접수는 전화 또는 문자로 가능하며, 확인 결과 민숙농장의 과실로 확인될 경우 재배송 또는 전액 환불해 드립니다.</p>
+
+        <h4>5. 환불 안내</h4>
+        <p>환불이 결정된 경우 고객님께서 알려주신 계좌로 최대한 신속하게 환불해 드립니다.</p>
+
+        <h4>6. 농산물 특성 안내</h4>
+        <p>민숙농장에서 판매하는 오이는 자연에서 재배되는 농산물입니다. 상품마다 길이, 굵기, 색상 등에 다소 차이가 있을 수 있으며, 이는 자연 농산물의 특성으로 불량이 아닙니다. 또한 계절과 생육 환경에 따라 맛과 식감에도 약간의 차이가 있을 수 있습니다.</p>
+
+        <h4>7. 고객센터</h4>
+        <p><strong>민숙농장</strong><br>
+        문의전화 및 문자문의 : 010-8990-4046<br>
+        운영시간 : 평일 오전 9시 ~ 오후 6시 (토요일, 일요일 및 공휴일은 답변이 다소 지연될 수 있습니다)</p>
+      </div>
+      <div class="terms-modal-footer">
+        <button type="button" id="btnCloseRefundModal" class="btn-terms-back">홈페이지로 돌아가기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scroll To Top Button -->
+  <button id="btnScrollTop" class="scroll-top-btn" aria-label="페이지 맨 위로 이동">
+    <svg viewBox="0 0 24 24" class="scroll-top-icon">
+      <path fill="currentColor" d="M13,20H11V8L5.5,13.5L4.08,12.08L12,4.16L19.92,12.08L18.5,13.5L13,8V20Z" />
+    </svg>
+  </button>
 
   <!-- Scripts -->
   <script src="script.js"></script>

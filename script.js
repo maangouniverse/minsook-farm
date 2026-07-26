@@ -1231,5 +1231,86 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
       }
     });
   }
+
+  // --- Privacy Policy Modal Event Handlers ---
+  const privacyModal = document.getElementById('privacyModal');
+  const btnOpenPrivacyModal = document.getElementById('btnOpenPrivacyModal');
+  const btnClosePrivacyModal = document.getElementById('btnClosePrivacyModal');
+  const btnClosePrivacyX = document.getElementById('btnClosePrivacyX');
+
+  if (btnOpenPrivacyModal && privacyModal) {
+    btnOpenPrivacyModal.addEventListener('click', (e) => {
+      e.preventDefault();
+      privacyModal.classList.add('active');
+      privacyModal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    });
+  }
+
+  function closePrivacyModal() {
+    if (privacyModal) {
+      privacyModal.classList.remove('active');
+      privacyModal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  }
+
+  if (btnClosePrivacyModal) btnClosePrivacyModal.addEventListener('click', closePrivacyModal);
+  if (btnClosePrivacyX) btnClosePrivacyX.addEventListener('click', closePrivacyModal);
+  if (privacyModal) {
+    privacyModal.addEventListener('click', (e) => {
+      if (e.target === privacyModal) closePrivacyModal();
+    });
+  }
+
+  // --- Refund Policy Modal Event Handlers ---
+  const refundModal = document.getElementById('refundModal');
+  const btnOpenRefundModal = document.getElementById('btnOpenRefundModal');
+  const btnCloseRefundModal = document.getElementById('btnCloseRefundModal');
+  const btnCloseRefundX = document.getElementById('btnCloseRefundX');
+
+  if (btnOpenRefundModal && refundModal) {
+    btnOpenRefundModal.addEventListener('click', (e) => {
+      e.preventDefault();
+      refundModal.classList.add('active');
+      refundModal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    });
+  }
+
+  function closeRefundModal() {
+    if (refundModal) {
+      refundModal.classList.remove('active');
+      refundModal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  }
+
+  if (btnCloseRefundModal) btnCloseRefundModal.addEventListener('click', closeRefundModal);
+  if (btnCloseRefundX) btnCloseRefundX.addEventListener('click', closeRefundModal);
+  if (refundModal) {
+    refundModal.addEventListener('click', (e) => {
+      if (e.target === refundModal) closeRefundModal();
+    });
+  }
+
+  // --- Scroll To Top Button Logic ---
+  const btnScrollTop = document.getElementById('btnScrollTop');
+  if (btnScrollTop) {
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 300) {
+        btnScrollTop.classList.add('visible');
+      } else {
+        btnScrollTop.classList.remove('visible');
+      }
+    });
+
+    btnScrollTop.addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+  }
 });
 
