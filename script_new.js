@@ -1360,6 +1360,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
         '오이-홈페이지용사진/박스.jpg',
         '오이-홈페이지용사진/오이 절단샷.jpg'
       ]
+    };
     if (cardsToRender.length === 0) return;
     grid.innerHTML = '';
 
