@@ -1794,4 +1794,43 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
       applyHeroTone(heroSlides[currentSlideIndex]);
     }, 3000);
   }
+
+  // --- Terms Modal Event Handlers ---
+  const termsModal = document.getElementById('termsModal');
+  const btnOpenTermsModal = document.getElementById('btnOpenTermsModal');
+  const btnCloseTermsModal = document.getElementById('btnCloseTermsModal');
+  const btnCloseTermsX = document.getElementById('btnCloseTermsX');
+
+  if (btnOpenTermsModal && termsModal) {
+    btnOpenTermsModal.addEventListener('click', (e) => {
+      e.preventDefault();
+      termsModal.classList.add('active');
+      termsModal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    });
+  }
+
+  function closeTermsModal() {
+    if (termsModal) {
+      termsModal.classList.remove('active');
+      termsModal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  }
+
+  if (btnCloseTermsModal) {
+    btnCloseTermsModal.addEventListener('click', closeTermsModal);
+  }
+
+  if (btnCloseTermsX) {
+    btnCloseTermsX.addEventListener('click', closeTermsModal);
+  }
+
+  if (termsModal) {
+    termsModal.addEventListener('click', (e) => {
+      if (e.target === termsModal) {
+        closeTermsModal();
+      }
+    });
+  }
 });
