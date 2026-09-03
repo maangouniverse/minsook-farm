@@ -10,7 +10,7 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'minsook_farm_jwt_secure_secret_2026';
-const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'minsook123!';
+const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '6138';
 
 // Custom server routes mapping
 app.get('/', (req, res) => {
