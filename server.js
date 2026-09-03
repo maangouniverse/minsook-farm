@@ -637,13 +637,19 @@ app.post('/api/admin/logout', (req, res) => {
 app.get('/api/admin/orders', authenticateAdmin, (req, res) => {
   db.all("SELECT * FROM orders ORDER BY created_at DESC", (err, rows) => {
     if (err) {
+      console.error('Failed to retrieve orders:', err);
       return res.status(500).json({ error: 'Failed to retrieve orders.' });
     }
     // Parse items JSON strings back to objects
-    const orders = rows.map(row => ({
-      ...row,
-      items: JSON.parse(row.items)
-    }));
+    const orders = rows.map(row => {
+      let items = [];
+      try {
+        items = Array.isArray(row.items) ? row.items : JSON.parse(row.items || '[]');
+      } catch (parseError) {
+        console.error(`Failed to parse items for order ${row.id}:`, parseError);
+      }
+      return { ...row, items };
+    });
     res.json({ orders });
   });
 });
