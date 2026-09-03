@@ -1434,15 +1434,67 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
       if (slides.length <= 1) return;
 
       let currentIndex = 0;
-      setInterval(() => {
+      let autoSlideTimer;
+
+      const showSlide = (nextIndex) => {
         slides[currentIndex].classList.remove('active');
         if (dots[currentIndex]) dots[currentIndex].classList.remove('active');
-        
-        currentIndex = (currentIndex + 1) % slides.length;
-        
+
+        currentIndex = (nextIndex + slides.length) % slides.length;
+
         slides[currentIndex].classList.add('active');
         if (dots[currentIndex]) dots[currentIndex].classList.add('active');
-      }, 3000);
+      };
+
+      const startAutoSlide = () => {
+        clearInterval(autoSlideTimer);
+        autoSlideTimer = setInterval(() => showSlide(currentIndex + 1), 3000);
+      };
+
+      const stopAutoSlide = () => clearInterval(autoSlideTimer);
+
+      const controls = document.createElement('div');
+      controls.className = 'slider-arrow-controls';
+      controls.innerHTML = `
+        <button type="button" class="slider-arrow slider-arrow-prev" aria-label="이전 상품 사진 보기">&#10094;</button>
+        <button type="button" class="slider-arrow slider-arrow-next" aria-label="다음 상품 사진 보기">&#10095;</button>
+      `;
+      slider.appendChild(controls);
+
+      controls.querySelector('.slider-arrow-prev').addEventListener('click', (event) => {
+        event.stopPropagation();
+        showSlide(currentIndex - 1);
+        startAutoSlide();
+      });
+
+      controls.querySelector('.slider-arrow-next').addEventListener('click', (event) => {
+        event.stopPropagation();
+        showSlide(currentIndex + 1);
+        startAutoSlide();
+      });
+
+      dots.forEach((dot, index) => {
+        dot.setAttribute('role', 'button');
+        dot.setAttribute('tabindex', '0');
+        dot.setAttribute('aria-label', `${index + 1}번 상품 사진 보기`);
+        dot.addEventListener('click', () => {
+          showSlide(index);
+          startAutoSlide();
+        });
+        dot.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            showSlide(index);
+            startAutoSlide();
+          }
+        });
+      });
+
+      slider.addEventListener('mouseenter', stopAutoSlide);
+      slider.addEventListener('mouseleave', startAutoSlide);
+      slider.addEventListener('focusin', stopAutoSlide);
+      slider.addEventListener('focusout', startAutoSlide);
+      startAutoSlide();
     });
   }
 
