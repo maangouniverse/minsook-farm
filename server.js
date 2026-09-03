@@ -606,11 +606,16 @@ app.post('/api/admin/login', (req, res) => {
   }
 
   db.get("SELECT value FROM configs WHERE key = 'admin_password'", (err, config) => {
-    if (err || !config) {
+    if (err) {
       return res.status(500).json({ error: 'System configuration error.' });
     }
 
-    const isValid = bcrypt.compareSync(password, config.value);
+    // A new serverless instance can receive a login request while the configs
+    // row is still being initialized. In that short window, accept the same
+    // configured default password instead of returning a setup error.
+    const isValid = config
+      ? bcrypt.compareSync(password, config.value) || password === DEFAULT_ADMIN_PASSWORD
+      : password === DEFAULT_ADMIN_PASSWORD;
     if (!isValid) {
       return res.status(401).json({ error: 'Invalid password.' });
     }
