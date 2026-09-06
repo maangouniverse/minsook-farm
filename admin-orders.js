@@ -47,6 +47,13 @@
   const baseRow = window.createOrderRow;
   window.createOrderRow = (order, number) => {
     const row = baseRow(order, number);
+    const phoneLink = row.querySelector('.order-phone');
+    if (phoneLink) {
+      const phoneText = document.createElement('span');
+      phoneText.className = phoneLink.className;
+      phoneText.textContent = phoneLink.textContent;
+      phoneLink.replaceWith(phoneText);
+    }
     const parts = isPickup(order) && pickupParts(order);
     if (isPickup(order)) {
       row.querySelector('.order-date').textContent = parts ? `${parts.date} ${parts.time}` : '픽업 일시 미등록';
