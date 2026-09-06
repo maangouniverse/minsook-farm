@@ -654,6 +654,27 @@ app.get('/api/admin/orders', authenticateAdmin, (req, res) => {
   });
 });
 
+// Edit order details without changing the creation time or sending notifications.
+app.put('/api/admin/orders/:id', authenticateAdmin, (req, res) => {
+  const { name, phone, address, memo, items, total_price, status, tracking_number, courier } = req.body;
+  if (!/^\d+$/.test(req.params.id) || typeof name !== 'string' || !name.trim() ||
+      typeof phone !== 'string' || !phone.trim() || typeof address !== 'string' || !address.trim() ||
+      typeof memo !== 'string' || typeof tracking_number !== 'string' || typeof courier !== 'string' ||
+      !Number.isFinite(total_price) || total_price < 0 ||
+      !['주문', '결제', '택배사', '주문취소'].includes(status) || !Array.isArray(items) ||
+      items.some(item => !item || typeof item.name !== 'string' || !item.name.trim() ||
+        !Number.isFinite(item.quantity) || item.quantity <= 0 || typeof item.unit !== 'string')) {
+    return res.status(400).json({ error: '주문 입력값을 확인해 주세요.' });
+  }
+  db.run('UPDATE orders SET name = ?, phone = ?, address = ?, memo = ?, items = ?, total_price = ?, status = ?, tracking_number = ?, courier = ? WHERE id = ?',
+    [name.trim(), phone.trim(), address.trim(), memo, JSON.stringify(items), total_price, status, tracking_number.trim() || null, courier.trim() || null, req.params.id],
+    function (err) {
+      if (err) return res.status(500).json({ error: '주문 수정에 실패했습니다.' });
+      if (this.changes === 0) return res.status(404).json({ error: '주문을 찾을 수 없습니다.' });
+      res.json({ success: true });
+    });
+});
+
 // 5. Update Order Status (Protected)
 app.put('/api/admin/orders/:id/status', authenticateAdmin, (req, res) => {
   const { id } = req.params;

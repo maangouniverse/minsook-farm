@@ -606,6 +606,23 @@ input[type="radio"] {
   gap: 4px;
 }
 
+/* Shared table alignment: selection alone is centered. */
+.table-container table th:not(:first-child),
+.table-container table td:not(:first-child),
+.order-card-payment,
+.order-card-payment strong,
+.table-container .status-badge {
+  text-align: left !important;
+}
+.order-edit-cell { cursor: pointer; }
+.order-edit-cell:focus-visible { outline: 2px solid var(--admin-green-600); outline-offset: -2px; }
+.order-edit-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; }
+.order-edit-fields > * { min-width: 0; }
+.order-edit-fields .admin-form-group:has(textarea) { grid-column: 1 / -1; }
+.order-edit-error { color: var(--admin-danger); }
+.order-edit-items:empty { display: none; }
+@media (max-width: 480px) { .order-edit-fields { grid-template-columns: minmax(0, 1fr); } }
+
 .status-select {
   width: 100%;
   min-width: 0;
