@@ -1714,6 +1714,625 @@
         align-items: center;
       }
     }
+
+    /* Dense operations UI: square, spreadsheet-like and responsive. */
+    :root {
+      --radius-sm: 2px;
+      --radius-md: 2px;
+      --radius-lg: 3px;
+      --shadow-sm: none;
+      --shadow-md: none;
+      --shadow-lg: none;
+    }
+
+    html,
+    body,
+    .dashboard,
+    .main-content,
+    .tab-content {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      background: #f3f4f6;
+      background-image: none;
+      color: #25292d;
+      font-size: 14px;
+    }
+
+    button,
+    input,
+    select,
+    textarea,
+    .btn-action,
+    .btn-login,
+    .btn-cancel,
+    .btn-confirm,
+    .status-badge,
+    .status-select,
+    .stat-card,
+    .tab-content,
+    .table-container,
+    .filter-bar,
+    .admin-modal-content,
+    .courier-box,
+    .login-card,
+    .settings-card,
+    .product-row,
+    .image-card {
+      border-radius: 2px !important;
+      box-shadow: none !important;
+      background-image: none !important;
+    }
+
+    .header {
+      box-shadow: none;
+      border-bottom: 1px solid #293d33;
+    }
+
+    header.dashboard-header {
+      min-height: 58px;
+      padding: 8px 18px;
+      border-bottom: 2px solid #183d2a;
+      background: #24533a;
+      background-image: none;
+      box-shadow: none;
+    }
+
+    .header-left {
+      padding: 3px 8px;
+      border: 1px solid #d7dcda;
+      border-radius: 2px;
+      background: #fff;
+    }
+
+    .header-logo {
+      height: 38px;
+    }
+
+    .user-info {
+      padding: 4px 7px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 2px;
+      background: transparent;
+      color: #fff;
+    }
+
+    .sidebar {
+      box-shadow: none;
+      border-right: 1px solid #c9ced2;
+    }
+
+    .dashboard-content {
+      width: 100%;
+      max-width: none;
+      padding: 14px 16px 28px;
+      gap: 12px;
+    }
+
+    aside.dashboard-sidebar {
+      width: 190px;
+      top: 74px;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid #bfc5ca;
+      border-radius: 0;
+      background: #fff;
+      box-shadow: none;
+    }
+
+    .sidebar-menu {
+      gap: 0;
+    }
+
+    .menu-item-btn,
+    .menu-item-btn:hover,
+    .menu-item-btn.active {
+      padding: 11px 12px;
+      border: 0;
+      border-bottom: 1px solid #d8dcdf;
+      border-left: 3px solid transparent;
+      border-radius: 0;
+      background: #fff;
+      box-shadow: none;
+      color: #3c4247;
+      font-size: 0.82rem;
+    }
+
+    .menu-item-btn:hover {
+      border-left-color: #8eae9b;
+      background: #f2f4f3;
+      color: #25292d;
+    }
+
+    .menu-item-btn.active {
+      border-left-color: var(--primary);
+      background: #e9efeb;
+      color: #183f2b;
+      font-weight: 700;
+    }
+
+    main.dashboard-main {
+      min-width: 0;
+      width: calc(100% - 202px);
+    }
+
+    .tab-content.active {
+      padding: 16px;
+      border: 1px solid #c6cbd0;
+      border-radius: 0;
+      background: #fff;
+      box-shadow: none;
+      animation: none;
+    }
+
+    .nav-item,
+    .nav-item.active {
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .main-content {
+      padding: 18px 20px 28px;
+    }
+
+    .section-title {
+      margin-bottom: 14px;
+    }
+
+    .section-title h2 {
+      font-size: 1.2rem;
+      line-height: 1.35;
+    }
+
+    .stats-row {
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .stat-card {
+      min-height: 72px;
+      padding: 10px 12px;
+      border: 1px solid #cfd4d8;
+      border-top: 2px solid var(--primary);
+      background: #fff;
+    }
+
+    .stat-card .stat-value {
+      font-size: 1.2rem;
+    }
+
+    .filter-bar {
+      margin-bottom: 14px !important;
+      padding: 12px !important;
+      border: 1px solid #c7ccd1 !important;
+      background: #fff !important;
+    }
+
+    #pickupCountBadge,
+    #deliveryCountBadge {
+      border-radius: 2px !important;
+      border: 1px solid #b9c9bf;
+      background: #eef4f0 !important;
+    }
+
+    .table-container {
+      width: 100%;
+      overflow: hidden;
+      border: 1px solid #bfc5ca;
+      background: #fff;
+    }
+
+    table.orders-table {
+      display: table;
+      width: 100%;
+      min-width: 0;
+      table-layout: fixed;
+      border-collapse: collapse;
+      border-spacing: 0;
+    }
+
+    .orders-table thead {
+      display: table-header-group;
+    }
+
+    .orders-table tbody {
+      display: table-row-group;
+      width: auto;
+      padding: 0;
+      background: #fff;
+    }
+
+    .orders-table thead tr,
+    .orders-table tr.order-card-row {
+      display: table-row;
+      width: auto;
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+      background: #fff;
+      box-shadow: none;
+    }
+
+    .orders-table thead th {
+      height: 34px;
+      padding: 7px 6px;
+      border-right: 1px solid #c9ced2;
+      border-bottom: 2px solid #9ca3a9;
+      background: #eceeef;
+      color: #34383c;
+      font-size: 0.75rem;
+      font-weight: 700;
+      line-height: 1.25;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    .orders-table thead th:last-child {
+      border-right: 0;
+    }
+
+    .orders-table tr.order-card-row:hover {
+      background: #f4f8f5;
+      box-shadow: none;
+    }
+
+    .orders-table tr.order-card-row td {
+      display: table-cell;
+      min-width: 0;
+      height: 52px;
+      padding: 6px;
+      border-right: 1px solid #d9dde0;
+      border-bottom: 1px solid #cdd2d6 !important;
+      background: transparent !important;
+      color: #303438;
+      font-size: 0.75rem;
+      line-height: 1.35;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    .orders-table tr.order-card-row td:last-child {
+      border-right: 0;
+    }
+
+    .orders-table th:nth-child(1),
+    .orders-table td:nth-child(1) { width: 3%; text-align: center; }
+    .orders-table th:nth-child(2),
+    .orders-table td:nth-child(2) { width: 10%; text-align: center; }
+    .orders-table th:nth-child(3),
+    .orders-table td:nth-child(3) { width: 7%; }
+    .orders-table th:nth-child(4),
+    .orders-table td:nth-child(4) { width: 11%; }
+    .orders-table th:nth-child(5),
+    .orders-table td:nth-child(5) { width: 15%; }
+    .orders-table th:nth-child(6),
+    .orders-table td:nth-child(6) { width: 24%; }
+    .orders-table th:nth-child(7),
+    .orders-table td:nth-child(7) { width: 11%; }
+    .orders-table th:nth-child(8),
+    .orders-table td:nth-child(8) { width: 9%; text-align: right; }
+    .orders-table th:nth-child(9),
+    .orders-table td:nth-child(9) { width: 10%; text-align: center; }
+
+    .order-card-select {
+      padding-inline: 4px !important;
+    }
+
+    .order-card-meta {
+      gap: 1px;
+      background: transparent !important;
+    }
+
+    .order-sequence {
+      display: block;
+      color: #1f5138;
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .order-date {
+      display: block;
+      color: #626970;
+      font-size: 0.69rem;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .order-card-label {
+      display: none;
+    }
+
+    .order-card-customer strong,
+    .order-card-payment strong {
+      color: #25292d;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    .order-phone {
+      display: block;
+      margin: 0;
+      overflow: hidden;
+      color: #303438;
+      font-size: 0.74rem;
+      text-decoration: none;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      word-break: normal;
+      overflow-wrap: normal;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .order-card-items .ordered-items-list {
+      margin: 0;
+      padding-left: 15px;
+    }
+
+    .order-card-items .ordered-items-list li {
+      margin: 0;
+    }
+
+    .order-address {
+      display: -webkit-box;
+      overflow: hidden;
+      color: #303438;
+      font-size: 0.74rem;
+      font-weight: 500;
+      line-height: 1.4;
+      max-height: 2.8em;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .order-memo {
+      display: -webkit-box;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      border: 0;
+      color: #555c62;
+      font-size: 0.72rem;
+      line-height: 1.35;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .tracking-number {
+      display: block;
+      margin-top: 3px;
+      overflow: hidden;
+      color: #1f5138;
+      font-size: 0.69rem;
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .order-card-payment strong {
+      color: #1f5138;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .order-card-status > div {
+      display: grid;
+      width: 100%;
+      gap: 4px;
+      align-items: stretch;
+    }
+
+    .order-card-status .status-badge {
+      display: block;
+      width: 100%;
+      padding: 3px 4px;
+      border: 1px solid currentColor;
+      border-radius: 2px;
+      font-size: 0.68rem;
+      line-height: 1.2;
+      text-align: center;
+    }
+
+    .order-card-status .status-select {
+      width: 100%;
+      min-width: 0;
+      height: 26px;
+      padding: 2px 18px 2px 4px;
+      border: 1px solid #afb5ba;
+      background: #fff;
+      color: #303438;
+      font-size: 0.67rem;
+    }
+
+    .status-order { background: #eef1f3 !important; color: #454c52 !important; }
+    .status-pay { background: #edf3ee !important; color: #285039 !important; }
+    .status-delivery { background: #edf1f4 !important; color: #334d60 !important; }
+    .status-cancel { background: #f3eeee !important; color: #6b3c3c !important; }
+
+    .orders-table tbody > tr:not(.order-card-row) {
+      display: table-row;
+    }
+
+    .orders-table tbody > tr:not(.order-card-row) td {
+      display: table-cell;
+      width: auto;
+    }
+
+    @media (max-width: 720px) {
+      header.dashboard-header {
+        min-height: 50px;
+        padding: 6px 8px;
+      }
+
+      .header-logo {
+        height: 34px;
+      }
+
+      .dashboard-content {
+        padding: 8px 6px 20px;
+        gap: 8px;
+      }
+
+      aside.dashboard-sidebar {
+        width: 100%;
+        border: 1px solid #bfc5ca;
+      }
+
+      main.dashboard-main {
+        width: 100%;
+      }
+
+      .sidebar-menu {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .menu-item-btn,
+      .menu-item-btn:hover,
+      .menu-item-btn.active {
+        justify-content: center;
+        padding: 8px 4px;
+        border-bottom: 0;
+        border-left: 0;
+        border-right: 1px solid #d8dcdf;
+        font-size: 0.72rem;
+      }
+
+      .menu-item-btn.active {
+        border-bottom: 3px solid var(--primary);
+      }
+
+      .tab-content.active {
+        padding: 10px 8px;
+      }
+
+      .main-content {
+        padding: 10px 8px 20px;
+      }
+
+      .section-title h2 {
+        font-size: 1.05rem;
+      }
+
+      .table-container {
+        border: 0;
+        background: transparent;
+      }
+
+      table.orders-table,
+      .orders-table tbody {
+        display: block;
+        width: 100%;
+      }
+
+      .orders-table thead {
+        display: none;
+      }
+
+      .orders-table tbody {
+        background: transparent;
+      }
+
+      .orders-table tr.order-card-row {
+        display: block;
+        width: 100%;
+        margin: 0 0 10px;
+        border: 1px solid #aeb4b9;
+        background: #fff;
+      }
+
+      .orders-table tr.order-card-row td {
+        display: grid;
+        grid-template-columns: 88px minmax(0, 1fr);
+        width: 100% !important;
+        min-height: 34px;
+        height: auto;
+        padding: 0;
+        border-right: 0;
+        border-bottom: 1px solid #d7dbde !important;
+        text-align: left !important;
+      }
+
+      .orders-table tr.order-card-row td:last-child {
+        border-bottom: 0 !important;
+      }
+
+      .orders-table tr.order-card-row td::before {
+        content: attr(data-label);
+        display: flex;
+        min-width: 0;
+        padding: 7px 8px;
+        align-items: center;
+        border-right: 1px solid #cbd0d4;
+        background: #eceeef;
+        color: #454b50;
+        font-size: 0.71rem;
+        font-weight: 700;
+      }
+
+      .orders-table tr.order-card-row td > * {
+        min-width: 0;
+        margin: 0;
+        align-self: center;
+      }
+
+      .orders-table tr.order-card-row td:not(.order-card-status) > * {
+        margin-left: 8px;
+        margin-right: 8px;
+      }
+
+      .order-card-select {
+        grid-row: auto;
+      }
+
+      .order-card-select .order-checkbox {
+        justify-self: start;
+      }
+
+      .order-card-meta,
+      .order-card-items,
+      .order-card-delivery,
+      .order-card-payment,
+      .order-card-status {
+        grid-column: auto !important;
+        border-top: 0;
+      }
+
+      .order-card-status > div {
+        grid-template-columns: minmax(64px, 0.75fr) minmax(0, 1.25fr);
+        gap: 5px;
+        padding: 5px 8px;
+      }
+
+      .order-card-status .status-badge,
+      .order-card-status .status-select {
+        width: 100%;
+      }
+
+      .order-address,
+      .order-memo {
+        padding-top: 6px;
+        padding-bottom: 6px;
+      }
+
+      .orders-table tbody > tr:not(.order-card-row) {
+        display: table;
+        width: 100%;
+        border: 1px solid #d1d5d8;
+        background: #fff;
+      }
+
+      .orders-table tbody > tr:not(.order-card-row) td {
+        display: table-cell;
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2020,15 +2639,15 @@
               <table id="pickupOrdersTable" class="orders-table">
                 <thead>
                   <tr>
-                    <th style="width: 40px; text-align: center;"><input type="checkbox" id="checkAllPickupOrders" onchange="toggleSelectAllPickup(this)"></th>
-                    <th style="width: 70px; text-align: center;">주문번호</th>
-                    <th style="width: 100px; text-align: center;">일시</th>
-                    <th style="width: 85px;">고객명</th>
-                    <th style="width: 110px;">연락처</th>
-                    <th style="width: 170px;">구매 내역</th>
-                    <th style="width: 90px;">총 금액</th>
-                    <th style="width: 160px;">메모 및 결제방식</th>
-                    <th style="width: 115px;">상태 관리</th>
+                    <th><input type="checkbox" id="checkAllPickupOrders" onchange="toggleSelectAllPickup(this)" aria-label="직접 픽업 주문 전체 선택"></th>
+                    <th>주문번호·주문시간</th>
+                    <th>주문자</th>
+                    <th>연락처</th>
+                    <th>주문상품·수량</th>
+                    <th>픽업 정보</th>
+                    <th>요청사항</th>
+                    <th>결제금액</th>
+                    <th>주문상태</th>
                   </tr>
                 </thead>
                 <tbody id="pickupOrdersTableBody">
@@ -2050,15 +2669,15 @@
               <table id="deliveryOrdersTable" class="orders-table">
                 <thead>
                   <tr>
-                    <th style="width: 40px; text-align: center;"><input type="checkbox" id="checkAllDeliveryOrders" onchange="toggleSelectAllDelivery(this)"></th>
-                    <th style="width: 70px; text-align: center;">주문번호</th>
-                    <th style="width: 100px; text-align: center;">일시</th>
-                    <th style="width: 85px;">고객명</th>
-                    <th style="width: 110px;">연락처</th>
-                    <th style="width: 170px;">구매 내역</th>
-                    <th style="width: 90px;">총 금액</th>
-                    <th style="width: 160px;">배송 메모 및 송장번호</th>
-                    <th style="width: 115px;">상태 관리</th>
+                    <th><input type="checkbox" id="checkAllDeliveryOrders" onchange="toggleSelectAllDelivery(this)" aria-label="택배 배송 주문 전체 선택"></th>
+                    <th>주문번호·주문시간</th>
+                    <th>주문자</th>
+                    <th>연락처</th>
+                    <th>주문상품·수량</th>
+                    <th>배송지</th>
+                    <th>요청사항</th>
+                    <th>결제금액</th>
+                    <th>주문상태</th>
                   </tr>
                 </thead>
                 <tbody id="deliveryOrdersTableBody">
@@ -2474,33 +3093,33 @@
       const tr = document.createElement('tr');
       tr.className = 'order-card-row';
       tr.innerHTML = `
-        <td class="order-card-select">
+        <td class="order-card-select" data-label="선택">
           <input type="checkbox" class="order-checkbox" data-id="${order.id}" onchange="onOrderCheckboxChange()">
         </td>
-        <td class="order-card-meta">
+        <td class="order-card-meta" data-label="주문번호·시간">
           <span class="order-sequence">주문 ${displayNumber}</span>
           <span class="order-date">${dateStr} ${timeStr}</span>
         </td>
-        <td class="order-card-customer">
-          <span class="order-card-label">주문 고객</span>
+        <td class="order-card-customer" data-label="주문자">
           <strong>${escapeHtml(order.name || '-')}</strong>
+        </td>
+        <td class="order-card-phone" data-label="연락처">
           <a class="order-phone" href="tel:${escapeHtml(order.phone || '')}">${escapeHtml(order.phone || '-')}</a>
         </td>
-        <td class="order-card-items">
-          <span class="order-card-label">구매 내역</span>
+        <td class="order-card-items" data-label="주문상품·수량">
           ${itemsHtml}
         </td>
-        <td class="order-card-delivery">
-          <span class="order-card-label">${isPickup ? '픽업 일정' : '배송지 주소'}</span>
+        <td class="order-card-delivery" data-label="${isPickup ? '픽업 정보' : '배송지'}">
           <strong class="order-address">${escapeHtml(order.address || '-')}</strong>
-          <span class="order-memo">${escapeHtml(order.memo || '배송 메모 없음')}</span>
-          ${order.tracking_number ? `<div style="margin-top: 6px; padding: 2px 6px; font-size: 0.72rem; color: var(--primary); font-weight: bold; background-color: var(--primary-light); border-radius: var(--radius-sm); display: inline-block; white-space: nowrap;">송장: ${order.courier ? escapeHtml(order.courier) + ' ' : ''}${escapeHtml(order.tracking_number)}</div>` : ''}
         </td>
-        <td class="order-card-payment">
-          <span class="order-card-label">총 결제금액</span>
+        <td class="order-card-memo" data-label="요청사항">
+          <span class="order-memo">${escapeHtml(order.memo || '배송 메모 없음')}</span>
+          ${order.tracking_number ? `<span class="tracking-number">송장: ${order.courier ? escapeHtml(order.courier) + ' ' : ''}${escapeHtml(order.tracking_number)}</span>` : ''}
+        </td>
+        <td class="order-card-payment" data-label="결제금액">
           <strong>${Number(order.total_price || 0).toLocaleString()}원</strong>
         </td>
-        <td class="order-card-status">
+        <td class="order-card-status" data-label="주문상태">
           <div>
             <span class="status-badge ${statusClass}">${order.status}</span>
             <select class="status-select" onchange="updateOrderStatus(${order.id}, this.value, this)">
