@@ -11,7 +11,7 @@
   <!-- SheetJS (xlsx) for robust excel export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   
-  <style>
+  <style id="legacyAdminStyles" media="not all">
     :root {
       --primary: #15803d;
       --primary-hover: #166534;
@@ -2334,6 +2334,7 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="admin-design-system.css?v=1">
 </head>
 <body>
 
@@ -2588,10 +2589,12 @@
               <!-- 기간 필터 -->
               <div class="filter-group">
                 <label class="admin-form-label" style="margin-bottom: 6px; font-weight: 800; font-size: 0.8rem;">📅 주문 조회 기간</label>
-                <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="filter-date-controls">
+                  <button type="button" class="date-step-button" onclick="shiftFilterDate(-1)" aria-label="이전 날짜">‹</button>
                   <input type="date" id="filterStartDate" class="input-field" style="padding: 8px 10px; font-size: 0.85rem; height: 38px; flex: 1; min-width: 120px;">
-                  <span style="font-weight: bold; color: var(--text-muted); flex-shrink: 0;">~</span>
+                  <span class="filter-date-separator">~</span>
                   <input type="date" id="filterEndDate" class="input-field" style="padding: 8px 10px; font-size: 0.85rem; height: 38px; flex: 1; min-width: 120px;">
+                  <button type="button" class="date-step-button" onclick="shiftFilterDate(1)" aria-label="다음 날짜">›</button>
                 </div>
               </div>
               
@@ -2953,7 +2956,7 @@
         pickupTbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px 0;">조건에 맞는 직접 픽업 주문이 없습니다.</td></tr>`;
       } else {
         pickupTbody.innerHTML = '';
-        const sortedPickupOrders = [...pickupOrders].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        const sortedPickupOrders = [...pickupOrders].sort((a, b) => getPickupDateTime(a) - getPickupDateTime(b));
         sortedPickupOrders.forEach((order, index) => {
           pickupTbody.appendChild(createOrderRow(order, index + 1));
         });
@@ -2971,6 +2974,47 @@
       }
     }
 
+    function formatDateInputValue(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function initializeDateFilter() {
+      const today = formatDateInputValue(new Date());
+      const startInput = document.getElementById('filterStartDate');
+      const endInput = document.getElementById('filterEndDate');
+      if (startInput && !startInput.value) startInput.value = today;
+      if (endInput && !endInput.value) endInput.value = today;
+    }
+
+    function shiftFilterDate(dayOffset) {
+      const startInput = document.getElementById('filterStartDate');
+      const endInput = document.getElementById('filterEndDate');
+      const fallback = formatDateInputValue(new Date());
+      const start = new Date(`${startInput.value || fallback}T00:00:00`);
+      const end = new Date(`${endInput.value || startInput.value || fallback}T00:00:00`);
+      start.setDate(start.getDate() + dayOffset);
+      end.setDate(end.getDate() + dayOffset);
+      startInput.value = formatDateInputValue(start);
+      endInput.value = formatDateInputValue(end);
+      applyFilters();
+    }
+
+    function getPickupDateTime(order) {
+      const address = String(order.address || '');
+      const match = address.match(/날짜:\s*(\d{4})-(\d{2})-(\d{2})\s*\/\s*시간:\s*(\d{1,2}):(\d{2})/);
+      if (!match) return new Date(order.created_at);
+      return new Date(
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3]),
+        Number(match[4]),
+        Number(match[5])
+      );
+    }
+
     // Filter Logic
     function filterOrdersData(orders) {
       const startDateVal = document.getElementById('filterStartDate').value;
@@ -2982,7 +3026,8 @@
       return orders.filter(order => {
         // 1. 날짜 기간 필터
         if (startDateVal || endDateVal) {
-          const orderDate = new Date(order.created_at);
+          const isPickup = String(order.address || '').includes('[직접 픽업]');
+          const orderDate = isPickup ? getPickupDateTime(order) : new Date(order.created_at);
           orderDate.setHours(0, 0, 0, 0);
           
           if (startDateVal) {
@@ -3031,8 +3076,9 @@
     }
 
     function resetFilters() {
-      document.getElementById('filterStartDate').value = '';
-      document.getElementById('filterEndDate').value = '';
+      const today = formatDateInputValue(new Date());
+      document.getElementById('filterStartDate').value = today;
+      document.getElementById('filterEndDate').value = today;
       document.getElementById('filterSearchType').value = 'all';
       document.getElementById('filterSearchKeyword').value = '';
       document.getElementById('filterStatus').value = 'all';
@@ -4206,7 +4252,10 @@
       }
     }
 
-    window.onload = checkAuthOnLoad;
+    window.onload = () => {
+      initializeDateFilter();
+      checkAuthOnLoad();
+    };
   </script>
 </body>
 </html>
