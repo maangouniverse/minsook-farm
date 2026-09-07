@@ -3,7 +3,8 @@
 
 .order-request-lines { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; line-height: 1.5; }
 .order-request-lines > span { display: block; min-width: 0; overflow-wrap: anywhere; }
-.order-request-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.order-request-text { white-space: nowrap; overflow: hidden; text-align: left; }
+.order-request-text > span { display: inline-block; width: max-content; max-width: none; transform-origin: left center; }
 .order-request-lines .payment-on-site { color: #c21c27; font-weight: 700; }
 .order-tracking { font-weight: 700; color: #117332; }
 .order-payment-total { padding: 10px 12px; border-bottom: 2px solid #20a449; background: #f2fff5; text-align: center; font-weight: 700; }
@@ -532,9 +533,9 @@ input[type="radio"] {
 .orders-table th:nth-child(2), .orders-table td:nth-child(2) { width: 10%; text-align: center; }
 .orders-table th:nth-child(3), .orders-table td:nth-child(3) { width: 7%; }
 .orders-table th:nth-child(4), .orders-table td:nth-child(4) { width: 10.5%; }
-.orders-table th:nth-child(5), .orders-table td:nth-child(5) { width: 14%; }
+.orders-table th:nth-child(5), .orders-table td:nth-child(5) { width: 10%; }
 .orders-table th:nth-child(6), .orders-table td:nth-child(6) { width: 24%; }
-.orders-table th:nth-child(7), .orders-table td:nth-child(7) { width: 11%; }
+.orders-table th:nth-child(7), .orders-table td:nth-child(7) { width: 15%; }
 .orders-table th:nth-child(8), .orders-table td:nth-child(8) { width: 9%; text-align: center; }
 .orders-table th:nth-child(9), .orders-table td:nth-child(9) { width: 11%; text-align: center; }
 

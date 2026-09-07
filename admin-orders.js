@@ -11,6 +11,17 @@
   };
   const isPickup = order => String(order.address || '').includes('[직접 픽업]');
   const customerAddress = address => String(address || '').split(/\s*\/\s*지번:/)[0].replace(/도로명:\s*/, '').trim();
+  // Keep the complete memo on one line, including after viewport resizing.
+  const memoSizer = new ResizeObserver(entries => {
+    entries.forEach(({ target }) => {
+      const text = target.firstElementChild;
+      if (!text || !target.clientWidth) return;
+      const width = text.offsetWidth;
+      const scale = width ? Math.min(1, target.clientWidth / width) : 1;
+      const inset = Math.max(0, (target.clientWidth - width * scale) / 2);
+      text.style.transform = `translateX(${inset}px) scaleX(${scale})`;
+    });
+  });
   window.getPickupDateTime = order => {
     const parts = pickupParts(order);
     // Missing pickup schedules must never silently use the order creation time.
@@ -61,13 +72,17 @@
       ? String(order.memo || '선택 없음').replace(/^픽업 주문\s*\(/, '').replace(/\)$/, '')
       : order.memo || '선택 없음';
     memo.title = memo.textContent;
+    const memoText = document.createElement('span');
+    memoText.textContent = memo.textContent;
+    memo.replaceChildren(memoText);
+    memoSizer.observe(memo);
     if (String(order.memo || '').includes('현장결제')) memo.classList.add('payment-on-site');
     details.append(memo);
     if (!isPickup(order)) {
       const carrier = document.createElement('span'); carrier.className = 'order-carrier';
-      carrier.textContent = `택배사: ${order.courier || '-'}`;
+      carrier.textContent = order.courier || '-';
       const tracking = document.createElement('span'); tracking.className = 'order-tracking';
-      tracking.textContent = `송장번호: ${order.tracking_number || '-'}`;
+      tracking.textContent = order.tracking_number || '-';
       details.append(carrier, tracking);
     }
     memoCell.replaceChildren(details);
@@ -104,6 +119,7 @@
   };
   const baseRender = window.renderOrdersTable;
   window.renderOrdersTable = orders => {
+    memoSizer.disconnect();
     baseRender(orders);
     ['pickup', 'delivery'].forEach(kind => {
       const table = document.getElementById(`${kind}OrdersTable`);
