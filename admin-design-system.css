@@ -1,6 +1,26 @@
 /* Minsook Admin Design System v1
    Shared primitives: surface, divider, field, button, table, badge, dialog. */
 
+.order-request-lines { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; line-height: 1.5; }
+.order-request-lines > span { display: block; min-width: 0; overflow-wrap: anywhere; }
+.order-request-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.order-request-lines .payment-on-site { color: #c21c27; font-weight: 700; }
+.order-tracking { font-weight: 700; color: #117332; }
+.order-payment-total { padding: 10px 12px; border-bottom: 2px solid #20a449; background: #f2fff5; text-align: center; font-weight: 700; }
+#orderPrintPreview { position: fixed; inset: 0; z-index: 3000; overflow: auto; background: #e9ebed; }
+.print-preview-toolbar { position: sticky; top: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; padding: 12px; background: white; border-bottom: 1px solid #90979d; }
+.print-image-sheet { max-width: 1200px; margin: 16px auto; background: white; }
+.print-image-sheet img { display: block; width: 100%; height: auto; }
+@media print {
+  @page { size: A4 landscape; margin: 10mm; }
+  body:has(#orderPrintPreview:not(.hidden)) > :not(#orderPrintPreview) { display: none !important; }
+  #orderPrintPreview:not(.hidden) { position: static; overflow: visible; background: white; }
+  #orderPrintPreview .print-preview-toolbar { display: none !important; }
+  .print-image-sheet { margin: 0; width: 100%; max-width: none; break-after: page; break-inside: avoid; }
+  .print-image-sheet:last-child { break-after: auto; }
+  .print-image-sheet img { width: 100%; max-height: 190mm; object-fit: contain; object-position: top; }
+}
+
 :root {
   --admin-green-700: #16833b;
   --admin-green-600: #20a449;

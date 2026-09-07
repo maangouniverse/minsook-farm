@@ -10,6 +10,7 @@
     return date && time ? { date: date[0], time: `${time[1].padStart(2, '0')}:${time[2]}` } : null;
   };
   const isPickup = order => String(order.address || '').includes('[직접 픽업]');
+  const customerAddress = address => String(address || '').split(/\s*\/\s*지번:/)[0].replace(/도로명:\s*/, '').trim();
   window.getPickupDateTime = order => {
     const parts = pickupParts(order);
     // Missing pickup schedules must never silently use the order creation time.
@@ -47,6 +48,29 @@
   const baseRow = window.createOrderRow;
   window.createOrderRow = (order, number) => {
     const row = baseRow(order, number);
+    row.dataset.orderId = order.id;
+    row.querySelector('.order-address').textContent = isPickup(order)
+      ? String(order.address || '').replace('[직접 픽업]', '').trim()
+      : customerAddress(order.address);
+    const memoCell = row.querySelector('.order-card-memo');
+    const details = document.createElement('div');
+    details.className = 'order-request-lines';
+    const memo = document.createElement('span');
+    memo.className = 'order-request-text';
+    memo.textContent = isPickup(order)
+      ? String(order.memo || '선택 없음').replace(/^픽업 주문\s*\(/, '').replace(/\)$/, '')
+      : order.memo || '선택 없음';
+    memo.title = memo.textContent;
+    if (String(order.memo || '').includes('현장결제')) memo.classList.add('payment-on-site');
+    details.append(memo);
+    if (!isPickup(order)) {
+      const carrier = document.createElement('span'); carrier.className = 'order-carrier';
+      carrier.textContent = `택배사: ${order.courier || '-'}`;
+      const tracking = document.createElement('span'); tracking.className = 'order-tracking';
+      tracking.textContent = `송장번호: ${order.tracking_number || '-'}`;
+      details.append(carrier, tracking);
+    }
+    memoCell.replaceChildren(details);
     const phoneLink = row.querySelector('.order-phone');
     if (phoneLink) {
       const phoneText = document.createElement('span');
@@ -58,6 +82,9 @@
     if (isPickup(order)) {
       row.querySelector('.order-date').textContent = parts ? `${parts.date} ${parts.time}` : '픽업 일시 미등록';
       row.querySelector('.order-card-meta').dataset.label = '번호·픽업일시';
+      row.querySelector('option[value="택배사"]')?.remove();
+      // Preserve legacy stored status without offering parcel dispatch as a pickup action.
+      if (order.status === '택배사') row.querySelector('.status-select').selectedIndex = -1;
     }
     row.querySelectorAll('td').forEach((cell, index) => {
       if (!index) return;
@@ -74,6 +101,21 @@
       });
     });
     return row;
+  };
+  const baseRender = window.renderOrdersTable;
+  window.renderOrdersTable = orders => {
+    baseRender(orders);
+    ['pickup', 'delivery'].forEach(kind => {
+      const table = document.getElementById(`${kind}OrdersTable`);
+      let total = document.getElementById(`${kind}PaymentTotal`);
+      if (!total) {
+        total = document.createElement('div'); total.id = `${kind}PaymentTotal`;
+        total.className = 'order-payment-total'; table.closest('.table-container').after(total);
+      }
+      const visible = (window.filteredOrders || []).filter(order => isPickup(order) === (kind === 'pickup'));
+      const amount = visible.reduce((sum, order) => sum + Number(order.total_price || 0), 0);
+      total.textContent = `결제금액 합계 (${visible.length}건): ${amount.toLocaleString()}원`;
+    });
   };
   document.querySelector('#pickupOrdersTable th:nth-child(2)').textContent = '주문번호·픽업일시';
   document.querySelector('.filter-group .admin-form-label').textContent = '조회 기간 (픽업: 픽업일 / 택배: 주문일)';
@@ -133,7 +175,12 @@
     field('total_price', '총 결제금액 (원)', editing.total_price, 'number').required = true;
     const state = field('status', '주문상태', editing.status);
     const select = document.createElement('select'); select.className = 'input-field'; select.name = state.name; select.id = state.id;
-    ['주문', '결제', '택배사', '주문취소'].forEach(value => select.add(new Option(value, value, false, value === editing.status)));
+    (isPickup(editing) ? ['주문', '결제', '주문취소'] : ['주문', '결제', '택배사', '주문취소'])
+      .forEach(value => select.add(new Option(value, value, false, value === editing.status)));
+    if (isPickup(editing) && editing.status === '택배사') {
+      const legacy = new Option('기존 상태 유지', editing.status, true, true);
+      legacy.disabled = true; select.add(legacy);
+    }
     state.replaceWith(select);
     field('courier', '택배사', editing.courier);
     field('tracking_number', '송장번호', editing.tracking_number);
@@ -146,7 +193,7 @@
     const payload = {
       name: values.name, phone: values.phone,
       address: isPickup(editing) ? `[직접 픽업] 날짜: ${values.pickupDate} / 시간: ${values.pickupTime}` : values.address,
-      memo: values.memo, total_price: Number(values.total_price), status: values.status,
+      memo: values.memo, total_price: Number(values.total_price), status: values.status || editing.status,
       courier: values.courier, tracking_number: values.tracking_number,
       items: (editing.items || []).map((item, index) => ({ ...item,
         name: values[`itemName${index}`], quantity: Number(values[`itemQuantity${index}`]), unit: values[`itemUnit${index}`]

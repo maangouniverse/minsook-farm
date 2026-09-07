@@ -955,7 +955,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
 
         const addressJibunVal = orderAddressJibun ? orderAddressJibun.value.trim() : '';
         const postcodeVal = orderPostcode ? orderPostcode.value.trim() : '';
-        combinedAddress = postcodeVal ? `[${postcodeVal}] 도로명: ${addressVal} ${detailVal} / 지번: ${addressJibunVal} ${detailVal}` : `도로명: ${addressVal} ${detailVal} / 지번: ${addressJibunVal} ${detailVal}`;
+        combinedAddress = `${postcodeVal ? `[${postcodeVal}] ` : ''}${addressVal} ${detailVal}`;
 
         if (orderMemoSelect) {
           if (orderMemoSelect.value === '직접 입력하기') {
