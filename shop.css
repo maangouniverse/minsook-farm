@@ -169,3 +169,15 @@
 .shop-added[hidden] { display: none; }
 #mainProductGrid .shop-added p { color: #307623; margin: 0; }
 .shop-grade-controls :focus-visible { outline: 3px solid #75ba51; outline-offset: 2px; }
+.receipt-payment { padding: 18px; margin: 18px 0; border: 1px solid #d3e4c7; background: #f3f9ec; border-radius: 7px; }
+.receipt-payment h4 { margin: 0 0 12px; font-size: 18px; }
+.receipt-payment dl { margin: 0 0 16px; }
+.receipt-payment dl > div { display: flex; justify-content: space-between; gap: 12px; margin: 6px 0; }
+.receipt-payment dd { margin: 0; font-weight: 700; }
+.receipt-payment .receipt-amount { border-top: 1px solid #d3e4c7; padding-top: 12px; margin-top: 12px; }
+.receipt-amount dd { color: #28731c; font-size: 21px; }
+.receipt-payment label { font-size: 14px; font-weight: 650; }
+.receipt-account-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.receipt-account-row input { flex: 1 1 180px; width: 100%; min-width: 0; padding: 12px 8px; background: white; border: 1px solid #bbcfae; border-radius: 4px; font-size: 17px; color: #283e23; user-select: all; }
+.receipt-account-row button { min-height: 48px; flex: 1 1 135px; font-size: 15px; }
+#receiptCopyStatus { font-size: 14px; color: #29731e; }

@@ -2334,7 +2334,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="admin-design-system.css?v=5">
+  <link rel="stylesheet" href="admin-design-system.css?v=6">
 </head>
 <body>
 
@@ -2373,7 +2373,7 @@
         </div>
         <div class="admin-modal-footer">
           <button type="button" class="btn-cancel" id="btnDeliveryCancel">취소</button>
-          <button type="submit" class="btn-confirm">알림톡 발송 및 저장</button>
+          <button type="submit" class="btn-confirm">송장 저장</button>
         </div>
       </form>
     </div>
@@ -2506,6 +2506,7 @@
         <span class="header-title">민숙농장 대시보드</span>
       </div>
       <div class="header-right">
+        <button type="button" class="btn-action btn-action-secondary" id="btnNotificationLogs">알림톡 상태·기록</button>
         <span class="user-info" id="loggedInUserDisplay">사용자: admin (관리자)</span>
         <button type="button" class="btn-logout" onclick="handleLogout()">로그아웃</button>
       </div>
@@ -4259,5 +4260,6 @@
   <script src="html2canvas.min.js"></script>
   <script src="admin-orders.js?v=5"></script>
   <script src="admin-print.js?v=1"></script>
+  <script src="admin-notifications.js?v=1"></script>
 </body>
 </html>

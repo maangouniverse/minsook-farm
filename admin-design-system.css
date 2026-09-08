@@ -1,5 +1,19 @@
-/* Minsook Admin Design System v1
+/* Minsook Admin Design System v2
    Shared primitives: surface, divider, field, button, table, badge, dialog. */
+
+.admin-audit-dialog { width: min(760px, calc(100% - 24px)); max-height: calc(100dvh - 32px); padding: 0; border: 1px solid var(--admin-border-strong); border-radius: 3px; color: var(--admin-text); font: inherit; }
+.admin-audit-dialog::backdrop { background: rgba(25, 38, 20, .36); }
+.admin-audit-body { padding: 18px; overflow-wrap: anywhere; }
+.admin-audit-body > p { font-size: 13px; line-height: 1.7; }
+.admin-audit-readiness { padding: 12px; border-left: 3px solid var(--admin-green-600); background: var(--admin-green-100); }
+.admin-audit-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; padding: 12px 0; border-bottom: 1px solid var(--admin-border); }
+.admin-audit-row time { font-size: 12px; color: var(--admin-text-muted); }
+.admin-audit-row p { grid-column: 1 / -1; margin: 0; font-size: 13px; line-height: 1.6; }
+.admin-audit-list { margin-bottom: 18px; }
+@media (max-width: 600px) {
+  .admin-audit-row { grid-template-columns: minmax(0, 1fr); }
+  .dashboard-header .header-right { flex-wrap: wrap; justify-content: flex-end; }
+}
 
 .order-request-lines { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; line-height: 1.5; }
 .order-request-lines > span { display: block; min-width: 0; overflow-wrap: anywhere; }
@@ -23,16 +37,16 @@
 }
 
 :root {
-  --admin-green-700: #16833b;
-  --admin-green-600: #20a449;
-  --admin-green-100: #eaffef;
+  --admin-green-700: #24731b;
+  --admin-green-600: #359b24;
+  --admin-green-100: #f3f9ec;
   --admin-bg: #ffffff;
   --admin-surface: #ffffff;
-  --admin-surface-subtle: #f0f2f3;
-  --admin-border: #c7ccd0;
-  --admin-border-strong: #90979d;
-  --admin-text: #25292d;
-  --admin-text-muted: #626970;
+  --admin-surface-subtle: #f7f8f5;
+  --admin-border: #dfe5d9;
+  --admin-border-strong: #aebba5;
+  --admin-text: #253322;
+  --admin-text-muted: #66735f;
   --admin-danger: #8a3030;
   --admin-control-height: 36px;
   --admin-radius: 2px;
@@ -67,7 +81,7 @@ body {
 body {
   background: var(--admin-bg);
   color: var(--admin-text);
-  font-family: "Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Outfit", "Noto Sans KR", sans-serif;
   font-size: 14px;
   line-height: 1.45;
 }
@@ -248,9 +262,9 @@ input[type="radio"] {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  border-bottom: 2px solid #16833b;
-  background: #33b855;
-  color: #fff;
+  border-bottom: 2px solid var(--admin-green-600);
+  background: #fff;
+  color: var(--admin-text);
 }
 
 .header-left,
@@ -265,21 +279,21 @@ input[type="radio"] {
   width: auto;
   height: 38px;
   padding: 3px 7px;
-  border: 1px solid #d8ddda;
+  border: 0;
   border-radius: 0;
   background: #fff;
   object-fit: contain;
 }
 
 .header-title {
-  color: #073b19;
+  color: var(--admin-text);
   font-size: 16px;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .user-info {
-  color: #073b19;
+  color: var(--admin-text-muted);
   font-size: 13px;
 }
 
@@ -338,7 +352,7 @@ input[type="radio"] {
 }
 
 .menu-item-btn:hover {
-  background: #ecefef;
+  background: var(--admin-surface-subtle);
   color: var(--admin-text);
 }
 

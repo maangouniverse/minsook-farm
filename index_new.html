@@ -26,7 +26,7 @@
   
   <!-- Stylesheets -->
   <link rel="stylesheet" href="styles_new.css?v=4">
-  <link rel="stylesheet" href="shop.css?v=1">
+  <link rel="stylesheet" href="shop.css?v=2">
 
   <!-- Daum Postcode SDK -->
   <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
@@ -372,7 +372,7 @@
               <button type="button" id="btnSearchAddress" class="btn-secondary" style="padding: 10px 16px; white-space: nowrap; height: 48px; border-radius: var(--radius-sm); font-weight: 700; border: 1px solid var(--border-light); cursor: pointer; background: #ffffff; color: var(--primary-dark);">우편번호 찾기</button>
             </div>
             <input type="text" id="orderAddress" class="sms-input" placeholder="기본 주소 (도로명)" readonly required style="margin-bottom: 0;">
-            <input type="text" id="orderAddressDetail" class="sms-input" placeholder="상세 주소 입력 (동, 호수 등)" required style="margin-bottom: 0;">
+            <input type="text" id="orderAddressDetail" class="sms-input" placeholder="상세주소 (선택)" style="margin-bottom: 0;">
           </div>
           <select id="orderMemoSelect" class="sms-input" style="margin-bottom: 12px; height: 48px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); padding: 0 12px; background-color: #ffffff; color: var(--text-dark); font-weight: 500; cursor: pointer; width: 100%;">
             <option value="" disabled selected>배송 요청 사항을 선택해 주세요</option>
@@ -903,8 +903,8 @@
   </button>
 
   <!-- Scripts -->
-  <script src="script_new.js?v=6"></script>
-  <script src="shop.js?v=1"></script>
+  <script src="script_new.js?v=7"></script>
+  <script src="shop.js?v=2"></script>
   <script src="chatbot_new.js"></script>
 </body>
 </html>

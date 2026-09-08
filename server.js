@@ -22,6 +22,7 @@ app.get('/', (req, res) => {
 // limit above Express's small default so several selected photos can be saved.
 app.use(express.json({ limit: '100mb' }));
 app.use(cookieParser());
+app.use('/internal', (req, res) => res.sendStatus(404));
 app.use(express.static(path.join(__dirname)));
 
 app.get('/admin', (req, res) => {
@@ -439,66 +440,18 @@ app.post('/api/admin/upload', authenticateAdmin, (req, res) => {
   });
 });
 
-// 1. Submit Order (Public)
-app.post('/api/orders', (req, res) => {
-  const { name, phone, address, memo, items, totalPrice } = req.body;
-
-  if (!name || !phone || !address || !items) {
-    return res.status(400).json({ error: 'Missing required order fields.' });
+// Durable order receipt and a disabled-by-default notification audit.
+const orderService = require('./internal/order-service.cjs').createOrderService(db);
+app.post('/api/orders', async (req, res) => {
+  try { res.status(201).json(await orderService.submit(req.body)); }
+  catch (error) {
+    console.error('Order receipt failed', { code: error.code || 'ORDER_ERROR' });
+    res.status(error.status || 503).json({ error: error.status ? error.message : '접수를 확인하지 못했습니다. 동일한 주문으로 다시 확인해 주세요.' });
   }
-
-  const itemsJson = JSON.stringify(items);
-
-  db.run(
-    `INSERT INTO orders (name, phone, address, memo, items, total_price) VALUES (?, ?, ?, ?, ?, ?)`,
-    [name, phone, address, memo, itemsJson, totalPrice],
-    function (err) {
-      if (err) {
-        console.error('Order insertion failed:', err);
-        return res.status(500).json({ error: 'Database insertion error.' });
-      }
-
-      const orderId = this.lastID;
-      const itemsListStr = Array.isArray(items) ? items.map(i => `${i.name} ${i.quantity}${i.unit}`).join(', ') : '선택 상품 없음';
-      const itemsText = Array.isArray(items) ? items.map(i => ` - ${i.name}: ${i.quantity}${i.unit}\n`).join('') : ' - 선택 상품 없음\n';
-
-      const customerTemplate = `[민숙농장 직거래 주문 신청]
-■ 주문자명: ${name}
-■ 연락처: ${phone}
-■ 주문 상품 내역:
-${itemsText}■ 배송지 주소: ${address}
-■ 총 입금 예정 금액: ${totalPrice.toLocaleString()}원
-■ 입금 계좌: 농협 312-0219-8388-41 최정민(민숙농장)
-■ 배송 메모: ${memo || '선택 없음'}
-
-※ 민숙농장 카카오톡 채널로 본 주문서를 붙여넣어 전송해 주시면 입금 확인 즉시 주문 상품을 배송해 드립니다.`;
-
-      // --- [SIMULATION] KakaoTalk Notification to Customer ---
-      console.log(`\n==================================================`);
-      console.log(`[카카오톡 알림톡 전송 완료 - 발송 채널: 민숙농장]`);
-      console.log(`수신인 (고객): ${name} (${phone})`);
-      console.log(`--------------------------------------------------`);
-      console.log(customerTemplate);
-      console.log(`==================================================\n`);
-
-      // --- [SIMULATION] KakaoTalk Notification to Seller ---
-      console.log(`==================================================`);
-      console.log(`[카카오톡 알림톡 전송 완료 - 발송 채널: 시스템 알림]`);
-      console.log(`수신인 (판매자): 민숙농장 (010-8990-4046)`);
-      console.log(`--------------------------------------------------`);
-      console.log(`[민숙농장] 신규 주문 발생 안내`);
-      console.log(`새로운 직거래 주문이 접수되었습니다! 입금 정보를 확인해 주세요.\n`);
-      console.log(`■ 주문번호: #${orderId}`);
-      console.log(`■ 주문자명: ${name} (${phone})`);
-      console.log(`■ 주문내역: ${itemsListStr}`);
-      console.log(`■ 결제금액: ${totalPrice.toLocaleString()}원`);
-      console.log(`■ 배송지 주소: ${address}`);
-      console.log(`■ 배송요청사항: ${memo || '선택 없음'}`);
-      console.log(`==================================================\n`);
-
-      res.status(201).json({ success: true, orderId: orderId });
-    }
-  );
+});
+app.get('/api/admin/notifications', authenticateAdmin, async (req, res) => {
+  try { res.json(await orderService.logs()); }
+  catch { res.status(503).json({ error: '알림톡 기록을 불러오지 못했습니다.' }); }
 });
 
 // 1-1. Query Order History by Phone Number (Public)
@@ -696,27 +649,8 @@ app.put('/api/admin/orders/:id/status', authenticateAdmin, (req, res) => {
       return res.status(404).json({ error: 'Order not found.' });
     }
 
-    // --- [SIMULATION] KakaoTalk Delivery Notification ---
-    if (status === '택배사' && tracking) {
-      db.get("SELECT name, phone, courier FROM orders WHERE id = ?", [id], (err, order) => {
-        if (!err && order) {
-          console.log(`\n==================================================`);
-          console.log(`[카카오톡 알림톡 전송 완료 - 발송 채널: 민숙농장]`);
-          console.log(`수신인 (고객): ${order.name} (${order.phone})`);
-          console.log(`--------------------------------------------------`);
-          console.log(`[민숙농장] 배송 시작 및 송장 번호 안내`);
-          console.log(`안녕하세요, ${order.name} 고객님!`);
-          console.log(`주문하신 상품이 택배사에 전달되어 배송이 시작되었습니다.\n`);
-          console.log(`■ 주문번호: #${id}`);
-          console.log(`■ 택배사: ${order.courier || '우체국택배'}`);
-          console.log(`■ 송장번호: ${tracking}`);
-          console.log(`--------------------------------------------------`);
-          console.log(`배송 조회를 통해 실시간 위치를 확인해 보실 수 있습니다.`);
-          console.log(`민숙농장과 함께 건강하고 행복한 하루 보내세요!`);
-          console.log(`==================================================\n`);
-        }
-      });
-    }
+    // Shipping/status storage is unchanged. Do not log a simulated send as a
+    // real AlimTalk success while the provider integration is disabled.
 
     res.json({ success: true });
   });

@@ -8,8 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const photo = value => esc(value || 'minsook_main.jpg');
   const biteNotice = '한입오이만 주문하면 6kg까지 담을 수 있어요. 다른 오이와 함께 주문하면 모두 합쳐 9kg까지 담을 수 있어요. 이때도 한입오이는 6kg을 넘을 수 없어요.';
-  // Reuse the existing, verified account display; do not duplicate payment details.
-  const bankText = `${document.querySelector('.bank-number').textContent} ${document.querySelector('.bank-holder').textContent}`;
   const policy = `<p>무게 1kg 또는 개수 10개를 1단위로 계산하며, 모든 상품의 kg·개수 옵션을 함께 합산합니다.</p><p>합계 2단위 미만은 할인 없음, 2단위부터 <strong>전체 상품금액에 2%</strong> 할인됩니다. 이후 1단위마다 1%씩 늘어나 최대 12%까지 적용됩니다. 소수점 단위는 버림합니다.</p><p>예: 2kg 또는 20개 → 2%, 3kg 또는 30개 → 3%. 1kg + 10개도 2단위로 2% 할인됩니다.</p><p>할인 계산 후 상품금액의 10원 미만은 버림하며, 이 차액도 할인금액에 포함됩니다. 배송비는 할인 대상이 아닙니다.</p><p>택배 배송비 4,000원 · 직접픽업 배송비 0원. 제주·도서산간은 추가 배송비가 발생할 수 있습니다.</p><p>일반 오이는 총 12kg까지 주문할 수 있습니다. 개수 옵션은 1개당 0.18kg으로 환산합니다. ${biteNotice}</p>`;
   let quote = api.snapshot();
   let renderedProducts;
@@ -33,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
   orderForm.querySelector('.sms-guide').remove();
   orderForm.querySelector('.sms-desc').textContent = '장바구니 상품이 그대로 접수됩니다. 주문 접수는 결제완료가 아니며, 입금 확인 후 처리됩니다.';
   orderForm.querySelector('.sms-store-link').remove();
-  const labels = { orderName: '주문자', orderPhone: '연락처', orderPostcode: '우편번호', orderAddress: '배송지 주소', orderAddressDetail: '상세주소', orderMemoSelect: '배송메모', orderMemo: '배송메모 직접 입력' };
+  const labels = { orderName: '주문자', orderPhone: '연락처', orderPostcode: '우편번호', orderAddress: '배송지 주소', orderAddressDetail: '상세주소 (선택)', orderMemoSelect: '배송메모', orderMemo: '배송메모 직접 입력' };
   Object.entries(labels).forEach(([id, label]) => {
     const input = document.getElementById(id);
     input.setAttribute('aria-label', label);
@@ -42,6 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Keep lookup while also accepting the customer's own road or lot address.
   ['orderAddress', 'orderPostcode'].forEach(id => { const input = document.getElementById(id); input.readOnly = false; input.addEventListener('input', api.refresh); });
   document.getElementById('orderAddress').placeholder = '도로명 또는 지번 주소';
+  document.getElementById('orderAddressDetail').required = false;
+  const onsiteNote = document.createElement('p'); onsiteNote.className = 'shop-hint'; onsiteNote.textContent = '현장결제는 카드 및 고흥사랑상품권 결제가 가능합니다.';
+  document.querySelector('.payment-tabs').after(onsiteNote);
   const submit = document.getElementById('btnSendSms');
   submit.textContent = '주문 접수하기'; submit.removeAttribute('style'); submit.className = 'shop-primary shop-wide';
   const finalNotice = document.createElement('p'); finalNotice.className = 'shop-bite'; finalNotice.id = 'shopFinalBite'; finalNotice.textContent = biteNotice; submit.before(finalNotice);
@@ -143,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (quote.discountRate >= 12) progress += ' · 최대 12% 할인 적용 중입니다.';
     else { const target = Math.max(2, Math.floor(quote.totalUnits || 0) + 1); const need = Number((target - (quote.totalUnits || 0)).toFixed(2)); progress += `\n${target}% 할인까지 ${need}단위가 더 필요합니다 (${need}kg 또는 ${Number((need * 10).toFixed(2))}개 상당). ${quote.canAddMore ? '판매 단위와 최대 주문 무게 안에서 추가할 수 있습니다.' : '현재 구성은 최대 주문 무게에 도달해 더 담을 수 없습니다.'}`; }
     $('#shopProgress').textContent = progress; $('#shopCheckout').disabled = !quote.items.length; finalNotice.hidden = !quote.hasBite;
-    paymentNotice.textContent = quote.orderType === 'pickup' && quote.paymentMethod === 'onsite' ? '현장결제 주문입니다. 픽업 시 결제해 주세요.' : '계좌이체 주문입니다. 접수 후 안내된 계좌로 입금해 주세요. 실제 입금 확인 전에는 결제완료로 처리되지 않습니다.';
+    paymentNotice.textContent = quote.orderType === 'pickup' && quote.paymentMethod === 'onsite' ? '현장결제 주문입니다. 픽업 시 카드 및 고흥사랑상품권으로 결제할 수 있습니다.' : '계좌이체 주문입니다. 접수 후 안내된 계좌로 입금해 주세요. 실제 입금 확인 전에는 결제완료로 처리되지 않습니다.';
   }
   headerButton.onclick = openCart; document.getElementById('shopCartButton').onclick = openCart;
   document.getElementById('shopPolicyButton').onclick = openPolicy; $('#shopCartPolicy').onclick = openPolicy;
@@ -164,8 +165,19 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('minsook:ordered', e => {
     const completedTemplate = e.detail.template.replace('※ 홈페이지의 [주문 접수하기] 버튼으로 접수해 주세요. 주문 접수는 결제완료가 아닙니다.', `※ 홈페이지 접수완료 (주문번호 #${e.detail.orderId}). 다시 접수하지 않으셔도 됩니다. 주문 접수는 결제완료가 아닙니다.`); setStage('success');
     const success = $('#shopSuccess');
-    success.innerHTML = `<div class="shop-success-mark">✓</div><h3>주문이 접수되었습니다</h3><p>주문번호 <strong>#${esc(e.detail.orderId)}</strong></p><p>${e.detail.paymentMethod === 'onsite' ? '픽업 시 현장에서 결제해 주세요.' : '안내된 계좌로 입금해 주세요. 입금 확인 후 주문이 처리됩니다.'}</p><p class="shop-hint">현재 상태는 ‘주문’이며 결제완료가 아닙니다. 주문내역은 상단 주문조회에서 확인할 수 있습니다.</p>${e.detail.paymentMethod === 'bank' ? `<div class="shop-bank-info">${esc(bankText)}</div>` : ''}<button type="button" class="shop-primary shop-wide" id="shopSuccessClose">계속 쇼핑하기</button><button type="button" class="shop-secondary shop-wide" id="shopSuccessCopy">문자·카카오톡용 주문양식 복사</button><details class="shop-template"><summary>접수한 주문양식 보기</summary><pre>${esc(completedTemplate)}</pre></details>`;
-    success.querySelector('#shopSuccessClose').onclick = closeDrawer; success.querySelector('#shopSuccessCopy').onclick = () => copyTemplate(completedTemplate);
+    const account = e.detail.paymentAccount;
+    const bankPanel = e.detail.paymentMethod === 'bank' && account ? `<section class="receipt-payment" aria-label="입금 안내"><h4>입금 안내</h4><dl><div><dt>은행</dt><dd>${esc(account.bankName)}</dd></div><div><dt>예금주</dt><dd>${esc(account.holder)}</dd></div><div class="receipt-amount"><dt>최종 입금금액</dt><dd>${money(e.detail.totalPrice)}</dd></div></dl><label for="receiptAccount">계좌번호</label><div class="receipt-account-row"><input id="receiptAccount" aria-label="입금 계좌번호" readonly value="${esc(account.accountNumber)}"><button type="button" class="shop-primary" id="receiptCopyAccount">계좌번호 복사</button></div><p id="receiptCopyStatus" role="status" aria-live="polite"></p><p class="shop-hint">할인과 배송비가 반영된 금액입니다. 입금 확인 후 주문이 처리됩니다.</p></section>` : '';
+    success.innerHTML = `<div class="shop-success-mark">✓</div><h3>주문이 접수되었습니다</h3>${bankPanel}<p>주문번호 <strong>#${esc(e.detail.orderId)}</strong></p><p>${e.detail.paymentMethod === 'onsite' ? '픽업 시 현장에서 결제해 주세요. 카드 및 고흥사랑상품권 결제가 가능합니다.' : '안내된 계좌로 입금해 주세요. 입금 확인 후 주문이 처리됩니다.'}</p><p class="shop-hint">현재 상태는 ‘주문’이며 결제완료가 아닙니다. 주문내역은 상단 주문조회에서 확인할 수 있습니다.</p><button type="button" class="shop-primary shop-wide" id="shopSuccessClose">계속 쇼핑하기</button><button type="button" class="shop-secondary shop-wide" id="shopSuccessCopy">문자·카카오톡용 주문양식 복사</button><details class="shop-template"><summary>접수한 주문양식 보기</summary><pre>${esc(completedTemplate)}</pre></details>`;
+    if (bankPanel) {
+      const accountInput = success.querySelector('#receiptAccount');
+      accountInput.onclick = () => accountInput.select();
+      success.querySelector('#receiptCopyAccount').onclick = async () => {
+        const feedback = success.querySelector('#receiptCopyStatus');
+        try { await navigator.clipboard.writeText(account.accountNumber); feedback.textContent = '계좌번호가 복사되었습니다'; }
+        catch { feedback.textContent = '복사하지 못했습니다. 계좌번호를 직접 선택한 뒤 복사해 주세요.'; accountInput.focus(); accountInput.select(); }
+      };
+    }
+    success.querySelector('#shopSuccessClose').onclick = () => { api.startNewOrder(); closeDrawer(); }; success.querySelector('#shopSuccessCopy').onclick = () => copyTemplate(completedTemplate);
   });
   api.refresh();
 });

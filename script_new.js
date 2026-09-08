@@ -3,6 +3,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Global order final price state
   let currentFinalTotal = 0;
+  let submissionAttempt = null;
+  try { submissionAttempt = JSON.parse(localStorage.getItem('minsook_order_attempt') || 'null'); } catch (_) {}
 
   // Order Type & Payment Method States
   let orderType = 'delivery'; // 'delivery' or 'pickup'
@@ -42,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Reset required properties
       if (orderPostcode) orderPostcode.required = true;
       if (orderAddress) orderAddress.required = true;
-      if (orderAddressDetail) orderAddressDetail.required = true;
+      if (orderAddressDetail) orderAddressDetail.required = false;
       if (pickupDate) pickupDate.required = false;
       if (pickupTime) pickupTime.required = false;
 
@@ -181,6 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentQuote = {};
   // The catalog, cart and checkout share this existing calculator and order state.
   window.MinsookOrder = {
+    startNewOrder() {
+      submissionAttempt = null;
+      try { localStorage.removeItem('minsook_order_attempt'); } catch (_) {}
+    },
     snapshot: () => ({ ...currentQuote, products: shopProducts, canAddMore: Object.entries(priceConfig).some(([key, config]) => isValidState({ ...orderState, [key]: (orderState[key] || 0) + config.step })), items: Object.entries(orderState).filter(([, qty]) => qty > 0).map(([key, quantity]) => ({ key, quantity, ...priceConfig[key] })) }),
     setQuantity(key, quantity) {
       const config = priceConfig[key];
@@ -969,14 +975,14 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
       if (orderType === 'delivery') {
         const addressVal = orderAddress.value.trim();
         const detailVal = orderAddressDetail.value.trim();
-        if (!addressVal || !detailVal) {
-          showToast('배송지 주소(상세주소 포함)를 모두 입력해주세요!');
+        if (!addressVal) {
+          showToast('기본 배송주소를 입력해주세요! 상세주소는 선택사항입니다.');
           return;
         }
 
         const addressJibunVal = orderAddressJibun ? orderAddressJibun.value.trim() : '';
         const postcodeVal = orderPostcode ? orderPostcode.value.trim() : '';
-        combinedAddress = `${postcodeVal ? `[${postcodeVal}] ` : ''}${addressVal} ${detailVal}`;
+        combinedAddress = [postcodeVal ? `[${postcodeVal}]` : '', addressVal, detailVal].filter(Boolean).join(' ');
 
         if (orderMemoSelect) {
           if (orderMemoSelect.value === '직접 입력하기') {
@@ -1029,13 +1035,19 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
       btnSendSms.textContent = '주문 접수 중…';
       document.dispatchEvent(new CustomEvent('minsook:submitting', { detail: true }));
       try {
+        const payload = { name: nameVal, phone: phoneVal, address: combinedAddress, memo: memoVal, items: orderedItems, totalPrice: currentFinalTotal };
+        if (orderType === 'delivery') Object.assign(payload, { basicAddress: orderAddress.value.trim(), detailAddress: orderAddressDetail.value.trim(), postcode: orderPostcode.value.trim() });
+        const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(payload)));
+        const fingerprint = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+        if (!submissionAttempt || submissionAttempt.fingerprint !== fingerprint) submissionAttempt = { fingerprint, key: crypto.randomUUID() };
+        try { localStorage.setItem('minsook_order_attempt', JSON.stringify(submissionAttempt)); } catch (_) {}
         const response = await fetch('/api/orders', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: nameVal, phone: phoneVal, address: combinedAddress, memo: memoVal, items: orderedItems, totalPrice: currentFinalTotal })
+            body: JSON.stringify({ ...payload, requestKey: submissionAttempt.key })
         });
         const result = await response.json();
         if (!response.ok || !result.success) throw new Error('Order rejected');
-        document.dispatchEvent(new CustomEvent('minsook:ordered', { detail: { orderId: result.orderId, template: document.getElementById('smsPreview').textContent, paymentMethod: orderType === 'delivery' ? 'bank' : paymentMethod } }));
+        document.dispatchEvent(new CustomEvent('minsook:ordered', { detail: { orderId: result.orderId, totalPrice: result.totalPrice, paymentAccount: result.paymentAccount, template: document.getElementById('smsPreview').textContent, paymentMethod: result.paymentMethod } }));
         for (const key in orderState) delete orderState[key];
         calculateOrder();
       } catch (error) {
