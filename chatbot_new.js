@@ -240,7 +240,7 @@ function appendMessage(text, role, saveToHistory = true) {
 // Trigger smart actions based on button click
 function triggerAction(action) {
   if (action === 'action:scroll-to-calculator') {
-    const calc = document.getElementById('order');
+    const calc = document.getElementById('products') || document.getElementById('order');
     if (calc) {
       calc.scrollIntoView({ behavior: 'smooth' });
       // highlight calc container
@@ -249,6 +249,10 @@ function triggerAction(action) {
       calc.classList.add('bounce-active');
     }
   } else if (action === 'action:scroll-to-form') {
+    if (window.MinsookOrder?.openCart) {
+      window.MinsookOrder.openCart();
+      return;
+    }
     const form = document.getElementById('orderForm');
     if (form) {
       form.scrollIntoView({ behavior: 'smooth' });

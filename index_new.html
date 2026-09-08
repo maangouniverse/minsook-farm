@@ -26,6 +26,7 @@
   
   <!-- Stylesheets -->
   <link rel="stylesheet" href="styles_new.css?v=4">
+  <link rel="stylesheet" href="shop.css?v=1">
 
   <!-- Daum Postcode SDK -->
   <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
@@ -142,12 +143,14 @@
   </section>
   <!-- Products Section -->
   <section id="products" class="products">
+    <span id="order" class="shop-order-anchor" aria-hidden="true"></span>
     <div class="section-title-wrapper">
       <span class="section-subtitle">상품 등급 안내</span>
       <h2 class="section-title">용도에 맞게 <span>골라보세요</span></h2>
       <p class="section-desc product-selection-desc"><span class="mobile-copy-line">좋은 오이는 수확에서 끝나지 않습니다.</span><br><span class="mobile-copy-line">민숙농장은 판매자인 동시에</span><br class="mobile-only"><span class="mobile-copy-line">택배를 받아보는 소비자의 마음으로,</span><br class="mobile-only"><span class="mobile-copy-line">선별부터 포장까지 모든 과정을 꼼꼼하게 살펴</span><br class="mobile-only"><span class="mobile-copy-line">가장 만족스러운 상태로 보내드립니다.</span></p>
     </div>
 
+    <div id="farmShop" aria-label="상품 주문 안내"><p>판매 옵션을 불러오는 중입니다…</p></div>
     <div class="product-grid" id="mainProductGrid">
       <!-- 한입오이 -->
       <div class="product-card load-animate fade-in-up delay-1">
@@ -245,13 +248,7 @@
 
 
   <!-- Calculator & Order Form Section -->
-  <section id="order" class="order-section">
-    <div class="section-title-wrapper">
-      <span class="section-subtitle">간편 주문 도우미</span>
-      <h2 class="section-title">실시간 수량 계산 및 <span>주문 생성</span></h2>
-      <p class="section-desc">원하는 오이 등급을 선택하여 주문서에 담고, 금액 확인 후 카톡으로 전송해보세요</p>
-    </div>
-
+  <section class="legacy-order" hidden>
     <div class="order-container">
       <!-- Left Panel: Calculator (Dropdown Style) -->
       <div class="calc-panel load-animate fade-in-up delay-2">
@@ -263,7 +260,7 @@
             <span class="notice-icon">🎁</span>
             <p class="notice-text">
               <strong>주문 수량이 늘어날수록 할인율이 커집니다!</strong><br>
-              (최초 1kg 또는 10개 주문 시 할인 없음, 첫 추가 1kg 또는 10개는 2% 할인, 그 이후부터 1%씩 추가할인 적용, 최대 12% 할인)
+              (1kg 또는 10개를 1단위로 합산해 2단위부터 전체 상품금액에 2% 할인, 이후 1단위마다 1%씩 증가, 최대 12% 할인)
             </p>
           </div>
           <div class="notice-item limit-notice">
@@ -906,7 +903,8 @@
   </button>
 
   <!-- Scripts -->
-  <script src="script_new.js?v=5"></script>
+  <script src="script_new.js?v=6"></script>
+  <script src="shop.js?v=1"></script>
   <script src="chatbot_new.js"></script>
 </body>
 </html>

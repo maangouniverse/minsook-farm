@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Scroll Active Highlight & Header Class ---
   const header = document.querySelector('header');
-  const sections = document.querySelectorAll('section, .hero');
+  const sections = document.querySelectorAll('section:not([hidden]), .hero');
   const navLinks = document.querySelectorAll('nav a');
 
   window.addEventListener('scroll', () => {
@@ -177,6 +177,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // format: { grade_key: quantity }
   // e.g., { special_kg: 2, bite_kg: 1.5, special_qty: 10 }
   const orderState = {};
+  let shopProducts = [];
+  let currentQuote = {};
+  // The catalog, cart and checkout share this existing calculator and order state.
+  window.MinsookOrder = {
+    snapshot: () => ({ ...currentQuote, products: shopProducts, canAddMore: Object.entries(priceConfig).some(([key, config]) => isValidState({ ...orderState, [key]: (orderState[key] || 0) + config.step })), items: Object.entries(orderState).filter(([, qty]) => qty > 0).map(([key, quantity]) => ({ key, quantity, ...priceConfig[key] })) }),
+    setQuantity(key, quantity) {
+      const config = priceConfig[key];
+      if (!config || !Number.isFinite(quantity) || quantity < 0) return false;
+      const step = Number(config.step);
+      if (!(step > 0) || Math.abs(quantity / step - Math.round(quantity / step)) > 0.00001) return false;
+      const next = { ...orderState, [key]: quantity };
+      if (!isValidState(next)) return false;
+      if (quantity === 0) delete orderState[key]; else orderState[key] = Math.round(quantity * 100) / 100;
+      calculateOrder();
+      return true;
+    },
+    refresh: () => calculateOrder()
+  };
 
   const productSelect = document.getElementById('productSelect');
   const btnAddProduct = document.getElementById('btnAddProduct');
@@ -532,6 +550,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateSMSPreview(totalOriginalPrice, discountRate, discountAmount, shipping, finalTotal);
+    currentQuote = { subtotal: totalOriginalPrice, discountRate, discountAmount, shipping, total: finalTotal, totalUnits, totalWeight, maxLimit, hasBite: A > 0, orderType, paymentMethod };
+    document.dispatchEvent(new CustomEvent('minsook:cartchange', { detail: window.MinsookOrder.snapshot() }));
   }
 
   function setBarColor(barElement, percentage) {
@@ -619,7 +639,7 @@ ${itemsText}■ 배송지 주소: ${address}
 ■ 입금 계좌: 농협 312-0219-8388-41 최정민(민숙농장)
 ■ 배송 메모: ${memo}
 
-※ [카카오톡으로 주문서 전송하기] 버튼을 누르시면 주문이 접수됩니다.`;
+※ 홈페이지의 [주문 접수하기] 버튼으로 접수해 주세요. 주문 접수는 결제완료가 아닙니다.`;
     } else {
       const pickupDateVal = (pickupDate && pickupDate.value) ? pickupDate.value : '날짜 선택 안됨';
       const pickupTimeVal = (pickupTime && pickupTime.value) ? pickupTime.value : '시간 선택 안됨';
@@ -636,7 +656,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
 ■ 총 결제금액: ${finalTotal.toLocaleString()}원
 ■ 결제 방식: ${paymentText}
 
-※ [카카오톡으로 주문서 전송하기] 버튼을 누르시면 주문이 접수됩니다.`;
+※ 홈페이지의 [주문 접수하기] 버튼으로 접수해 주세요. 주문 접수는 결제완료가 아닙니다.`;
     }
 
     previewBox.textContent = template;
@@ -932,7 +952,8 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
   // --- KakaoTalk Action / Copy Button click ---
   const btnSendSms = document.getElementById('btnSendSms');
   if (btnSendSms) {
-    btnSendSms.addEventListener('click', () => {
+    btnSendSms.addEventListener('click', async () => {
+      if (btnSendSms.disabled) return;
       // 1. Simple Form Validation
       const nameVal = orderName.value.trim();
       const phoneVal = orderPhone.value.trim();
@@ -997,63 +1018,34 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
         showToast('주문할 상품 수량을 최소 1개 이상 설정해 주세요!');
         return;
       }
+      if (!isValidState(orderState)) {
+        showToast('주문 가능 무게를 초과했습니다. 장바구니 수량을 확인해 주세요.');
+        return;
+      }
 
-      // Clipboard Copy logic
-      const previewBox = document.getElementById('smsPreview');
-      const templateText = previewBox ? previewBox.textContent : '';
-
-      navigator.clipboard.writeText(templateText).then(() => {
-        showToast('📋 주문서가 클립보드에 자동 복사되었습니다!');
-        
-        const submitOrderData = () => {
-          if (window.location.protocol === 'file:') {
-            const localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
-            const newOrder = {
-              id: localOrders.length + 1,
-              name: nameVal,
-              phone: phoneVal,
-              address: combinedAddress,
-              memo: memoVal,
-              items: orderedItems,
-              total_price: currentFinalTotal,
-              status: '주문',
-              created_at: new Date().toISOString()
-            };
-            localOrders.push(newOrder);
-            localStorage.setItem('minsook_orders', JSON.stringify(localOrders));
-            
-            setTimeout(openKakaoModal, 500);
-            return;
-          }
-
-          fetch('/api/orders', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              name: nameVal,
-              phone: phoneVal,
-              address: combinedAddress,
-              memo: memoVal,
-              items: orderedItems,
-              totalPrice: currentFinalTotal
-            })
-          }).then(res => {
-            if (!res.ok) console.error('서버 주문 저장 실패');
-          }).catch(err => {
-            console.error('주문 데이터 전송 오류:', err);
-          }).finally(() => {
-            setTimeout(openKakaoModal, 500);
-          });
-        };
-
-        submitOrderData();
-      }).catch(err => {
-        console.error('클립보드 복사 실패:', err);
-        showToast('클립보드 복사에 실패했습니다. 주문서를 직접 복사해 주세요.');
-        setTimeout(openKakaoModal, 500);
-      });
+      // Saving an order must not depend on clipboard permissions or KakaoTalk.
+      calculateOrder();
+      btnSendSms.disabled = true;
+      btnSendSms.textContent = '주문 접수 중…';
+      document.dispatchEvent(new CustomEvent('minsook:submitting', { detail: true }));
+      try {
+        const response = await fetch('/api/orders', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: nameVal, phone: phoneVal, address: combinedAddress, memo: memoVal, items: orderedItems, totalPrice: currentFinalTotal })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error('Order rejected');
+        document.dispatchEvent(new CustomEvent('minsook:ordered', { detail: { orderId: result.orderId, template: document.getElementById('smsPreview').textContent, paymentMethod: orderType === 'delivery' ? 'bank' : paymentMethod } }));
+        for (const key in orderState) delete orderState[key];
+        calculateOrder();
+      } catch (error) {
+        showToast('접수 완료를 확인하지 못했습니다. 중복 주문을 피하려면 상단 주문조회에서 먼저 확인해 주세요.');
+        document.dispatchEvent(new CustomEvent('minsook:ordererror'));
+      } finally {
+        document.dispatchEvent(new CustomEvent('minsook:submitting', { detail: false }));
+        btnSendSms.disabled = false;
+        btnSendSms.textContent = '주문 접수하기';
+      }
     });
   }
 
@@ -1147,7 +1139,8 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
           : isQty ? `${step}개당 ${price.toLocaleString()}원` : `1kg당 ${price.toLocaleString()}원`;
         priceConfig[key] = {
           name: `${p.name}${units.length > 1 ? ` (${isQty ? '개수' : '무게'})` : ''}`,
-          desc, price, isBite, isQty, unit, step,
+          desc, price: Number(price), isBite, isQty, unit, step: Number(step),
+          productId: p.id, images: getProductImages(p.image_url), description: p.description || '',
           badgeClass: p.badge_class || 'badge-good', badgeText: p.badge_text || ''
         };
       });
@@ -1155,6 +1148,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
 
     renderProductSelectOptions(products);
     renderMainPageProductCards(products);
+    shopProducts = products.map(p => ({ ...p, images: getProductImages(p.image_url), options: getProductUnits(p).map(unit => ({ key: `${p.id}:${unit}`, ...priceConfig[`${p.id}:${unit}`] })) }));
   }
 
   function renderProductSelectOptions(products) {
@@ -1231,6 +1225,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
         badgeText: biteProduct.badge_text || '농장 시그니처',
         badgeClass: biteProduct.badge_class || 'badge-signature',
         title: biteProduct.name,
+        productIds: [biteProduct.id],
         imageUrl: biteProduct.image_url,
         desc: biteProduct.description || '작고 귀여운 사이즈로 등산이나 나들이 갈 때 가방에 쏙 들어갑니다. 껍질째 그대로 한 입에 아삭아삭 씹어 먹기 편리한 민숙농장의 인기 시그니처입니다.',
         priceHTML: `
@@ -1258,6 +1253,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
         badgeText: pRef.badge_text || '최상급 선물용',
         badgeClass: pRef.badge_class || 'badge-special',
         title: '특품 오이',
+        productIds: [specialKg, specialQty].filter(Boolean).map(p => p.id),
         imageUrl: specialKg ? specialKg.image_url : (specialQty ? specialQty.image_url : ''),
         desc: specialKg ? specialKg.description : (specialQty ? specialQty.description : ''),
         priceHTML: priceHTML
@@ -1282,6 +1278,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
         badgeText: pRef.badge_text || '가정용 추천',
         badgeClass: pRef.badge_class || 'badge-good',
         title: '상품 오이',
+        productIds: [goodKg, goodQty].filter(Boolean).map(p => p.id),
         imageUrl: goodKg ? goodKg.image_url : (goodQty ? goodQty.image_url : ''),
         desc: goodKg ? goodKg.description : (goodQty ? goodQty.description : ''),
         priceHTML: priceHTML
@@ -1294,6 +1291,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
         badgeText: valueProduct.badge_text || '실속형 대용량',
         badgeClass: valueProduct.badge_class || 'badge-value',
         title: valueProduct.name,
+        productIds: [valueProduct.id],
         imageUrl: valueProduct.image_url,
         desc: valueProduct.description || '',
         priceHTML: `<span class="price-val">${valueProduct.price.toLocaleString()}</span>원 <span class="price-unit-inline">(1${valueProduct.unit}당)</span>`
@@ -1330,6 +1328,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
         badgeText: p.badge_text,
         badgeClass: p.badge_class,
         title: p.name,
+        productIds: [p.id],
         imageUrl: p.image_url,
         desc: p.description || '',
         priceHTML: priceHTML
@@ -1367,6 +1366,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
     cardsToRender.forEach((card, idx) => {
       const cardEl = document.createElement('div');
       cardEl.className = `product-card load-animate fade-in-up delay-${(idx % 4) + 1}`;
+      cardEl.dataset.productIds = card.productIds.join(',');
       
       const badgeHTML = card.badgeText ? `<span class="product-badge ${card.badgeClass || 'badge-good'}">${escapeHtml(card.badgeText)}</span>` : '';
       
