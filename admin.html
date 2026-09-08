@@ -2435,8 +2435,8 @@
           <label class="admin-form-label" for="modalProductImageFile">상품 사진 (개수 제한 없이 다중 추가 가능)</label>
           <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
             <input type="file" id="modalProductImageFile" accept="image/*" style="display: none;" multiple onchange="handleImageUpload(this)">
-            <button type="button" class="btn-action btn-action-secondary" onclick="document.getElementById('modalProductImageFile').click()" style="padding: 10px 16px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
-              <span>📁</span> 컴퓨터에서 찾기 (복수 선택 가능)
+            <button type="button" class="btn-action btn-action-secondary" onclick="delete document.getElementById('modalProductImageFile').dataset.replaceIndex; document.getElementById('modalProductImageFile').multiple = true; document.getElementById('modalProductImageFile').click()" style="padding: 10px 16px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+              <span>📁</span> 내 컴퓨터에서 사진 추가
             </button>
             <span id="modalProductImageName" style="font-size: 0.85rem; color: var(--text-muted); word-break: break-all;">선택된 파일 없음</span>
           </div>
@@ -2472,6 +2472,8 @@
           <textarea id="modalProductDescription" class="input-field" rows="3" placeholder="상품에 대한 상세 설명을 입력하세요" style="resize: vertical; font-family: inherit;"></textarea>
         </div>
 
+        <p id="productSaveFeedback" role="status" aria-live="polite" style="white-space: pre-wrap; overflow-wrap: anywhere;"></p>
+        <p style="font-size: 13px;">사진 추가는 기존 사진을 유지합니다. 아래 사진의 ‘교체’·‘삭제’는 저장하기를 눌러야 반영됩니다.</p>
         <div class="admin-modal-footer" style="margin-top: 24px;">
           <button type="button" class="btn-cancel" onclick="closeProductModal()">취소</button>
           <button type="submit" class="btn-confirm">저장하기</button>
@@ -3826,10 +3828,14 @@
         item.style.height = '80px';
         
         item.innerHTML = `
-          <img src="${img}" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+          <img src="${escapeHtml(img)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
           <button type="button" onclick="deleteUploadedImage(${idx})" style="position: absolute; top: -5px; right: -5px; width: 18px; height: 18px; border-radius: 50%; background: #ef4444; color: white; border: none; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;" title="이미지 삭제">&times;</button>
         `;
         list.appendChild(item);
+        item.style.marginBottom = '34px';
+        const replace = document.createElement('button'); replace.type = 'button'; replace.className = 'btn-action'; replace.textContent = '교체'; replace.setAttribute('aria-label', `사진 ${idx + 1} 교체`); replace.style.cssText = 'width:100%;min-height:30px;padding:3px!important';
+        replace.onclick = () => { const picker = document.getElementById('modalProductImageFile'); picker.dataset.replaceIndex = idx; picker.multiple = false; picker.click(); };
+        item.appendChild(replace);
       });
     }
 
@@ -3848,6 +3854,8 @@
 
     // Modal Control
     function openProductModal(id = null) {
+      if (window.MinsookImages?.busy) return;
+      document.getElementById('productSaveFeedback').textContent = '';
       const modal = document.getElementById('productModal');
       const form = document.getElementById('productForm');
       const title = document.getElementById('productModalTitle');
@@ -3886,9 +3894,9 @@
           }
           
           if (p.image_url) {
-            const images = parseProductImages(p.image_url);
-            uploadedImages = images.filter(image => image.startsWith('data:'));
-            imageUrlInputs = images.filter(image => !image.startsWith('data:'));
+            const images = MinsookGallery.images(p);
+            uploadedImages = images;
+            imageUrlInputs = [];
             if (imageUrlInputs.length === 0) imageUrlInputs = [''];
             renderImageUrlInputs();
             renderImagePreviews();
@@ -3916,6 +3924,7 @@
     }
 
     function closeProductModal() {
+      if (window.MinsookImages?.busy) return;
       document.getElementById('productModal').classList.add('hidden');
     }
 
@@ -3954,39 +3963,27 @@
 
     // Image Upload Handler (Supports multiple files and appends to uploadedImages array)
     async function handleImageUpload(input) {
-      const files = input.files;
+      const files = Array.from(input.files || []);
       if (!files || files.length === 0) return;
-
-      const nameLabel = document.getElementById('modalProductImageName');
-      nameLabel.textContent = `사진 ${files.length}개 업로드 중...`;
-
-      let processedCount = 0;
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const reader = new FileReader();
-        
-        await new Promise((resolve) => {
-          reader.onload = function(e) {
-            const base64Data = e.target.result;
-            uploadedImages.push(base64Data);
-            processedCount++;
-            resolve();
-          };
-          reader.onerror = function(err) {
-            console.error('FileReader error:', err);
-            resolve();
-          };
-          reader.readAsDataURL(file);
-        });
-      }
-
-      renderImagePreviews();
-      showToast(`✅ 사진 ${processedCount}개가 정상적으로 준비되었습니다. 저장하기를 누르시면 완료됩니다.`);
+      if (MinsookImages.busy) return;
+      const feedback = document.getElementById('productSaveFeedback');
+      MinsookImages.busy = true;
+      const controls = [...document.querySelectorAll('#productForm button, #productForm input, #productForm select, #productForm textarea')];
+      const states = controls.map(el => el.disabled); controls.forEach(el => el.disabled = true);
+      feedback.textContent = '사진을 읽고 크기를 조절하고 있습니다. 잠시 기다려 주세요.';
+      try {
+        const prepared = []; for (const file of files) prepared.push(await MinsookImages.prepare(file));
+        if (input.dataset.replaceIndex !== undefined) {
+          const images = getAllProductImages(); images.splice(Number(input.dataset.replaceIndex), 1, prepared[0]); uploadedImages = images; imageUrlInputs = ['']; renderImageUrlInputs();
+        } else uploadedImages.push(...prepared);
+        renderImagePreviews(); feedback.textContent = `사진 ${prepared.length}개 준비 완료. 저장하기를 눌러야 반영됩니다.`;
+      } catch (error) { feedback.textContent = error.message; }
+      finally { MinsookImages.busy = false; controls.forEach((el,i) => el.disabled = states[i]); input.value = ''; delete input.dataset.replaceIndex; }
     }
 
     async function handleSaveProduct(e) {
       e.preventDefault();
+      if (MinsookImages.busy) return;
       
       const id = document.getElementById('modalProductId').value;
       const name = document.getElementById('modalProductName').value.trim();
@@ -4043,7 +4040,12 @@
         return;
       }
 
+      const saveControls = [...document.querySelectorAll('#productForm button, #productForm input, #productForm select, #productForm textarea')];
+      const saveControlStates = saveControls.map(control => control.disabled);
       try {
+        MinsookImages.busy = true;
+        saveControls.forEach(control => control.disabled = true);
+        payload.image_url = JSON.stringify(await MinsookImages.persist(getAllProductImages()));
         const url = id ? `/api/admin/products/${id}` : '/api/admin/products';
         const method = id ? 'PUT' : 'POST';
         
@@ -4053,17 +4055,25 @@
           body: JSON.stringify(payload)
         });
 
-        if (res.ok) {
+        let data; try { data = await res.json(); } catch { data = {}; }
+        if (res.ok && data.success) {
+          const check = await fetch('/api/products', { cache: 'no-store' });
+          if (!check.ok) throw new Error('저장 요청 후 재조회에 실패했습니다. 다시 열어 저장 결과를 확인해 주세요.');
+          const saved = (await check.json()).products.find(p => String(p.id) === String(id || data.productId));
+          if (!saved || saved.image_url !== payload.image_url) throw new Error('서버에서 사진 저장 결과를 확인하지 못했습니다. 다시 조회해 주세요.');
+          MinsookImages.busy = false;
           showToast(id ? '📦 품목이 수정되었습니다!' : '📦 새 품목이 추가되었습니다!');
           closeProductModal();
           loadProducts();
         } else {
-          const data = await res.json();
-          showToast(`❌ 저장 실패: ${data.error || '품목 정보를 저장할 수 없습니다.'}`);
+          throw new Error(data.error || (res.status === 413 ? '사진 용량이 너무 큽니다.' : '품목 정보를 저장할 수 없습니다.'));
         }
       } catch (err) {
         console.error('Error saving product:', err);
-        showToast('❌ 서버 통신 오류가 발생했습니다.');
+        document.getElementById('productSaveFeedback').textContent = `저장 확인 실패: ${err.message}`;
+      } finally {
+        MinsookImages.busy = false;
+        saveControls.forEach((control, index) => control.disabled = saveControlStates[index]);
       }
     }
 
@@ -4261,5 +4271,9 @@
   <script src="admin-orders.js?v=5"></script>
   <script src="admin-print.js?v=1"></script>
   <script src="admin-notifications.js?v=1"></script>
+  <script src="product-gallery.js?v=1"></script>
+  <script src="admin-product-images.js?v=1"></script>
+  <script src="shipping-format.js?v=1"></script>
+  <script src="shipping-export.js?v=1"></script>
 </body>
 </html>

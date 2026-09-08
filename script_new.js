@@ -1152,7 +1152,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
         priceConfig[key] = {
           name: `${p.name}${units.length > 1 ? ` (${isQty ? '개수' : '무게'})` : ''}`,
           desc, price: Number(price), isBite, isQty, unit, step: Number(step),
-          productId: p.id, images: getProductImages(p.image_url), description: p.description || '',
+          productId: p.id, images: window.MinsookGallery ? window.MinsookGallery.images(p) : getProductImages(p.image_url), description: p.description || '',
           badgeClass: p.badge_class || 'badge-good', badgeText: p.badge_text || ''
         };
       });
@@ -1160,7 +1160,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
 
     renderProductSelectOptions(products);
     renderMainPageProductCards(products);
-    shopProducts = products.map(p => ({ ...p, images: getProductImages(p.image_url), options: getProductUnits(p).map(unit => ({ key: `${p.id}:${unit}`, ...priceConfig[`${p.id}:${unit}`] })) }));
+    shopProducts = products.map(p => ({ ...p, images: window.MinsookGallery ? window.MinsookGallery.images(p) : getProductImages(p.image_url), options: getProductUnits(p).map(unit => ({ key: `${p.id}:${unit}`, ...priceConfig[`${p.id}:${unit}`] })) }));
   }
 
   function renderProductSelectOptions(products) {
@@ -1384,7 +1384,13 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
       
       const title = card.title || '';
       let images;
-      if (title.includes('한입')) {
+      // Explicit admin image lists (including an empty list) take precedence.
+      // Preserve the original galleries only for untouched legacy defaults.
+      const configured = products.filter(p => card.productIds.includes(p.id)).filter(p => String(p.image_url || '').trim().startsWith('[') || !['', 'minsook_main.jpg', 'minsook_detail_1.jpg', 'minsook_detail_2.jpg'].includes(p.image_url));
+      if (configured.length) {
+        images = [...new Set(configured.flatMap(p => getProductImages(p.image_url)))];
+        if (!images.length) images = ['민숙농장로고가로형-배경없음.png'];
+      } else if (title.includes('한입')) {
         images = sliderImagesMap['한입'];
       } else if (title.includes('특품')) {
         images = sliderImagesMap['특품'];
@@ -1403,7 +1409,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
         let slidesHTML = '';
         let dotsHTML = '';
         images.forEach((img, imgIdx) => {
-          slidesHTML += `<img src="${img}" alt="${escapeHtml(card.title)} ${imgIdx + 1}" class="product-slide${imgIdx === 0 ? ' active' : ''}">`;
+          slidesHTML += `<img src="${escapeHtml(img)}" alt="${escapeHtml(card.title)} ${imgIdx + 1}" class="product-slide${imgIdx === 0 ? ' active' : ''}">`;
           dotsHTML += `<span class="dot${imgIdx === 0 ? ' active' : ''}"></span>`;
         });
         imageAreaHTML = `
@@ -1417,7 +1423,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
           </div>
         `;
       } else {
-        imageAreaHTML = `<img src="${images[0]}" alt="${escapeHtml(card.title)}" class="product-card-img">`;
+        imageAreaHTML = `<img src="${escapeHtml(images[0])}" alt="${escapeHtml(card.title)}" class="product-card-img">`;
       }
       
       cardEl.innerHTML = `

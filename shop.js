@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const money = value => `${Number(value || 0).toLocaleString('ko-KR')}원`;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const photo = value => esc(value || 'minsook_main.jpg');
-  const biteNotice = '한입오이만 주문하면 6kg까지 담을 수 있어요. 다른 오이와 함께 주문하면 모두 합쳐 9kg까지 담을 수 있어요. 이때도 한입오이는 6kg을 넘을 수 없어요.';
-  const policy = `<p>무게 1kg 또는 개수 10개를 1단위로 계산하며, 모든 상품의 kg·개수 옵션을 함께 합산합니다.</p><p>합계 2단위 미만은 할인 없음, 2단위부터 <strong>전체 상품금액에 2%</strong> 할인됩니다. 이후 1단위마다 1%씩 늘어나 최대 12%까지 적용됩니다. 소수점 단위는 버림합니다.</p><p>예: 2kg 또는 20개 → 2%, 3kg 또는 30개 → 3%. 1kg + 10개도 2단위로 2% 할인됩니다.</p><p>할인 계산 후 상품금액의 10원 미만은 버림하며, 이 차액도 할인금액에 포함됩니다. 배송비는 할인 대상이 아닙니다.</p><p>택배 배송비 4,000원 · 직접픽업 배송비 0원. 제주·도서산간은 추가 배송비가 발생할 수 있습니다.</p><p>일반 오이는 총 12kg까지 주문할 수 있습니다. 개수 옵션은 1개당 0.18kg으로 환산합니다. ${biteNotice}</p>`;
+  const biteNotice = '한입오이만 담으면 최대 6kg. 다른 오이와 함께 담으면 전체 최대 9kg이며, 한입오이는 6kg까지예요.';
+  const policy = `<p class="shop-policy-key">추가한 상품만이 아니라 <strong>전체 상품금액에 할인됩니다.</strong><br><strong>최대 12% 할인</strong></p><table class="shop-discount-examples"><thead><tr><th>주문량 예시</th><th>할인율</th></tr></thead><tbody><tr><td>2kg 또는 20개</td><td>2%</td></tr><tr><td>3kg 또는 30개</td><td>3%</td></tr><tr><td>1kg + 10개</td><td>2%</td></tr></tbody></table><p>종류가 달라도 함께 계산해요. 할인 계산에서는 10개를 1kg과 같이 봅니다. 무게와 개수를 합쳐 2kg 상당부터 2% 할인하고, 1kg 또는 10개가 늘 때마다 1%씩 높아져요.</p><p>예를 들어 2.5kg은 2%, 3kg은 3%입니다. 2kg 또는 20개 상당보다 적으면 할인되지 않아요.</p><p>할인 계산 후 상품금액의 10원 미만은 버림하며, 이 차액도 할인금액에 포함됩니다. 배송비는 할인 대상이 아닙니다.</p><p>택배 배송비 4,000원 · 직접픽업 배송비 0원. 제주·도서산간은 추가 배송비가 발생할 수 있습니다.</p><p>일반 오이는 총 12kg까지 주문할 수 있습니다. 포장 무게 계산에서는 오이 1개를 0.18kg으로 환산합니다. 할인 계산과는 다른 기준입니다. ${biteNotice}</p>`;
   let quote = api.snapshot();
   let renderedProducts;
   let busy = false;
@@ -53,6 +53,17 @@ document.addEventListener('DOMContentLoaded', () => {
   details.innerHTML = '<summary>문자·카카오톡용 주문양식 보기</summary><button type="button" class="shop-secondary" id="shopCopyTemplate">주문양식 복사</button>';
   preview.replaceWith(details); details.append(preview);
   const modal = document.createElement('dialog'); modal.className = 'shop-modal'; modal.setAttribute('aria-labelledby', 'shopModalTitle'); document.body.append(modal);
+  const policySummary = shop.querySelector('.shop-policy');
+  policySummary.querySelector('strong').textContent = '전체 상품금액, 최대 12% 할인';
+  const emphasis = document.createElement('p'); emphasis.className = 'shop-policy-emphasis'; emphasis.textContent = '추가한 상품만이 아니라 전체 상품금액에 할인됩니다.'; policySummary.querySelector('div').append(emphasis);
+  let addOpener;
+  function showAdded(item, quantity, card) {
+    addOpener = document.activeElement;
+    const imageUrl = item.images[0] || card.querySelector('img')?.getAttribute('src');
+    openModal('장바구니에 담았습니다', `<div class="shop-add-confirm"><img src="${photo(imageUrl)}" alt="${esc(item.name)}"><div><strong>${esc(item.name)}</strong><p>${esc(optionLabel(item))}</p><p>추가 수량 <strong>${quantity}${esc(item.unit)}</strong></p><p>추가 상품금액 <strong>${money(quantity * item.price / (item.isQty ? item.step : 1))}</strong><small>할인 전 금액</small></p></div></div><p class="shop-hint">아직 주문은 접수되지 않았습니다.</p><div class="shop-confirm-actions"><button type="button" class="shop-secondary" id="shopAddedContinue">계속 쇼핑하기</button><button type="button" class="shop-primary" id="shopAddedCart">장바구니 보기 (${quote.items.length}종)</button></div>`);
+    modal.querySelector('#shopAddedContinue').onclick = () => { modal.close(); addOpener?.focus(); };
+    modal.querySelector('#shopAddedCart').onclick = () => { modal.close(); openCart(); };
+  }
   function closeDrawer() { if (busy) return; drawer.close(); document.body.append(document.getElementById('toast')); document.body.classList.remove('shop-locked'); opener?.focus(); }
   function setStage(stage) {
     $('#shopCartContent').hidden = stage !== 'cart'; $('#shopCheckoutContent').hidden = stage !== 'checkout'; $('#shopSuccess').hidden = stage !== 'success';
@@ -114,8 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
         controls.querySelector('.shop-error').textContent = '';
-        controls.querySelector('.shop-added').hidden = false;
-        controls.querySelector('[role="status"]').textContent = `장바구니에 담았습니다. ${o.name} ${number}${o.unit} 추가`;
+        showAdded(o, number, card);
       };
       controls.querySelector('[data-grade-cart]').onclick = openCart;
       reset();
@@ -140,9 +150,9 @@ document.addEventListener('DOMContentLoaded', () => {
     lines.querySelectorAll('[data-remove]').forEach(b => b.onclick = () => change(Number(b.dataset.remove), 0));
     $('#shopTotals').innerHTML = totals();
     $('#shopCheckoutSummary').innerHTML = `<h3>주문 상품 ${quote.items.length}종 · ${quote.orderType === 'delivery' ? '택배배송' : '직접픽업'}</h3><ul class="shop-review-items">${quote.items.map(item => `<li><span>${esc(item.name)} · ${item.quantity}${esc(item.unit)}</span><strong>${money(item.quantity * item.price / (item.isQty ? item.step : 1))}</strong></li>`).join('')}</ul>${totals()}`;
-    let progress = `현재 ${Number((quote.totalUnits || 0).toFixed(2))}단위 · 무게 ${Number((quote.totalWeight || 0).toFixed(2))} / ${quote.maxLimit || 12}kg`;
+    let progress = `현재 포장 무게 ${Number((quote.totalWeight || 0).toFixed(2))} / ${quote.maxLimit || 12}kg`;
     if (quote.discountRate >= 12) progress += ' · 최대 12% 할인 적용 중입니다.';
-    else { const target = Math.max(2, Math.floor(quote.totalUnits || 0) + 1); const need = Number((target - (quote.totalUnits || 0)).toFixed(2)); progress += `\n${target}% 할인까지 ${need}단위가 더 필요합니다 (${need}kg 또는 ${Number((need * 10).toFixed(2))}개 상당). ${quote.canAddMore ? '판매 단위와 최대 주문 무게 안에서 추가할 수 있습니다.' : '현재 구성은 최대 주문 무게에 도달해 더 담을 수 없습니다.'}`; }
+    else { const target = Math.max(2, Math.floor(quote.totalUnits || 0) + 1); const need = Number((target - (quote.totalUnits || 0)).toFixed(2)); progress += `\n${target}% 할인까지 ${need}kg 또는 ${Number((need * 10).toFixed(2))}개에 해당하는 양이 더 필요해요. ${quote.canAddMore ? '상품별로 담을 수 있는 수량과 최대 주문 무게 안에서 추가해 주세요.' : '현재 구성은 최대 주문 무게에 도달해 더 담을 수 없습니다.'}`; }
     $('#shopProgress').textContent = progress; $('#shopCheckout').disabled = !quote.items.length; finalNotice.hidden = !quote.hasBite;
     paymentNotice.textContent = quote.orderType === 'pickup' && quote.paymentMethod === 'onsite' ? '현장결제 주문입니다. 픽업 시 카드 및 고흥사랑상품권으로 결제할 수 있습니다.' : '계좌이체 주문입니다. 접수 후 안내된 계좌로 입금해 주세요. 실제 입금 확인 전에는 결제완료로 처리되지 않습니다.';
   }

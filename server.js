@@ -132,7 +132,7 @@ if (process.env.DATABASE_URL) {
     let index = 1;
     pgQuery = pgQuery.replace(/\?/g, () => `$${index++}`);
 
-    if (/insert\s+into\s+orders/i.test(pgQuery) && !/returning/i.test(pgQuery)) {
+    if (/insert\s+into\s+(orders|products)\b/i.test(pgQuery) && !/returning/i.test(pgQuery)) {
       pgQuery += ' RETURNING id';
     }
 
@@ -442,6 +442,7 @@ app.post('/api/admin/upload', authenticateAdmin, (req, res) => {
 
 // Durable order receipt and a disabled-by-default notification audit.
 const orderService = require('./internal/order-service.cjs').createOrderService(db);
+require('./internal/product-images.cjs')(app, db, authenticateAdmin);
 app.post('/api/orders', async (req, res) => {
   try { res.status(201).json(await orderService.submit(req.body)); }
   catch (error) {

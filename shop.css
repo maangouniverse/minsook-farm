@@ -181,3 +181,46 @@
 .receipt-account-row input { flex: 1 1 180px; width: 100%; min-width: 0; padding: 12px 8px; background: white; border: 1px solid #bbcfae; border-radius: 4px; font-size: 17px; color: #283e23; user-select: all; }
 .receipt-account-row button { min-height: 48px; flex: 1 1 135px; font-size: 15px; }
 #receiptCopyStatus { font-size: 14px; color: #29731e; }
+
+/* Compact grade selection; text remains visible, only photos/spacing shrink. */
+.shop-policy { background: #e4f6cd; border-left-width: 6px; padding: 28px 30px; }
+.shop-policy strong { font-size: clamp(22px, 2.2vw, 28px); color: #235d13; }
+.shop-policy p { font-size: 17px; line-height: 1.65; margin-top: 10px; }
+.shop-policy .shop-policy-emphasis { color: #234e18; font-weight: 750; }
+.shop-policy-key { padding: 14px; background: #e4f6cd; color: #254c1a; }
+.shop-discount-examples { width: 100%; border-collapse: collapse; font-size: 16px; }
+.shop-discount-examples th, .shop-discount-examples td { border: 1px solid #b5cca8; padding: 10px 12px; text-align: left; }
+.shop-discount-examples th { background: #f1f7ec; }
+.shop-discount-examples td:last-child { font-weight: 750; color: #246819; }
+.shop-add-confirm { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 16px; }
+.shop-add-confirm img { width: 90px; height: 100px; object-fit: cover; border-radius: 4px; }
+.shop-add-confirm p { margin: 6px 0; font-size: 15px; }
+.shop-add-confirm small { display: block; color: #66755c; font-size: 13px; }
+.shop-confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; }
+.shop-confirm-actions button { min-height: 46px; padding: 10px 8px; font-size: 15px; }
+#mainProductGrid .product-card { padding: 14px; scroll-margin-top: 90px; }
+#mainProductGrid .product-badge { margin-bottom: 8px; padding: 3px 8px; }
+#mainProductGrid .product-card-img, #mainProductGrid .product-card-img-slider { height: clamp(100px, 16dvh, 165px); flex-shrink: 0; margin-bottom: 8px; border-radius: 6px; }
+#mainProductGrid .product-card h3 { font-size: 20px; margin: 0 0 5px; }
+#mainProductGrid .product-card > p { flex-grow: 0; font-size: 14px; line-height: 1.5; margin-bottom: 8px; }
+#mainProductGrid .product-card .price { padding-top: 8px; margin-top: 0; font-size: 20px; line-height: 1.35; }
+#mainProductGrid .shop-sale-unit { font-size: 14px; }
+#mainProductGrid .shop-grade-controls { margin-top: 6px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 8px; }
+#mainProductGrid .shop-grade-controls > label { margin: 4px 0; }
+#mainProductGrid .shop-grade-controls > label:first-child { grid-column: 1; grid-row: 1; }
+#mainProductGrid .shop-grade-controls > select { grid-column: 1; grid-row: 2; }
+#mainProductGrid .shop-grade-controls > label:nth-of-type(2) { grid-column: 2; grid-row: 1; }
+#mainProductGrid .shop-option-quantity { grid-column: 2; grid-row: 2; gap: 3px; }
+#mainProductGrid .shop-grade-controls select { padding: 8px 2px; font-size: 14px; }
+#mainProductGrid .shop-grade-controls input { padding: 8px 0; }
+#mainProductGrid .shop-option-quantity button { min-width: 30px; min-height: 44px; padding: 6px; }
+#mainProductGrid .shop-grade-controls > p, #mainProductGrid .shop-grade-controls > button, #mainProductGrid .shop-added { grid-column: 1 / -1; }
+#mainProductGrid .shop-grade-controls p { margin: 6px 0; line-height: 1.5; }
+#mainProductGrid .shop-grade-controls .shop-bite { padding: 8px; margin: 4px 0; }
+#mainProductGrid .shop-grade-controls .shop-wide { margin-top: 6px; min-height: 44px; padding: 9px 12px; }
+@media (max-width: 768px) {
+  .shop-policy { padding: 20px; }
+  .shop-policy p { font-size: 16px; }
+  #mainProductGrid .product-card { padding: 12px; }
+  .shop-confirm-actions { grid-template-columns: 1fr; }
+}
