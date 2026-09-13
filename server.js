@@ -471,7 +471,22 @@ app.post('/api/admin/upload', authenticateAdmin, (req, res) => {
 // Durable order receipt and a disabled-by-default notification audit.
 const lifecycle = require('./internal/order-lifecycle.cjs').createLifecycle(db);
 const orderService = require('./internal/order-service.cjs').createOrderService(db, { lifecycle });
+const visitorAnalytics = require('./internal/visitor-analytics.cjs').createVisitorAnalytics(db);
 require('./internal/product-images.cjs')(app, db, authenticateAdmin);
+visitorAnalytics.ensureSchema().catch(error => {
+  console.error('Visitor analytics schema initialization failed', { error: error.message });
+});
+
+app.post('/api/visits', async (req, res) => {
+  try {
+    const result = await visitorAnalytics.record(req.body?.visitorId);
+    res.status(result.counted ? 201 : 200).json({ success: true, date: result.date });
+  } catch (error) {
+    if (!error.status) console.error('Visitor recording failed', { route: '/api/visits', error: error.message });
+    res.status(error.status || 503).json({ error: error.status ? error.message : '방문 기록을 저장하지 못했습니다.' });
+  }
+});
+
 app.post('/api/orders', async (req, res) => {
   try { res.status(201).json(await orderService.submit(req.body)); }
   catch (error) {
@@ -640,6 +655,15 @@ app.get('/api/admin/orders', authenticateAdmin, async (req, res) => {
     });
     res.json({ orders });
   });
+});
+
+app.get('/api/admin/visitors', authenticateAdmin, async (req, res) => {
+  try {
+    res.json(await visitorAnalytics.stats());
+  } catch (error) {
+    console.error('Visitor statistics failed', { route: '/api/admin/visitors', error: error.message });
+    res.status(503).json({ error: '방문자 통계를 불러오지 못했습니다.' });
+  }
 });
 
 // Persist order changes and audit records together. No live notification transport.

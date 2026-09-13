@@ -1,6 +1,31 @@
 // Minsook Farm Landing Page Interactivity
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Count one anonymous browser once per Korean calendar day. Only a hash of
+  // this random ID is stored on the server; names, phone numbers and IPs are not used.
+  function recordAnonymousVisit() {
+    if (window.location.protocol === 'file:') return;
+    const storageKey = 'minsook_anonymous_visitor';
+    let visitorId = localStorage.getItem(storageKey);
+    if (!/^[a-zA-Z0-9_-]{20,100}$/.test(visitorId || '')) {
+      if (window.crypto?.randomUUID) {
+        visitorId = window.crypto.randomUUID();
+      } else {
+        const bytes = new Uint8Array(18);
+        window.crypto.getRandomValues(bytes);
+        visitorId = `visitor_${Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('')}`;
+      }
+      localStorage.setItem(storageKey, visitorId);
+    }
+    fetch('/api/visits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visitorId }),
+      keepalive: true
+    }).catch(() => {});
+  }
+  recordAnonymousVisit();
+
   // Global order final price state
   let currentFinalTotal = 0;
   let submissionAttempt = null;

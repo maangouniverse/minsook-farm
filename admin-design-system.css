@@ -404,7 +404,7 @@ input[type="radio"] {
 .stats-row {
   display: grid;
   margin: 0 0 12px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   border-top: 1px solid var(--admin-border);
   border-bottom: 1px solid var(--admin-border);
   background: var(--admin-surface);
@@ -430,6 +430,18 @@ input[type="radio"] {
   color: var(--admin-text-muted);
   font-size: 12px;
   font-weight: 600;
+}
+
+.stat-card.stat-visitor-today,
+.stat-card.stat-visitor-total {
+  background: var(--admin-green-100);
+}
+
+.stat-basis {
+  display: block;
+  margin-top: 1px;
+  font-size: 10px;
+  font-weight: 500;
 }
 
 .stat-value {

@@ -2560,12 +2560,20 @@
               <button type="button" class="btn-action btn-action-danger" id="btnDeleteSelected" onclick="deleteSelectedOrders()" style="display: none;">🗑️ 선택 삭제</button>
               <button type="button" class="btn-action btn-action-secondary" onclick="downloadExcel()">📋 엑셀 다운로드</button>
               <button type="button" class="btn-action btn-action-secondary" onclick="openPrintTemplate()">🖨️ 주문 상황 인쇄</button>
-              <button type="button" class="btn-action btn-action-primary" onclick="loadOrders()">새로고침</button>
+              <button type="button" class="btn-action btn-action-primary" onclick="loadOrders(); loadVisitorStats();">새로고침</button>
             </div>
           </div>
 
           <!-- Cards Summary Statistics -->
           <div class="stats-row">
+            <div class="stat-card stat-visitor-today">
+              <h4>오늘 방문자 <span class="stat-basis">한국시간</span></h4>
+              <div class="stat-value" id="statTodayVisitors" aria-live="polite">-명</div>
+            </div>
+            <div class="stat-card stat-visitor-total">
+              <h4>누적 방문자 <span class="stat-basis">브라우저 기준</span></h4>
+              <div class="stat-value" id="statTotalVisitors" aria-live="polite">-명</div>
+            </div>
             <div class="stat-card stat-total">
               <h4>총 접수</h4>
               <div class="stat-value" id="statTotalOrders">0건</div>
@@ -2872,6 +2880,7 @@
       document.getElementById('dashboardSection').style.display = 'flex';
       document.getElementById('loggedInUserDisplay').textContent = `사용자: 최고 관리자 (admin)`;
       switchTab('orders');
+      loadVisitorStats();
       checkPendingMigration();
     }
 
@@ -2882,6 +2891,34 @@
     }
 
     // Fetch and render orders from DB
+    async function loadVisitorStats() {
+      const todayElement = document.getElementById('statTodayVisitors');
+      const totalElement = document.getElementById('statTotalVisitors');
+      if (!todayElement || !totalElement) return;
+
+      if (window.location.protocol === 'file:') {
+        todayElement.textContent = '-명';
+        totalElement.textContent = '-명';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/admin/visitors');
+        if (response.status === 401 || response.status === 400) {
+          showLogin();
+          return;
+        }
+        if (!response.ok) throw new Error(`방문자 통계 조회 실패 (${response.status})`);
+        const data = await response.json();
+        todayElement.textContent = `${Number(data.today || 0).toLocaleString('ko-KR')}명`;
+        totalElement.textContent = `${Number(data.total || 0).toLocaleString('ko-KR')}명`;
+      } catch (error) {
+        todayElement.textContent = '-명';
+        totalElement.textContent = '-명';
+        console.error(error);
+      }
+    }
+
     async function loadOrders() {
       const pickupTbody = document.getElementById('pickupOrdersTableBody');
       const deliveryTbody = document.getElementById('deliveryOrdersTableBody');
