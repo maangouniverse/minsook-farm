@@ -21,7 +21,7 @@ function normalizeOrder(body) {
   }
   return { name: clean(body.name), phone: clean(body.phone), address, memo: clean(body.memo), items, totalPrice: Number(body.totalPrice) };
 }
-function createOrderService(db, { env = process.env, sendApprovedTemplate = null } = {}) {
+function createOrderService(db, { env = process.env, sendApprovedTemplate = null, lifecycle = null } = {}) {
   const run = (sql, args = []) => new Promise((resolve, reject) => db.run(sql, args, function(error) { error ? reject(error) : resolve({ id: this.lastID, changes: this.changes }); }));
   const get = (sql, args = []) => new Promise((resolve, reject) => db.get(sql, args, (error, row) => error ? reject(error) : resolve(row)));
   const all = (sql, args = []) => new Promise((resolve, reject) => db.all(sql, args, (error, rows) => error ? reject(error) : resolve(rows)));
@@ -82,12 +82,23 @@ function createOrderService(db, { env = process.env, sendApprovedTemplate = null
     if (typeof key !== 'string' || !/^[a-zA-Z0-9-]{20,100}$/.test(key)) throw Object.assign(new Error('주문 확인번호가 올바르지 않습니다. 새로고침 후 다시 시도해 주세요.'), { status: 400 });
     const hash = crypto.createHash('sha256').update(JSON.stringify(order)).digest('hex');
     await ensureSchema();
+    let saved;
+    if (lifecycle) {
+      saved = await lifecycle.transaction(async tx => {
+        const inserted = await tx.run('INSERT INTO orders (name, phone, address, memo, items, total_price, request_key, request_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (request_key) DO NOTHING', [order.name, order.phone, order.address, order.memo, JSON.stringify(order.items), order.totalPrice, key, hash]);
+        const row = await tx.get('SELECT * FROM orders WHERE request_key = ?', [key]);
+        if (!row || row.request_hash !== hash) throw Object.assign(new Error('이미 사용된 주문 확인번호입니다. 기존 접수 내역을 먼저 확인해 주세요.'), { status: 409 });
+        if (inserted.changes) await lifecycle.record(tx, null, row, '주문 접수');
+        return row;
+      });
+    } else {
     await run('INSERT INTO orders (name, phone, address, memo, items, total_price, request_key, request_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (request_key) DO NOTHING', [order.name, order.phone, order.address, order.memo, JSON.stringify(order.items), order.totalPrice, key, hash]);
-    const saved = await get('SELECT * FROM orders WHERE request_key = ?', [key]);
+    saved = await get('SELECT * FROM orders WHERE request_key = ?', [key]);
     if (!saved || saved.request_hash !== hash) throw Object.assign(new Error('이미 사용된 주문 확인번호입니다. 기존 접수 내역을 먼저 확인해 주세요.'), { status: 409 });
     // This point is reached only after the order has been durably saved.
     try { await recordNotification({ ...order, id: saved.id }); }
     catch { console.error('Order notification audit unavailable', { orderId: saved.id, code: 'AUDIT_WRITE_FAILED' }); }
+    }
     const isOnsite = saved.address.includes('[직접 픽업]') && (saved.memo || '').includes('현장결제');
     return { success: true, orderId: saved.id, totalPrice: saved.total_price, paymentMethod: isOnsite ? 'onsite' : 'bank', paymentAccount: isOnsite ? null : account };
   }

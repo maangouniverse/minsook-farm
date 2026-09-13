@@ -112,6 +112,21 @@ if (process.env.DATABASE_URL) {
     }
   };
 
+  db.transaction = async work => {
+    const client = await pool.connect();
+    const adapter = {};
+    for (const method of ['run', 'get', 'all']) adapter[method] = (query, params, callback) => {
+      const { pgQuery, pgParams } = convertSqliteToPostgres(query, params);
+      client.query(pgQuery, pgParams).then(result => {
+        if (method === 'run') callback.call({ lastID: result.rows[0]?.id, changes: result.rowCount }, null);
+        else callback(null, method === 'get' ? result.rows[0] : result.rows);
+      }, callback);
+    };
+    try { await client.query('BEGIN'); const result = await work(adapter); await client.query('COMMIT'); return result; }
+    catch (error) { await client.query('ROLLBACK'); throw error; }
+    finally { client.release(); }
+  };
+
   // Helper to convert SQLite SQL dialect & placeholders to PostgreSQL
   function convertSqliteToPostgres(query, params) {
     let pgParams = Array.isArray(params) ? params : (params ? [params] : []);
@@ -148,7 +163,7 @@ if (process.env.DATABASE_URL) {
 } else {
   console.log('Using local SQLite database.');
   const sqlite3 = require('sqlite3').verbose();
-  const dbPath = process.env.VERCEL ? '/tmp/database.db' : path.join(__dirname, 'database.db');
+  const dbPath = process.env.LOCAL_TEST_DATABASE || (process.env.VERCEL ? '/tmp/database.db' : path.join(__dirname, 'database.db'));
   db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
       console.error('Database connection failed:', err);
@@ -157,6 +172,19 @@ if (process.env.DATABASE_URL) {
       initializeDatabase();
     }
   });
+}
+
+if (!db.transaction) {
+  db.configure('busyTimeout', 5000);
+  db.transaction = async work => {
+    const sqlite3 = require('sqlite3');
+    const isolated = new sqlite3.Database(db.filename);
+    isolated.configure('busyTimeout', 5000);
+    const run = query => new Promise((yes, no) => isolated.run(query, e => e ? no(e) : yes()));
+    try { await run('BEGIN IMMEDIATE'); const result = await work(isolated); await run('COMMIT'); return result; }
+    catch (error) { try { await run('ROLLBACK'); } catch {} throw error; }
+    finally { await new Promise(resolve => isolated.close(resolve)); }
+  };
 }
 
 function initializeDatabase() {
@@ -441,7 +469,8 @@ app.post('/api/admin/upload', authenticateAdmin, (req, res) => {
 });
 
 // Durable order receipt and a disabled-by-default notification audit.
-const orderService = require('./internal/order-service.cjs').createOrderService(db);
+const lifecycle = require('./internal/order-lifecycle.cjs').createLifecycle(db);
+const orderService = require('./internal/order-service.cjs').createOrderService(db, { lifecycle });
 require('./internal/product-images.cjs')(app, db, authenticateAdmin);
 app.post('/api/orders', async (req, res) => {
   try { res.status(201).json(await orderService.submit(req.body)); }
@@ -451,7 +480,11 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 app.get('/api/admin/notifications', authenticateAdmin, async (req, res) => {
-  try { res.json(await orderService.logs()); }
+  try {
+    const previous = await orderService.logs();
+    const recent = await lifecycle.logs();
+    res.json({ ...previous, logs: [...recent, ...previous.logs].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 100) });
+  }
   catch { res.status(503).json({ error: '알림톡 기록을 불러오지 못했습니다.' }); }
 });
 
@@ -588,7 +621,8 @@ app.post('/api/admin/logout', (req, res) => {
 });
 
 // 4. Fetch All Orders (Protected)
-app.get('/api/admin/orders', authenticateAdmin, (req, res) => {
+app.get('/api/admin/orders', authenticateAdmin, async (req, res) => {
+  try { await lifecycle.ensureSchema(); } catch { return res.status(503).json({ error: '주문 관리 준비 중입니다. 잠시 후 다시 확인해 주세요.' }); }
   db.all("SELECT * FROM orders ORDER BY created_at DESC", (err, rows) => {
     if (err) {
       console.error('Failed to retrieve orders:', err);
@@ -608,8 +642,8 @@ app.get('/api/admin/orders', authenticateAdmin, (req, res) => {
   });
 });
 
-// Edit order details without changing the creation time or sending notifications.
-app.put('/api/admin/orders/:id', authenticateAdmin, (req, res) => {
+// Persist order changes and audit records together. No live notification transport.
+app.put('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
   const { name, phone, address, memo, items, total_price, status, tracking_number, courier } = req.body;
   if (!/^\d+$/.test(req.params.id) || typeof name !== 'string' || !name.trim() ||
       typeof phone !== 'string' || !phone.trim() || typeof address !== 'string' || !address.trim() ||
@@ -620,41 +654,39 @@ app.put('/api/admin/orders/:id', authenticateAdmin, (req, res) => {
         !Number.isFinite(item.quantity) || item.quantity <= 0 || typeof item.unit !== 'string')) {
     return res.status(400).json({ error: '주문 입력값을 확인해 주세요.' });
   }
-  db.run('UPDATE orders SET name = ?, phone = ?, address = ?, memo = ?, items = ?, total_price = ?, status = ?, tracking_number = ?, courier = ? WHERE id = ?',
-    [name.trim(), phone.trim(), address.trim(), memo, JSON.stringify(items), total_price, status, tracking_number.trim() || null, courier.trim() || null, req.params.id],
-    function (err) {
-      if (err) return res.status(500).json({ error: '주문 수정에 실패했습니다.' });
-      if (this.changes === 0) return res.status(404).json({ error: '주문을 찾을 수 없습니다.' });
-      res.json({ success: true });
-    });
+  try {
+    res.json(await lifecycle.update(req.params.id, { name: name.trim(), phone: phone.trim(), address: address.trim(), memo, items: JSON.stringify(items), total_price, status, tracking_number, courier }, req.body.revision, '주문 상세'));
+  } catch (error) { res.status(error.status || 503).json({ error: error.status ? error.message : '저장하지 못했습니다. 다시 확인해 주세요.' }); }
 });
 
-// 5. Update Order Status (Protected)
-app.put('/api/admin/orders/:id/status', authenticateAdmin, (req, res) => {
-  const { id } = req.params;
-  const { status, trackingNumber, courier } = req.body; // '주문', '결제', '택배사', '주문취소'
-
-  if (!['주문', '결제', '택배사', '주문취소'].includes(status)) {
-    return res.status(400).json({ error: 'Invalid status value.' });
+app.put('/api/admin/orders/:id/status', authenticateAdmin, async (req, res) => {
+  const patch = { status: req.body.status };
+  if (req.body.status === '택배사') {
+    if (typeof req.body.trackingNumber !== 'string' || typeof req.body.courier !== 'string') return res.status(400).json({ error: '택배사와 운송장 번호를 입력해 주세요.' });
+    patch.tracking_number = req.body.trackingNumber; patch.courier = req.body.courier;
   }
+  try { res.json(await lifecycle.update(req.params.id, patch, req.body.revision, '주문 목록')); }
+  catch (error) { res.status(error.status || 503).json({ error: error.status ? error.message : '저장하지 못했습니다. 다시 확인해 주세요.' }); }
+});
 
-  const tracking = (status === '택배사') ? (trackingNumber || null) : null;
-  const cr = (status === '택배사') ? (courier || null) : null;
-
-  db.run("UPDATE orders SET status = ?, tracking_number = ?, courier = ? WHERE id = ?", [status, tracking, cr, id], function (err) {
-    if (err) {
-      console.error('Failed to update status:', err);
-      return res.status(500).json({ error: 'Failed to update order status.' });
-    }
-    if (this.changes === 0) {
-      return res.status(404).json({ error: 'Order not found.' });
-    }
-
-    // Shipping/status storage is unchanged. Do not log a simulated send as a
-    // real AlimTalk success while the provider integration is disabled.
-
-    res.json({ success: true });
-  });
+app.get('/api/admin/orders/:id/history', authenticateAdmin, async (req, res) => {
+  try { res.json(await lifecycle.history(req.params.id)); }
+  catch (error) { res.status(error.status || 503).json({ error: error.status ? error.message : '변경 이력을 불러오지 못했습니다.' }); }
+});
+app.get('/api/admin/notification-templates', authenticateAdmin, async (req, res) => {
+  try { res.json(await lifecycle.templates()); }
+  catch { res.status(503).json({ error: '템플릿을 불러오지 못했습니다.' }); }
+});
+app.put('/api/admin/notification-templates/:status', authenticateAdmin, async (req, res) => {
+  try { res.json(await lifecycle.saveTemplate(req.params.status, req.body)); }
+  catch (error) { res.status(error.status || 503).json({ error: error.status ? error.message : '템플릿을 저장하지 못했습니다.' }); }
+});
+app.post('/api/admin/notification-templates/preview', authenticateAdmin, (req, res) => {
+  const { validateTemplate, renderTemplate } = require('./internal/order-lifecycle.cjs');
+  const sample = { id: 'SAMPLE-001', name: '가상 주문자', created_at: '2026-09-13T01:30:00Z', total_price: 30000, courier: '한진택배', tracking_number: '000000000000', address: req.body.pickup ? '[직접 픽업] 날짜: 2026-09-15 / 시간: 14:00' : '가상 배송지' };
+  if (req.body.pickup) { sample.courier = ''; sample.tracking_number = ''; }
+  try { res.json({ ...renderTemplate(validateTemplate(req.body), sample), sendingEnabled: false }); }
+  catch (error) { res.status(error.status || 400).json({ error: error.message }); }
 });
 
 // 5-1. Batch Delete Orders (Protected)

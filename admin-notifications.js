@@ -5,7 +5,7 @@
   const dialog = document.createElement('dialog');
   dialog.className = 'admin-audit-dialog';
   dialog.setAttribute('aria-labelledby', 'notificationTitle');
-  dialog.innerHTML = '<div class="admin-modal-header"><h3 id="notificationTitle">주문접수 알림톡</h3><button type="button" class="btn-cancel" data-close>닫기</button></div><div class="admin-audit-body"><p class="admin-audit-readiness" role="status"></p><p>비즈톡 연동 가이드, 발신 채널, 승인 템플릿과 테스트 번호를 확인한 뒤 발송을 연결합니다. 지금은 고객에게 알림톡이 발송되지 않습니다.</p><p>아래는 최근 100건의 처리 기록입니다. 비활성 기간의 주문을 나중에 자동 발송하지 않습니다.</p><div class="admin-audit-list"></div><button type="button" class="btn-action" data-refresh>기록 새로고침</button></div>';
+  dialog.innerHTML = '<div class="admin-modal-header"><h3 id="notificationTitle">주문 알림톡 준비·처리 기록</h3><button type="button" class="btn-cancel" data-close>닫기</button></div><div class="admin-audit-body"><p class="admin-audit-readiness" role="status"></p><p>비즈톡 연동 가이드, 발신 채널, 승인 템플릿과 테스트 번호를 확인한 뒤 발송을 연결합니다. 지금은 고객에게 알림톡이 발송되지 않습니다.</p><p>아래는 최근 100건의 처리 기록입니다. 비활성 기간의 주문을 나중에 자동 발송하지 않습니다.</p><div class="admin-audit-list"></div><button type="button" class="btn-action" data-refresh>기록 새로고침</button></div>';
   document.body.appendChild(dialog);
   const statusNames = { disabled: '비활성 · 미발송', queued: '처리 대기', processing: '결과 확인 필요', blocked: '발송 차단', accepted: '요청 접수 · 수신 미확인', delivered: '수신 성공', failed: '발송 실패', unknown: '결과 미확인' };
   async function refresh() {
@@ -18,7 +18,7 @@
       if (!response.ok) throw new Error('load');
       const data = await response.json();
       state.textContent = data.readiness.reason;
-      if (!data.logs.length) list.textContent = '아직 기록이 없습니다. 이 기능 배포 후 접수된 주문부터 기록합니다.';
+      if (!data.logs.length) list.textContent = '아직 기록이 없습니다. 이 기능 적용 후 주문 접수와 변경부터 기록합니다.';
       for (const log of data.logs) {
         const row = document.createElement('article');
         row.className = 'admin-audit-row';

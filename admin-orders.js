@@ -192,7 +192,7 @@
     const state = field('status', '주문상태', editing.status);
     const select = document.createElement('select'); select.className = 'input-field'; select.name = state.name; select.id = state.id;
     (isPickup(editing) ? ['주문', '결제', '주문취소'] : ['주문', '결제', '택배사', '주문취소'])
-      .forEach(value => select.add(new Option(value, value, false, value === editing.status)));
+      .forEach(value => select.add(new Option(window.orderStatusLabel(value), value, false, value === editing.status)));
     if (isPickup(editing) && editing.status === '택배사') {
       const legacy = new Option('기존 상태 유지', editing.status, true, true);
       legacy.disabled = true; select.add(legacy);
@@ -200,6 +200,9 @@
     state.replaceWith(select);
     field('courier', '택배사', editing.courier);
     field('tracking_number', '송장번호', editing.tracking_number);
+    let history = modal.querySelector('.order-history');
+    if (!history) { history = document.createElement('section'); history.className = 'order-history'; fields.after(history); }
+    window.renderOrderHistory(id, history);
     modal.querySelector('.order-edit-error').textContent = '';
     modal.classList.remove('hidden'); form.elements.name.focus();
   }
@@ -207,7 +210,7 @@
     event.preventDefault();
     const values = Object.fromEntries(new FormData(form));
     const payload = {
-      name: values.name, phone: values.phone,
+      revision: editing.revision, name: values.name, phone: values.phone,
       address: isPickup(editing) ? `[직접 픽업] 날짜: ${values.pickupDate} / 시간: ${values.pickupTime}` : values.address,
       memo: values.memo, total_price: Number(values.total_price), status: values.status || editing.status,
       courier: values.courier, tracking_number: values.tracking_number,

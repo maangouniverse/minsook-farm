@@ -1,0 +1,33 @@
+// Explicitly local-only. Never point this test at a hosted site.
+const assert = require('node:assert/strict');
+const base = 'http://127.0.0.1:3017';
+const { randomUUID } = require('node:crypto');
+(async () => {
+  for (const path of ['/api/admin/orders/1/history', '/api/admin/notification-templates']) assert.equal((await fetch(base + path)).status, 401);
+  const login = await fetch(base + '/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'local-test-only' }) });
+  assert.equal(login.status, 200);
+  const Cookie = login.headers.getSetCookie().map(c => c.split(';')[0]).join('; ');
+  const headers = { 'Content-Type': 'application/json', Cookie };
+  const body = { name: '가상 배송 주문', phone: '01000000000', basicAddress: '가상 배송지', memo: '화면 확인용 가상 주문', items: [{ name: '가상 오이', quantity: 1, unit: 'kg' }], totalPrice: 1000, requestKey: randomUUID() };
+  const created = await fetch(base + '/api/orders', { method: 'POST', headers, body: JSON.stringify(body) });
+  assert.equal(created.status, 201); const { orderId } = await created.json();
+  const status = await fetch(base + `/api/admin/orders/${orderId}/status`, { method: 'PUT', headers, body: JSON.stringify({ status: '택배사', trackingNumber: '000000000001', courier: '한진택배', revision: 0 }) });
+  assert.equal(status.status, 200);
+  const stale = await fetch(base + `/api/admin/orders/${orderId}/status`, { method: 'PUT', headers, body: JSON.stringify({ status: '주문취소', revision: 0 }) });
+  assert.equal(stale.status, 409);
+  const orders = await (await fetch(base + '/api/admin/orders', { headers })).json();
+  const order = orders.orders.find(o => o.id === orderId);
+  const detail = await fetch(base + `/api/admin/orders/${orderId}`, { method: 'PUT', headers, body: JSON.stringify({ ...order, tracking_number: '000000000002' }) });
+  assert.equal(detail.status, 200);
+  const history = await (await fetch(base + `/api/admin/orders/${orderId}/history`, { headers })).json();
+  assert.equal(history.events.length, 3); assert.equal(history.events[0].kind, 'shipping');
+  assert.ok(history.events.every(e => e.notification_status === 'disabled'));
+  const templates = await (await fetch(base + '/api/admin/notification-templates', { headers })).json();
+  assert.equal(templates.templates.length, 4); assert.ok(templates.variables.includes('픽업일시'));
+  const tpl = templates.templates.find(t => t.status === '결제');
+  const saved = await fetch(base + '/api/admin/notification-templates/' + encodeURIComponent('결제'), { method: 'PUT', headers, body: JSON.stringify({ ...tpl, body: '#{주문자명}님, #{픽업일시}에 뵙겠습니다.' }) });
+  assert.equal(saved.status, 200);
+  const preview = await (await fetch(base + '/api/admin/notification-templates/preview', { method: 'POST', headers, body: JSON.stringify({ body: '#{픽업일시}', pickup: true }) })).json();
+  assert.equal(preview.body, '2026-09-15 14:00');
+  console.log(`PASS local HTTP: auth, order #${orderId}, status/detail history, stale update rejection, templates, pickup preview. No messages sent.`);
+})().catch(e => { console.error(e); process.exitCode = 1; });

@@ -2335,6 +2335,7 @@
     }
   </style>
   <link rel="stylesheet" href="admin-design-system.css?v=6">
+  <link rel="stylesheet" href="admin-order-management.css?v=1">
 </head>
 <body>
 
@@ -2508,6 +2509,7 @@
         <span class="header-title">민숙농장 대시보드</span>
       </div>
       <div class="header-right">
+        <button type="button" class="btn-action btn-action-secondary" id="btnNotificationTemplates">알림톡 템플릿 관리</button>
         <button type="button" class="btn-action btn-action-secondary" id="btnNotificationLogs">알림톡 상태·기록</button>
         <span class="user-info" id="loggedInUserDisplay">사용자: admin (관리자)</span>
         <button type="button" class="btn-logout" onclick="handleLogout()">로그아웃</button>
@@ -2569,19 +2571,19 @@
               <div class="stat-value" id="statTotalOrders">0건</div>
             </div>
             <div class="stat-card stat-order">
-              <h4>주문 접수</h4>
+              <h4>주문완료</h4>
               <div class="stat-value" id="statStatusOrder">0건</div>
             </div>
             <div class="stat-card stat-pay">
-              <h4>결제 완료</h4>
+              <h4>입금완료</h4>
               <div class="stat-value" id="statStatusPay">0건</div>
             </div>
             <div class="stat-card stat-delivery">
-              <h4>택배사 전달</h4>
+              <h4>택배발송</h4>
               <div class="stat-value" id="statStatusDelivery">0건</div>
             </div>
             <div class="stat-card stat-cancel">
-              <h4>주문 취소</h4>
+              <h4>주문취소</h4>
               <div class="stat-value" id="statStatusCancel">0건</div>
             </div>
           </div>
@@ -3169,7 +3171,7 @@
         </td>
         <td class="order-card-status" data-label="주문상태">
           <div>
-            <span class="status-badge ${statusClass}">${order.status}</span>
+            <span class="status-badge ${statusClass}">${window.orderStatusLabel(order.status)}</span>
             <select class="status-select" onchange="updateOrderStatus(${order.id}, this.value, this)">
               <option value="주문" ${order.status === '주문' ? 'selected' : ''}>주문완료 (접수)</option>
               <option value="결제" ${order.status === '결제' ? 'selected' : ''}>입금완료 (결제)</option>
@@ -3290,8 +3292,8 @@
         }).join('');
         
         const statusDetail = order.status === '택배사' && order.tracking_number
-          ? `${order.status}<br><span style="font-size: 0.8em; color: #166534; font-weight: normal; white-space: nowrap;">${order.courier || ''} ${order.tracking_number}</span>`
-          : order.status;
+          ? `${window.orderStatusLabel(order.status)}<br><span style="font-size: 0.8em; color: #166534; font-weight: normal; white-space: nowrap;">${order.courier || ''} ${order.tracking_number}</span>`
+          : window.orderStatusLabel(order.status);
         
         rowsHtml += `
           <tr>
@@ -3434,6 +3436,7 @@
     async function updateOrderStatus(orderId, newStatus, selectElement) {
       if (newStatus === '택배사') {
         currentOrderIdForDelivery = orderId;
+        deliveryOrderRevision = window.allOrders.find(o => o.id === orderId)?.revision;
         previousSelectElement = selectElement;
         
         // Open the custom delivery modal
@@ -3443,100 +3446,29 @@
         return;
       }
 
-      if (window.location.protocol === 'file:') {
-        const localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
-        const idx = localOrders.findIndex(o => o.id === orderId);
-        if (idx !== -1) {
-          localOrders[idx].status = newStatus;
-          delete localOrders[idx].tracking_number;
-          delete localOrders[idx].courier;
-          localStorage.setItem('minsook_orders', JSON.stringify(localOrders));
-          showToast(`📋 주문 #${orderId}의 상태가 [${newStatus}]로 업데이트되었습니다. (로컬)`);
-          loadOrders();
-        } else {
-          showToast('❌ 해당 주문을 로컬 저장소에서 찾을 수 없습니다.');
-        }
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/admin/orders/${orderId}/status`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: newStatus, trackingNumber: null, courier: null })
-        });
-        if (res.ok) {
-          showToast(`📋 주문 #${orderId}의 상태가 [${newStatus}]로 업데이트되었습니다.`);
-          loadOrders(); // reload
-        } else {
-          showToast('❌ 상태 변경 처리에 실패하였습니다.');
-          loadOrders();
-        }
-      } catch (err) {
-        // Fallback to local storage if offline
-        const localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
-        const idx = localOrders.findIndex(o => o.id === orderId);
-        if (idx !== -1) {
-          localOrders[idx].status = newStatus;
-          delete localOrders[idx].tracking_number;
-          delete localOrders[idx].courier;
-          localStorage.setItem('minsook_orders', JSON.stringify(localOrders));
-          showToast(`📋 주문 #${orderId}의 상태가 [${newStatus}]로 업데이트되었습니다. (로컬 저장소)`);
-          loadOrders();
-        } else {
-          showToast('❌ 서버 통신 오류가 발생했습니다.');
-          loadOrders();
-        }
-      }
+      await persistOrderStatus(orderId, { status: newStatus });
     }
 
-    async function submitDeliveryStatus(orderId, courier, trackingNumber) {
+    let deliveryOrderRevision;
+    async function persistOrderStatus(orderId, patch) {
       if (window.location.protocol === 'file:') {
-        const localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
-        const idx = localOrders.findIndex(o => o.id === orderId);
-        if (idx !== -1) {
-          localOrders[idx].status = '택배사';
-          localOrders[idx].courier = courier;
-          localOrders[idx].tracking_number = trackingNumber;
-          localStorage.setItem('minsook_orders', JSON.stringify(localOrders));
-          
-          showToast(`📋 주문 #${orderId}의 상태가 [택배사]로 업데이트되고 송장번호(${courier} ${trackingNumber})가 카카오톡으로 전송되었습니다. (로컬)`);
-          loadOrders();
-        } else {
-          showToast('❌ 해당 주문을 로컬 저장소에서 찾을 수 없습니다.');
-        }
-        return;
+        showToast('변경 이력을 저장하려면 관리자 사이트에 접속해 주세요.');
+        loadOrders(); return;
       }
-
+      const order = window.allOrders.find(o => o.id === orderId);
       try {
         const res = await fetch(`/api/admin/orders/${orderId}/status`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: '택배사', trackingNumber: trackingNumber, courier: courier })
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...patch, revision: patch.status === '택배사' ? deliveryOrderRevision : order?.revision })
         });
-        if (res.ok) {
-          showToast(`📋 주문 #${orderId}의 상태가 [택배사 전달]로 변경되었으며, 고객님께 카카오톡 알림톡(${courier} ${trackingNumber})이 전송되었습니다.`);
-          loadOrders();
-        } else {
-          showToast('❌ 상태 변경 처리에 실패하였습니다.');
-          loadOrders();
-        }
-      } catch (err) {
-        // Fallback to local storage if offline
-        const localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
-        const idx = localOrders.findIndex(o => o.id === orderId);
-        if (idx !== -1) {
-          localOrders[idx].status = '택배사';
-          localOrders[idx].courier = courier;
-          localOrders[idx].tracking_number = trackingNumber;
-          localStorage.setItem('minsook_orders', JSON.stringify(localOrders));
-          showToast(`📋 주문 #${orderId}의 상태가 [택배사]로 업데이트되었습니다. (로컬 저장소)`);
-          loadOrders();
-        } else {
-          showToast('❌ 서버 통신 오류가 발생했습니다.');
-          loadOrders();
-        }
-      }
+        const result = await res.json();
+        if (!res.ok) throw Error(result.error || '주문 변경을 저장하지 못했습니다.');
+        showToast('주문 변경을 저장했습니다. 실제 알림톡 발송은 꺼져 있습니다.');
+      } catch (error) { showToast(error.message || '연결을 확인한 뒤 다시 시도해 주세요.'); }
+      await loadOrders();
+    }
+    async function submitDeliveryStatus(orderId, courier, trackingNumber) {
+      await persistOrderStatus(orderId, { status: '택배사', courier, trackingNumber });
     }
 
     // Toggle check/uncheck all orders for Pickup
@@ -4268,9 +4200,11 @@
     };
   </script>
   <script src="html2canvas.min.js"></script>
-  <script src="admin-orders.js?v=5"></script>
+  <script src="admin-order-history.js?v=1"></script>
+  <script src="admin-orders.js?v=6"></script>
+  <script src="admin-templates.js?v=1"></script>
   <script src="admin-print.js?v=1"></script>
-  <script src="admin-notifications.js?v=1"></script>
+  <script src="admin-notifications.js?v=2"></script>
   <script src="product-gallery.js?v=1"></script>
   <script src="admin-product-images.js?v=1"></script>
   <script src="shipping-format.js?v=1"></script>
