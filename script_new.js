@@ -188,13 +188,19 @@ document.addEventListener('DOMContentLoaded', () => {
       try { localStorage.removeItem('minsook_order_attempt'); } catch (_) {}
     },
     snapshot: () => ({ ...currentQuote, products: shopProducts, canAddMore: Object.entries(priceConfig).some(([key, config]) => isValidState({ ...orderState, [key]: (orderState[key] || 0) + config.step })), items: Object.entries(orderState).filter(([, qty]) => qty > 0).map(([key, quantity]) => ({ key, quantity, ...priceConfig[key] })) }),
-    setQuantity(key, quantity) {
+    validateQuantity(key, quantity) {
       const config = priceConfig[key];
-      if (!config || !Number.isFinite(quantity) || quantity < 0) return false;
+      if (!config || !Number.isFinite(quantity) || quantity < 0) return { valid: false, reason: 'quantity' };
       const step = Number(config.step);
-      if (!(step > 0) || Math.abs(quantity / step - Math.round(quantity / step)) > 0.00001) return false;
-      const next = { ...orderState, [key]: quantity };
-      if (!isValidState(next)) return false;
+      if (!(step > 0) || Math.abs(quantity / step - Math.round(quantity / step)) > 0.00001) return { valid: false, reason: 'step' };
+      const next = { ...orderState };
+      if (quantity === 0) delete next[key]; else next[key] = Math.round(quantity * 100) / 100;
+      const weights = getWeights(next);
+      const valid = isValidState(next);
+      return { valid, reason: valid ? null : 'weight-limit', ...weights, totalWeight: weights.A + weights.B };
+    },
+    setQuantity(key, quantity) {
+      if (!this.validateQuantity(key, quantity).valid) return false;
       if (quantity === 0) delete orderState[key]; else orderState[key] = Math.round(quantity * 100) / 100;
       calculateOrder();
       return true;
@@ -296,6 +302,25 @@ document.addEventListener('DOMContentLoaded', () => {
   function getTotalWeight() {
     const { A, B } = getWeights(orderState);
     return A + B;
+  }
+
+  function getDiscountBreakdown(stateObj) {
+    let standardWeight = 0;
+    let count = 0;
+    let biteWeight = 0;
+    for (const key in stateObj) {
+      const quantity = Number(stateObj[key]) || 0;
+      const config = priceConfig[key];
+      if (!config || quantity <= 0) continue;
+      if (config.isBite) biteWeight += quantity;
+      else if (config.isQty) count += quantity;
+      else standardWeight += quantity;
+    }
+    const completedExtras = (value, firstUnit, unit) => Math.max(0, Math.floor((value - firstUnit + 1e-9) / unit));
+    const standardRate = completedExtras(standardWeight, 1, 1);
+    const countRate = completedExtras(count, 10, 10) * 2;
+    const biteRate = completedExtras(biteWeight, 0.5, 0.5);
+    return { standardWeight, count, biteWeight, standardRate, countRate, biteRate, totalRate: standardRate + countRate + biteRate };
   }
 
   // Trigger alert UI animation when hitting limits
@@ -497,21 +522,9 @@ document.addEventListener('DOMContentLoaded', () => {
       limitWeightText.textContent = `${formatWeight(totalWeight)} kg / ${formatWeight(maxLimit)} kg`;
     }
 
-    // Calculate total units for discount logic
-    // (weight: 1kg = 1 unit, quantity: 10 cucumbers = 1 unit)
-    let totalUnits = 0;
-    for (const g in orderState) {
-      const qty = orderState[g];
-      if (qty > 0 && priceConfig[g]) {
-        if (priceConfig[g].isQty) {
-          totalUnits += qty / 10.0;
-        } else {
-          totalUnits += qty;
-        }
-      }
-    }
-    const integerUnits = Math.floor(totalUnits);
-    const discountRate = integerUnits >= 2 ? Math.min(12, integerUnits) : 0;
+    // Each sales category earns its own completed-unit discount, then the rates are added.
+    const discount = getDiscountBreakdown(orderState);
+    const discountRate = discount.totalRate;
     
     // Apply 1-won unit drop (truncation to 10-won units) after applying discount
     const baseDiscountAmount = Math.round(totalOriginalPrice * (discountRate / 100));
@@ -556,7 +569,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateSMSPreview(totalOriginalPrice, discountRate, discountAmount, shipping, finalTotal);
-    currentQuote = { subtotal: totalOriginalPrice, discountRate, discountAmount, shipping, total: finalTotal, totalUnits, totalWeight, maxLimit, hasBite: A > 0, orderType, paymentMethod };
+    currentQuote = { subtotal: totalOriginalPrice, discountRate, discountAmount, shipping, total: finalTotal, discount, totalWeight, maxLimit, hasBite: A > 0, orderType, paymentMethod };
     document.dispatchEvent(new CustomEvent('minsook:cartchange', { detail: window.MinsookOrder.snapshot() }));
   }
 

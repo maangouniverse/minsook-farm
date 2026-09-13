@@ -8,12 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const photo = value => esc(value || 'minsook_main.jpg');
   const biteNotice = '한입오이만 담으면 최대 6kg. 다른 오이와 함께 담으면 전체 최대 9kg이며, 한입오이는 6kg까지예요.';
-  const policy = `<p class="shop-policy-key">추가한 상품만이 아니라 <strong>전체 상품금액에 할인됩니다.</strong><br><strong>최대 12% 할인</strong></p><table class="shop-discount-examples"><thead><tr><th>주문량 예시</th><th>할인율</th></tr></thead><tbody><tr><td>2kg 또는 20개</td><td>2%</td></tr><tr><td>3kg 또는 30개</td><td>3%</td></tr><tr><td>1kg + 10개</td><td>2%</td></tr></tbody></table><p>종류가 달라도 함께 계산해요. 할인 계산에서는 10개를 1kg과 같이 봅니다. 무게와 개수를 합쳐 2kg 상당부터 2% 할인하고, 1kg 또는 10개가 늘 때마다 1%씩 높아져요.</p><p>예를 들어 2.5kg은 2%, 3kg은 3%입니다. 2kg 또는 20개 상당보다 적으면 할인되지 않아요.</p><p>할인 계산 후 상품금액의 10원 미만은 버림하며, 이 차액도 할인금액에 포함됩니다. 배송비는 할인 대상이 아닙니다.</p><p>택배 배송비 4,000원 · 직접픽업 배송비 0원. 제주·도서산간은 추가 배송비가 발생할 수 있습니다.</p><p>일반 오이는 총 12kg까지 주문할 수 있습니다. 포장 무게 계산에서는 오이 1개를 0.18kg으로 환산합니다. 할인 계산과는 다른 기준입니다. ${biteNotice}</p>`;
+  const policy = `<p class="shop-policy-key"><strong>구분별 주문량을 합산한 뒤 할인율을 더해 전체 상품금액에 적용합니다.</strong></p><table class="shop-discount-examples"><thead><tr><th>구분</th><th>할인 계산</th><th>예시</th></tr></thead><tbody><tr><td>일반 무게</td><td>첫 1kg 제외, 추가 1kg마다 1%</td><td>3kg → 2%</td></tr><tr><td>개수</td><td>첫 10개 제외, 추가 10개마다 2%</td><td>30개 → 4%</td></tr><tr><td>한입오이</td><td>첫 500g 제외, 추가 500g마다 1%</td><td>1.5kg → 2%</td></tr></tbody></table><p>같은 구분에서는 상품 종류가 달라도 합산합니다. 일반 무게 2kg과 개수 20개를 함께 담으면 1% + 2%로, 전체 상품금액에 3% 할인이 적용됩니다.</p><p>추가 단위를 모두 채운 수량까지만 계산합니다. 예를 들어 일반 무게 2.5kg은 1% 할인입니다.</p><p>할인 계산 후 상품금액의 10원 미만은 버림하며, 이 차액도 할인금액에 포함됩니다. 배송비는 할인 대상이 아닙니다.</p><p>택배 배송비 4,000원 · 직접픽업 배송비 0원. 제주·도서산간은 추가 배송비가 발생할 수 있습니다.</p><p>일반 오이는 총 12kg까지 주문할 수 있습니다. 포장 무게 계산에서는 오이 1개를 0.18kg으로 환산합니다. 할인 계산과는 다른 기준입니다. ${biteNotice}</p>`;
   let quote = api.snapshot();
   let renderedProducts;
   let busy = false;
   let opener;
-  shop.innerHTML = `<div class="shop-policy"><div><strong>여러 종류를 함께 담아도 할인돼요</strong><p>2kg 또는 20개부터 전체 상품금액을 2% 할인해요.<br>1kg 또는 10개를 더 담을 때마다 1%씩 늘어나요. 최대 12%까지 할인돼요.<br>무게와 개수를 섞어도 함께 계산해요. 예: 1kg + 10개 → 2% 할인</p></div><button type="button" class="shop-link" id="shopPolicyButton">할인정책 자세히 보기 ↗</button></div><div class="shop-toolbar"><span>① 주문 단위 선택 → ② 수량 입력 → ③ 장바구니 담기</span><button type="button" class="shop-secondary" id="shopCartButton">장바구니 보기 (0종)</button></div>`;
+  const controlRefreshers = [];
+  shop.innerHTML = `<div class="shop-policy"><div><strong>구분별 할인율을 더해 전체 상품금액에 적용해요</strong><p>일반 무게는 첫 1kg 이후 1kg마다 1%, 개수는 첫 10개 이후 10개마다 2%, 한입오이는 첫 500g 이후 500g마다 1% 할인돼요.<br>예: 일반 무게 2kg + 개수 20개 → 전체 상품금액 3% 할인</p></div><button type="button" class="shop-link" id="shopPolicyButton">할인정책 자세히 보기 ↗</button></div><div class="shop-toolbar"><span>① 주문 단위 선택 → ② 수량 입력 → ③ 장바구니 담기</span><button type="button" class="shop-secondary" id="shopCartButton">장바구니 보기</button></div>`;
   const headerButton = document.createElement('button');
   headerButton.type = 'button'; headerButton.id = 'headerCart'; headerButton.className = 'shop-header-cart';
   headerButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h2l2.5 12h11l2-8H6M9 20h.01M18 20h.01"/></svg><span class="shop-cart-label">장바구니</span><span id="shopCount">0</span>';
@@ -54,13 +55,13 @@ document.addEventListener('DOMContentLoaded', () => {
   preview.replaceWith(details); details.append(preview);
   const modal = document.createElement('dialog'); modal.className = 'shop-modal'; modal.setAttribute('aria-labelledby', 'shopModalTitle'); document.body.append(modal);
   const policySummary = shop.querySelector('.shop-policy');
-  policySummary.querySelector('strong').textContent = '전체 상품금액, 최대 12% 할인';
+  policySummary.querySelector('strong').textContent = '구분별 할인율 합산 · 전체 상품금액 할인';
   const emphasis = document.createElement('p'); emphasis.className = 'shop-policy-emphasis'; emphasis.textContent = '추가한 상품만이 아니라 전체 상품금액에 할인됩니다.'; policySummary.querySelector('div').append(emphasis);
   let addOpener;
   function showAdded(item, quantity, card) {
     addOpener = document.activeElement;
     const imageUrl = item.images[0] || card.querySelector('img')?.getAttribute('src');
-    openModal('장바구니에 담았습니다', `<div class="shop-add-confirm"><img src="${photo(imageUrl)}" alt="${esc(item.name)}"><div><strong>${esc(item.name)}</strong><p>${esc(optionLabel(item))}</p><p>추가 수량 <strong>${quantity}${esc(item.unit)}</strong></p><p>추가 상품금액 <strong>${money(quantity * item.price / (item.isQty ? item.step : 1))}</strong><small>할인 전 금액</small></p></div></div><p class="shop-hint">아직 주문은 접수되지 않았습니다.</p><div class="shop-confirm-actions"><button type="button" class="shop-secondary" id="shopAddedContinue">계속 쇼핑하기</button><button type="button" class="shop-primary" id="shopAddedCart">장바구니 보기 (${quote.items.length}종)</button></div>`);
+    openModal('장바구니에 담았습니다', `<div class="shop-add-confirm"><img src="${photo(imageUrl)}" alt="${esc(item.name)}"><div><strong>${esc(item.name)}</strong><p>${esc(optionLabel(item))}</p><p>추가 수량 <strong>${quantity}${esc(item.unit)}</strong></p><p>추가 상품금액 <strong>${money(quantity * item.price / (item.isQty ? item.step : 1))}</strong><small>할인 전 금액</small></p></div></div><p class="shop-hint">아직 주문은 접수되지 않았습니다.</p><div class="shop-confirm-actions"><button type="button" class="shop-secondary" id="shopAddedContinue">계속 쇼핑하기</button><button type="button" class="shop-primary" id="shopAddedCart">장바구니 보기</button></div>`);
     modal.querySelector('#shopAddedContinue').onclick = () => { modal.close(); addOpener?.focus(); };
     modal.querySelector('#shopAddedCart').onclick = () => { modal.close(); openCart(); };
   }
@@ -78,6 +79,33 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   function openPolicy() { openModal('할인정책 · 주문 수량 안내', `<div class="shop-policy-detail">${policy}</div>`); }
   const optionLabel = option => `${option.step}${option.unit} 단위 · ${money(option.isQty ? option.price : option.price * option.step)}`;
+  const bitePopup = document.createElement('div');
+  bitePopup.id = 'shopBiteNoticePopup'; bitePopup.className = 'shop-bite-popup'; bitePopup.setAttribute('role', 'tooltip'); bitePopup.hidden = true;
+  bitePopup.innerHTML = `<strong>한입오이 주문 안내</strong><span>${biteNotice}</span>`;
+  document.body.append(bitePopup);
+  let bitePopupPinned = false;
+  let bitePopupButton = null;
+  function positionBitePopup(x, y) {
+    const gap = 14; const width = bitePopup.offsetWidth; const height = bitePopup.offsetHeight;
+    bitePopup.style.left = `${Math.max(gap, Math.min(window.innerWidth - width - gap, x + 18))}px`;
+    bitePopup.style.top = `${Math.max(gap, Math.min(window.innerHeight - height - gap, y + 18))}px`;
+  }
+  function showBitePopup(x, y, button = null, pinned = false) {
+    bitePopup.hidden = false; bitePopupPinned = pinned; bitePopupButton = button;
+    if (button) button.setAttribute('aria-expanded', 'true');
+    positionBitePopup(x, y);
+  }
+  function hideBitePopup() {
+    bitePopup.hidden = true; bitePopupPinned = false;
+    if (bitePopupButton) bitePopupButton.setAttribute('aria-expanded', 'false');
+    bitePopupButton = null;
+  }
+  function anchorBitePopup(button, pinned = false) {
+    const rect = button.getBoundingClientRect();
+    showBitePopup(rect.left, rect.bottom, button, pinned);
+  }
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && !bitePopup.hidden) hideBitePopup(); });
+  document.addEventListener('pointerdown', event => { if (bitePopupPinned && !bitePopup.contains(event.target) && event.target !== bitePopupButton) hideBitePopup(); });
   function renderProducts() {
     if (renderedProducts === quote.products) return;
     renderedProducts = quote.products;
@@ -92,11 +120,18 @@ document.addEventListener('DOMContentLoaded', () => {
       controls.className = 'shop-grade-controls';
       controls.setAttribute('role', 'group');
       controls.setAttribute('aria-label', `${title} 상품 선택`);
-      controls.innerHTML = `<label for="gradeOption${index}">주문 단위</label><select id="gradeOption${index}">${options.map(o => `<option value="${esc(o.key)}">${o.unit === '개' ? '개수로 주문' : '무게로 주문'} · ${o.step}${esc(o.unit)}씩</option>`).join('')}</select><label for="gradeQuantity${index}">담을 수량</label><div class="shop-option-quantity"><button type="button" class="shop-secondary" data-less aria-label="${esc(title)} 수량 줄이기">−</button><input id="gradeQuantity${index}" type="number" inputmode="decimal"><span class="shop-grade-unit"></span><button type="button" class="shop-secondary" data-more aria-label="${esc(title)} 수량 늘리기">+</button></div><p class="shop-grade-amount"></p>${options.some(o => o.isBite) ? `<p class="shop-bite"><strong>한입오이, 담기 전에 확인해 주세요</strong><br>${biteNotice}</p>` : ''}<p class="shop-error" role="alert"></p><button type="button" class="shop-primary shop-wide" data-grade-add>장바구니 담기</button><div class="shop-added" hidden><p role="status"></p><button type="button" class="shop-secondary shop-wide" data-grade-cart>장바구니 보기</button></div>`;
+      controls.innerHTML = `<label for="gradeOption${index}">주문 단위</label><select id="gradeOption${index}">${options.map(o => `<option value="${esc(o.key)}">${o.unit === '개' ? '개수로 주문' : '무게로 주문'} · ${o.step}${esc(o.unit)}씩</option>`).join('')}</select><label for="gradeQuantity${index}">담을 수량</label><div class="shop-option-quantity"><button type="button" class="shop-secondary" data-less aria-label="${esc(title)} 수량 줄이기">−</button><input id="gradeQuantity${index}" type="number" inputmode="decimal"><span class="shop-grade-unit"></span><button type="button" class="shop-secondary" data-more aria-label="${esc(title)} 수량 늘리기">+</button></div><p class="shop-grade-amount"></p><p class="shop-error" role="alert"></p><button type="button" class="shop-primary shop-wide" data-grade-add>장바구니 담기</button><div class="shop-added" hidden><p role="status"></p><button type="button" class="shop-secondary shop-wide" data-grade-cart>장바구니 보기</button></div>`;
       card.append(controls);
       const select = controls.querySelector('select');
       const quantity = controls.querySelector('input');
       const selected = () => options.find(o => o.key === select.value);
+      const error = controls.querySelector('.shop-error');
+      const moreButton = controls.querySelector('[data-more]');
+      let lastValidQuantity = 0;
+      const proposedTotal = value => (quote.items.find(item => item.key === selected().key)?.quantity || 0) + value;
+      const validateSelected = value => api.validateQuantity(selected().key, Math.round(proposedTotal(value) * 100) / 100);
+      const limitMessage = o => `수량은 ${o.step}${o.unit}씩 입력해 주세요. 일반 오이만 담으면 총 12kg, 한입오이는 6kg, 한입오이가 섞이면 총 9kg까지 담을 수 있어요.`;
+      const refreshMoreButton = () => { moreButton.disabled = !validateSelected(Number(quantity.value) + selected().step).valid; };
       const updateAmount = () => {
         const o = selected();
         controls.querySelector('.shop-grade-amount').textContent = `지금 담을 금액 ${money(Number(quantity.value) * o.price / (o.isQty ? o.step : 1))}`;
@@ -107,35 +142,72 @@ document.addEventListener('DOMContentLoaded', () => {
         quantity.setAttribute('aria-label', `${title} 담을 수량`);
         controls.querySelector('.shop-grade-unit').textContent = o.unit;
         price.innerHTML = `<strong>${money(o.isQty ? o.price : o.price * o.step)}</strong><span class="shop-sale-unit"> / ${o.step}${esc(o.unit)}<br>${o.step}${esc(o.unit)}씩 담을 수 있어요.</span>`;
-        controls.querySelector('.shop-error').textContent = '';
-        updateAmount();
+        error.textContent = ''; lastValidQuantity = o.step;
+        updateAmount(); refreshMoreButton();
       };
-      select.onchange = reset; quantity.oninput = updateAmount;
+      select.onchange = reset;
+      quantity.oninput = () => {
+        updateAmount();
+        const value = Number(quantity.value); const o = selected();
+        if (quantity.value === '' || !(value > 0)) return;
+        const validation = validateSelected(value);
+        if (validation.reason === 'weight-limit') {
+          error.textContent = limitMessage(o); quantity.value = lastValidQuantity; updateAmount(); refreshMoreButton(); return;
+        }
+        if (validation.valid) { lastValidQuantity = value; error.textContent = ''; refreshMoreButton(); }
+      };
+      quantity.onchange = () => {
+        const value = Number(quantity.value); const o = selected();
+        if (!quantity.checkValidity() || !(value > 0) || !validateSelected(value).valid) {
+          error.textContent = limitMessage(o); quantity.value = lastValidQuantity; updateAmount(); refreshMoreButton(); return;
+        }
+        lastValidQuantity = value; error.textContent = ''; refreshMoreButton();
+      };
       [['[data-less]', -1], ['[data-more]', 1]].forEach(([selector, direction]) => {
         controls.querySelector(selector).onclick = () => {
-          quantity.value = Math.max(selected().step, Math.round((Number(quantity.value) + direction * selected().step) * 100) / 100);
-          updateAmount();
+          const o = selected();
+          const next = Math.max(o.step, Math.round((Number(quantity.value) + direction * o.step) * 100) / 100);
+          if (direction > 0 && !validateSelected(next).valid) { error.textContent = limitMessage(o); return; }
+          quantity.value = next; lastValidQuantity = next; error.textContent = '';
+          updateAmount(); refreshMoreButton();
         };
       });
       controls.querySelector('[data-grade-add]').onclick = () => {
         const o = selected(); const number = Number(quantity.value);
         const existing = quote.items.find(item => item.key === o.key)?.quantity || 0;
-        if (!quantity.checkValidity() || !(number > 0) || !api.setQuantity(o.key, Math.round((existing + number) * 100) / 100)) {
-          controls.querySelector('.shop-error').textContent = `수량은 ${o.step}${o.unit}씩 입력해 주세요. 일반 오이만 담으면 총 12kg, 한입오이는 6kg, 한입오이가 섞이면 총 9kg까지 담을 수 있어요.`;
+        if (!quantity.checkValidity() || !(number > 0) || !api.validateQuantity(o.key, Math.round((existing + number) * 100) / 100).valid || !api.setQuantity(o.key, Math.round((existing + number) * 100) / 100)) {
+          error.textContent = limitMessage(o);
           return;
         }
-        controls.querySelector('.shop-error').textContent = '';
+        error.textContent = '';
         showAdded(o, number, card);
       };
       controls.querySelector('[data-grade-cart]').onclick = openCart;
+      controlRefreshers.push(refreshMoreButton);
+      if (options.some(o => o.isBite)) {
+        card.dataset.hasBite = 'true';
+        const button = document.createElement('button');
+        button.type = 'button'; button.className = 'shop-bite-info-button'; button.textContent = '주문 안내';
+        button.setAttribute('aria-controls', bitePopup.id); button.setAttribute('aria-expanded', 'false');
+        card.querySelector('h3').append(button);
+        button.addEventListener('focus', () => anchorBitePopup(button));
+        button.addEventListener('blur', () => { if (!bitePopupPinned) hideBitePopup(); });
+        button.addEventListener('click', () => bitePopupPinned && bitePopupButton === button ? hideBitePopup() : anchorBitePopup(button, true));
+        card.addEventListener('pointerenter', event => { if (event.pointerType === 'mouse' && !bitePopupPinned) showBitePopup(event.clientX, event.clientY); });
+        card.addEventListener('pointermove', event => {
+          if (bitePopupPinned || event.pointerType !== 'mouse') return;
+          if (bitePopup.hidden) showBitePopup(event.clientX, event.clientY); else positionBitePopup(event.clientX, event.clientY);
+        });
+        card.addEventListener('pointerleave', () => { if (!bitePopupPinned) hideBitePopup(); });
+      }
       reset();
     });
   }
   function totals() { return `<dl class="shop-totals"><div><dt>할인 전 상품금액</dt><dd>${money(quote.subtotal)}</dd></div><div class="shop-discount"><dt>수량 합산 할인 ${quote.discountRate}%<small>10원 미만 절사 포함</small></dt><dd>−${money(quote.discountAmount)}</dd></div><div><dt>배송비</dt><dd>${money(quote.shipping)}</dd></div><div class="shop-final-total"><dt>최종 결제금액</dt><dd>${money(quote.total)}</dd></div></dl>`; }
   function render() {
     renderProducts(); document.getElementById('shopCount').textContent = quote.items.length;
-    document.getElementById('shopCartButton').textContent = `장바구니 보기 (${quote.items.length}종)`;
-    document.querySelectorAll('[data-grade-cart]').forEach(button => button.textContent = `장바구니 보기 (${quote.items.length}종)`);
+    document.getElementById('shopCartButton').textContent = '장바구니 보기';
+    document.querySelectorAll('[data-grade-cart]').forEach(button => button.textContent = '장바구니 보기');
     if (!quote.items.length) document.querySelectorAll('.shop-added').forEach(message => message.hidden = true);
     headerButton.setAttribute('aria-label', `장바구니, 담긴 상품 ${quote.items.length}종`); $('#shopItemCount').textContent = quote.items.length;
     const lines = $('#shopLines');
@@ -150,10 +222,12 @@ document.addEventListener('DOMContentLoaded', () => {
     lines.querySelectorAll('[data-remove]').forEach(b => b.onclick = () => change(Number(b.dataset.remove), 0));
     $('#shopTotals').innerHTML = totals();
     $('#shopCheckoutSummary').innerHTML = `<h3>주문 상품 ${quote.items.length}종 · ${quote.orderType === 'delivery' ? '택배배송' : '직접픽업'}</h3><ul class="shop-review-items">${quote.items.map(item => `<li><span>${esc(item.name)} · ${item.quantity}${esc(item.unit)}</span><strong>${money(item.quantity * item.price / (item.isQty ? item.step : 1))}</strong></li>`).join('')}</ul>${totals()}`;
+    const d = quote.discount || { standardRate: 0, countRate: 0, biteRate: 0 };
     let progress = `현재 포장 무게 ${Number((quote.totalWeight || 0).toFixed(2))} / ${quote.maxLimit || 12}kg`;
-    if (quote.discountRate >= 12) progress += ' · 최대 12% 할인 적용 중입니다.';
-    else { const target = Math.max(2, Math.floor(quote.totalUnits || 0) + 1); const need = Number((target - (quote.totalUnits || 0)).toFixed(2)); progress += `\n${target}% 할인까지 ${need}kg 또는 ${Number((need * 10).toFixed(2))}개에 해당하는 양이 더 필요해요. ${quote.canAddMore ? '상품별로 담을 수 있는 수량과 최대 주문 무게 안에서 추가해 주세요.' : '현재 구성은 최대 주문 무게에 도달해 더 담을 수 없습니다.'}`; }
+    progress += `\n할인율: 일반 무게 ${d.standardRate}% + 개수 ${d.countRate}% + 한입오이 ${d.biteRate}% = ${quote.discountRate}%`;
+    if (!quote.canAddMore) progress += '\n현재 구성은 최대 주문 무게에 도달해 더 담을 수 없습니다.';
     $('#shopProgress').textContent = progress; $('#shopCheckout').disabled = !quote.items.length; finalNotice.hidden = !quote.hasBite;
+    controlRefreshers.forEach(refresh => refresh());
     paymentNotice.textContent = quote.orderType === 'pickup' && quote.paymentMethod === 'onsite' ? '현장결제 주문입니다. 픽업 시 카드 및 고흥사랑상품권으로 결제할 수 있습니다.' : '계좌이체 주문입니다. 접수 후 안내된 계좌로 입금해 주세요. 실제 입금 확인 전에는 결제완료로 처리되지 않습니다.';
   }
   headerButton.onclick = openCart; document.getElementById('shopCartButton').onclick = openCart;

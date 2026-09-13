@@ -6,11 +6,13 @@ const assert = require('node:assert/strict');
 const source = fs.readFileSync(path.join(__dirname, '../script_new.js'), 'utf8');
 const functions = [
   source.slice(source.indexOf('  function getWeights('), source.indexOf('  function getCappedQuantity(')),
+  source.slice(source.indexOf('  function getDiscountBreakdown('), source.indexOf('  // Trigger alert UI animation')),
   source.slice(source.indexOf('  function calculateOrder('), source.indexOf('  function setBarColor('))
 ].join('\n');
 const context = {
   priceConfig: {
-    kg: { name: '무게', price: 7900, isQty: false, isBite: false, unit: 'kg', step: 1 },
+    kg: { name: '특품 무게', price: 7900, isQty: false, isBite: false, unit: 'kg', step: 1 },
+    kg2: { name: '상품 무게', price: 5900, isQty: false, isBite: false, unit: 'kg', step: 1 },
     qty: { name: '개수', price: 5500, isQty: true, isBite: false, unit: '개', step: 10 },
     bite: { name: '한입', price: 5800, isQty: false, isBite: true, unit: 'kg', step: 0.5 }
   },
@@ -25,25 +27,28 @@ vm.runInContext(functions, context);
 const cases = [
   [{}, 'delivery', 0, 0, 0, 0],
   [{ kg: 1 }, 'delivery', 7900, 0, 0, 11900],
-  [{ kg: 2 }, 'delivery', 15800, 2, 320, 19480],
-  [{ kg: 3 }, 'delivery', 23700, 3, 720, 26980],
-  [{ kg: 12 }, 'delivery', 94800, 12, 11380, 87420],
+  [{ kg: 2 }, 'delivery', 15800, 1, 160, 19640],
+  [{ kg: 3 }, 'delivery', 23700, 2, 480, 27220],
+  [{ kg: 12 }, 'delivery', 94800, 11, 10430, 88370],
+  [{ kg: 20 }, 'delivery', 158000, 19, 30020, 131980],
   [{ bite: 0.5 }, 'delivery', 2900, 0, 0, 6900],
-  [{ bite: 1.5 }, 'delivery', 8700, 0, 0, 12700],
-  [{ bite: 2 }, 'pickup', 11600, 2, 240, 11360],
-  [{ kg: 1, qty: 10 }, 'delivery', 13400, 2, 270, 17130],
+  [{ bite: 1.5 }, 'delivery', 8700, 2, 180, 12520],
+  [{ bite: 2 }, 'pickup', 11600, 3, 350, 11250],
+  [{ kg: 1, qty: 10 }, 'delivery', 13400, 0, 0, 17400],
   [{ qty: 20 }, 'pickup', 11000, 2, 220, 10780],
-  [{ bite: 6, kg: 3 }, 'pickup', 58500, 9, 5270, 53230]
+  [{ kg: 1, kg2: 2 }, 'pickup', 19700, 2, 400, 19300],
+  [{ kg: 2, qty: 20 }, 'pickup', 26800, 3, 810, 25990],
+  [{ bite: 6, kg: 3 }, 'pickup', 58500, 13, 7610, 50890]
 ];
 for (const [state, type, subtotal, rate, discount, total] of cases) {
   context.orderState = state; context.orderType = type; context.calculateOrder();
   const q = context.currentQuote;
   assert.deepEqual([q.subtotal, q.discountRate, q.discountAmount, q.total], [subtotal, rate, discount, total]);
 }
-for (const [state, valid] of [[{ bite: 6 }, true], [{ bite: 6.5 }, false], [{ bite: 6, kg: 3 }, true], [{ bite: 6, kg: 4 }, false], [{ kg: 12 }, true], [{ kg: 13 }, false], [{ qty: 60 }, true], [{ qty: 70 }, false], [{ bite: 6, qty: 20 }, false]]) {
+for (const [state, valid] of [[{ bite: 6 }, true], [{ bite: 6.5 }, false], [{ bite: 6, kg: 3 }, true], [{ bite: 6.5, kg: 1 }, false], [{ bite: 6, kg: 4 }, false], [{ kg: 12 }, true], [{ kg: 13 }, false], [{ qty: 60 }, true], [{ qty: 70 }, false], [{ bite: 6, qty: 20 }, false]]) {
   assert.equal(context.isValidState(state), valid, JSON.stringify(state));
 }
-console.log(`PASS: ${cases.length} pricing cases and 9 weight-limit cases (no database access).`);
+console.log(`PASS: ${cases.length} pricing cases and 10 weight-limit cases (no database access).`);
 // Exercise the catalog adapter with admin-defined dual-unit options and steps.
 const adapterContext = { ...context, window: {}, renderProductSelectOptions: () => {}, renderMainPageProductCards: () => {}, formatWeight: value => String(value) };
 vm.createContext(adapterContext);
@@ -60,6 +65,11 @@ assert.equal(api.setQuantity('99:개', 11), false);
 assert.equal(api.setQuantity('99:개', Infinity), false);
 assert.equal(api.setQuantity('missing', 1), false);
 const snapshot = api.snapshot();
+const beforeValidation = JSON.stringify(snapshot.items);
+const validation = api.validateQuantity('99:kg', 12);
+assert.equal(validation.valid, false);
+assert.equal(validation.reason, 'weight-limit');
+assert.equal(JSON.stringify(api.snapshot().items), beforeValidation, 'validation must not mutate cart state');
 assert.equal(snapshot.products[0].options.length, 2);
 assert.equal(snapshot.products[0].options[1].price, 8500);
 assert.equal(snapshot.products[0].images.length, 2);
@@ -68,3 +78,7 @@ assert.equal(api.setQuantity('99:개', 0), true);
 assert.equal(api.snapshot().items.length, 1);
 assert.equal(api.snapshot().subtotal, 3950);
 console.log('PASS: admin dual-unit prices, custom steps, invalid input and item removal.');
+const submitBlock = source.slice(source.indexOf('// Saving an order must not depend'), source.indexOf("fetch('/api/orders'"));
+assert.ok(submitBlock.indexOf('calculateOrder();') < submitBlock.indexOf('const payload ='), 'quote must refresh immediately before payload creation');
+assert.match(submitBlock, /totalPrice: currentFinalTotal/, 'the order payload must use the same calculated total shown in cart and checkout');
+console.log('PASS: checkout refreshes the quote and sends the displayed final total without submitting an order.');

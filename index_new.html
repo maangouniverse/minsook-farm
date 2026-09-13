@@ -25,8 +25,8 @@
   <meta name="twitter:image" content="https://minsook-farm.vercel.app/minsook_main.jpg">
   
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="styles_new.css?v=4">
-  <link rel="stylesheet" href="shop.css?v=3">
+  <link rel="stylesheet" href="styles_new.css?v=5">
+  <link rel="stylesheet" href="shop.css?v=4">
 
   <!-- Daum Postcode SDK -->
   <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
@@ -75,7 +75,7 @@
       <div class="hero-content load-animate fade-in-up delay-1">
         <h1>
           <span class="hero-title-line">받는 순간</span><br>
-          <span class="hero-title-line hero-title-accent">기분좋은 오이만</span><br>
+          <span class="hero-title-line hero-title-accent">기분 좋은 오이만</span><br>
           <span class="hero-title-line">담겠습니다</span>
         </h1>
         <p class="hero-sub-desc">
@@ -147,7 +147,7 @@
     <div class="section-title-wrapper">
       <span class="section-subtitle">상품 등급 안내</span>
       <h2 class="section-title">용도에 맞게 <span>골라보세요</span></h2>
-      <p class="section-desc product-selection-desc"><span class="mobile-copy-line">좋은 오이는 수확에서 끝나지 않습니다.</span><br><span class="mobile-copy-line">민숙농장은 판매자인 동시에</span><br class="mobile-only"><span class="mobile-copy-line">택배를 받아보는 소비자의 마음으로,</span><br class="mobile-only"><span class="mobile-copy-line">선별부터 포장까지 모든 과정을 꼼꼼하게 살펴</span><br class="mobile-only"><span class="mobile-copy-line">가장 만족스러운 상태로 보내드립니다.</span></p>
+      <p class="section-desc product-selection-desc"><span class="mobile-copy-line">좋은 오이는 수확에서 끝나지 않습니다.</span><br><span class="mobile-copy-line">민숙농장은 판매자인 동시에 </span><br class="mobile-only"><span class="mobile-copy-line">택배를 받아보는 소비자의 마음으로, </span><br class="mobile-only"><span class="mobile-copy-line">선별부터 포장까지 모든 과정을 꼼꼼하게 살펴 </span><br class="mobile-only"><span class="mobile-copy-line">가장 만족스러운 상태로 보내드립니다.</span></p>
     </div>
 
     <div id="farmShop" aria-label="상품 주문 안내"><p>판매 옵션을 불러오는 중입니다…</p></div>
@@ -260,7 +260,7 @@
             <span class="notice-icon">🎁</span>
             <p class="notice-text">
               <strong>주문 수량이 늘어날수록 할인율이 커집니다!</strong><br>
-              (1kg 또는 10개를 1단위로 합산해 2단위부터 전체 상품금액에 2% 할인, 이후 1단위마다 1%씩 증가, 최대 12% 할인)
+              일반 무게는 첫 1kg 이후 1kg마다 1%, 개수는 첫 10개 이후 10개마다 2%, 한입오이는 첫 500g 이후 500g마다 1% 할인됩니다. 구분별 할인율을 더해 전체 상품금액에 적용합니다.
             </p>
           </div>
           <div class="notice-item limit-notice">
@@ -538,79 +538,6 @@
       <span>Goheung, Jeollanam-do</span>
     </div>
   </footer>
-
-  <!-- Gemini Chatbot Widget -->
-  <div id="chatbotWidget" class="chatbot-widget">
-    <!-- Floating Bubble Button -->
-    <button id="chatbotBubble" class="chatbot-bubble" aria-label="챗봇 열기">
-      <div class="bubble-icon-container">
-        <svg class="bubble-icon" viewBox="0 0 24 24">
-          <path fill="currentColor" d="M12,2A10,10 0 0,1 22,12C22,15.22 20.47,18.09 18.09,19.93L19,22L16.22,21.1C14.93,21.68 13.5,22 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,6A1.5,1.5 0 0,0 10.5,7.5A1.5,1.5 0 0,0 12,9A1.5,1.5 0 0,0 13.5,7.5A1.5,1.5 0 0,0 12,6M12,11A1.5,1.5 0 0,0 10.5,12.5A1.5,1.5 0 0,0 12,14A1.5,1.5 0 0,0 13.5,12.5A1.5,1.5 0 0,0 12,11M12,16A1.5,1.5 0 0,0 10.5,17.5A1.5,1.5 0 0,0 12,19A1.5,1.5 0 0,0 13.5,17.5A1.5,1.5 0 0,0 12,16Z" />
-        </svg>
-      </div>
-      <span class="chatbot-badge">1</span>
-    </button>
-
-    <!-- Chat Window Container -->
-    <div id="chatbotWindow" class="chatbot-window hidden">
-      <!-- Chat Header -->
-      <div class="chatbot-header">
-        <div class="chatbot-profile">
-          <div class="avatar-bg">
-            <svg class="avatar-icon" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L7.33,18C13,17.5 19,13 22,8C22,8 20,8 17,8Z" />
-            </svg>
-          </div>
-          <div class="profile-info">
-            <span class="profile-name">농장지기 민숙 씨</span>
-            <span class="profile-status">아삭하게 대답 중 🥒</span>
-          </div>
-        </div>
-        <div class="header-actions">
-          <button id="btnChatbotReset" class="chatbot-action-btn" title="대화 초기화" aria-label="대화 초기화">
-            <svg viewBox="0 0 24 24">
-              <path fill="currentColor" d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z" />
-            </svg>
-          </button>
-          <button id="btnChatbotClose" class="chatbot-close-btn" aria-label="챗봇 닫기">
-            <svg viewBox="0 0 24 24">
-              <path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Chat Body -->
-      <div class="chatbot-body">
-        <div id="chatbotMessages" class="chatbot-messages">
-          <!-- Initial welcome message from bot -->
-          <div class="chat-message bot">
-            <div class="msg-bubble">
-              안녕하세요! 민숙농장에 방문해 주셔서 진심으로 감사드립니다. 🥒 고흥에서 매일 아침 당일 수확해서 보내드리는 아삭한 백다다기 오이 직거래 전문 농장입니다. 궁금하신 점이 있으시면 언제든지 편하게 문의해 주세요.
-            </div>
-          </div>
-          
-          <!-- Suggested Quick Questions chips -->
-          <div class="quick-questions" id="quickQuestions">
-            <button class="qq-chip" data-question="오이 등급 차이를 알려줘">오이 등급은 어떻게 다른가요?</button>
-            <button class="qq-chip" data-question="배송비랑 배송 기간은 어떻게 돼?">배송은 언제 발송되나요?</button>
-            <button class="qq-chip" data-question="주문은 어떻게 해?">오이를 주문하고 싶어요</button>
-            <button class="qq-chip" data-question="파손 보상(A/S) 기준이 뭐야?">오이가 상해서 왔어요</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Chat Footer -->
-      <div class="chatbot-footer">
-        <input type="text" id="chatbotInput" placeholder="민숙 씨에게 물어보세요..." maxlength="500">
-        <button id="btnChatbotSend" aria-label="메시지 전송" class="chatbot-send-btn">
-          <svg viewBox="0 0 24 24">
-            <path fill="currentColor" d="M2,21L23,12L2,3V10L17,12L2,14V21Z" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  </div>
 
   <!-- KakaoTalk Instruction Modal -->
   <div id="kakaoModal" class="kakao-modal hidden">
@@ -904,8 +831,7 @@
 
   <!-- Scripts -->
   <script src="product-gallery.js?v=1"></script>
-  <script src="script_new.js?v=8"></script>
-  <script src="shop.js?v=3"></script>
-  <script src="chatbot_new.js"></script>
+  <script src="script_new.js?v=9"></script>
+  <script src="shop.js?v=4"></script>
 </body>
 </html>
