@@ -88,9 +88,10 @@ function createOrderService(db, { env = process.env, sendApprovedTemplate = null
         const inserted = await tx.run('INSERT INTO orders (name, phone, address, memo, items, total_price, request_key, request_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (request_key) DO NOTHING', [order.name, order.phone, order.address, order.memo, JSON.stringify(order.items), order.totalPrice, key, hash]);
         const row = await tx.get('SELECT * FROM orders WHERE request_key = ?', [key]);
         if (!row || row.request_hash !== hash) throw Object.assign(new Error('이미 사용된 주문 확인번호입니다. 기존 접수 내역을 먼저 확인해 주세요.'), { status: 409 });
-        if (inserted.changes) await lifecycle.record(tx, null, row, '주문 접수');
-        return row;
+        const eventId = inserted.changes ? await lifecycle.record(tx, null, row, '주문 접수') : null;
+        return { ...row, eventId };
       });
+      await lifecycle.dispatch(saved.eventId);
     } else {
     await run('INSERT INTO orders (name, phone, address, memo, items, total_price, request_key, request_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (request_key) DO NOTHING', [order.name, order.phone, order.address, order.memo, JSON.stringify(order.items), order.totalPrice, key, hash]);
     saved = await get('SELECT * FROM orders WHERE request_key = ?', [key]);

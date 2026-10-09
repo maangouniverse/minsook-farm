@@ -4,10 +4,15 @@ const base = 'http://127.0.0.1:3017';
 const { randomUUID } = require('node:crypto');
 (async () => {
   for (const path of ['/api/admin/orders/1/history', '/api/admin/notification-templates']) assert.equal((await fetch(base + path)).status, 401);
+  assert.equal((await fetch(base + '/api/admin/notifications/sync', { method: 'POST' })).status, 401);
   const login = await fetch(base + '/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'local-test-only' }) });
   assert.equal(login.status, 200);
   const Cookie = login.headers.getSetCookie().map(c => c.split(';')[0]).join('; ');
   const headers = { 'Content-Type': 'application/json', Cookie };
+  const notificationState = await (await fetch(base + '/api/admin/notifications', { headers })).json();
+  assert.equal(notificationState.readiness.provider, 'solapi');
+  assert.equal(notificationState.readiness.enabled, false);
+  assert.equal((await fetch(base + '/api/admin/notifications/sync', { method: 'POST', headers })).status, 503);
   const body = { name: '가상 배송 주문', phone: '01000000000', basicAddress: '가상 배송지', memo: '화면 확인용 가상 주문', items: [{ name: '가상 오이', quantity: 1, unit: 'kg' }], totalPrice: 1000, requestKey: randomUUID() };
   const created = await fetch(base + '/api/orders', { method: 'POST', headers, body: JSON.stringify(body) });
   assert.equal(created.status, 201); const { orderId } = await created.json();

@@ -4,11 +4,12 @@
   const dialog = document.createElement('dialog'); dialog.className = 'template-dialog';
   dialog.setAttribute('aria-labelledby', 'template-title');
   dialog.innerHTML = `<form><header><h2 id="template-title">알림톡 템플릿 관리</h2><button type="button" data-close>닫기</button></header>
-    <p class="template-notice">실제 알림톡 발송은 꺼져 있습니다. 여기서는 안내 문구와 발송 준비 내용을 관리합니다.</p>
-    <p>문구 저장과 비즈톡 발송 승인은 별개입니다. 비즈톡에서 승인받은 문구와 코드를 확인해 주세요.</p>
+    <p class="template-notice">솔라피 발송 설정을 확인하고 있습니다.</p>
+    <p>솔라피에서 승인받은 템플릿 ID와 동일한 문구·변수·버튼을 입력하세요. 이 화면에서 문구를 저장해도 카카오 검수가 신청되지는 않습니다.</p>
+    <p>현재 발송 대상은 주문완료·입금확인·택배발송입니다. 주문취소 문구는 보관용이며 발송하지 않습니다.</p>
     <label>주문 상태<select name="status"></select></label>
-    <label class="template-checkbox"><input name="enabled" type="checkbox"> 이 템플릿 사용 (현재 실제 발송은 하지 않음)</label>
-    <label>비즈톡 승인 템플릿 코드<input name="provider_code" maxlength="200"></label>
+    <label class="template-checkbox"><input name="enabled" type="checkbox"> 이 템플릿 사용 (솔라피 발송 설정 완료 후 적용)</label>
+    <label>솔라피 승인 템플릿 ID<input name="provider_code" maxlength="200"></label>
     <label>안내 문구<textarea name="body" rows="6" maxlength="4000" required></textarea></label>
     <fieldset><legend>변수 넣기 — 선택한 입력칸에 주문 정보가 들어갈 자리를 넣습니다</legend><div data-variables></div></fieldset>
     <label>버튼 이름<input name="button_label" maxlength="50"></label>
@@ -38,6 +39,7 @@
     notice.textContent = '저장된 문구를 불러오고 있습니다.';
     try {
       const value = await request('/api/admin/notification-templates'); templates = value.templates;
+      dialog.querySelector('.template-notice').textContent = value.readiness?.reason || '솔라피 설정을 확인해 주세요.';
       fields.status.replaceChildren(...Object.entries(value.statuses).map(([key, label]) => new Option(label, key)));
       fields.status.value = selected; fill();
       dialog.querySelector('[data-variables]').replaceChildren(...value.variables.map(variable => {
@@ -65,7 +67,7 @@
     event.preventDefault(); const button = form.querySelector('[type="submit"]'); button.disabled = true;
     try {
       const value = await request(`/api/admin/notification-templates/${encodeURIComponent(fields.status.value)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data()) });
-      templates = value.templates; dirty = false; notice.textContent = '문구를 저장했습니다. 실제 발송은 꺼져 있습니다.';
+      templates = value.templates; dirty = false; notice.textContent = '문구를 저장했습니다. ' + (value.readiness?.reason || '솔라피 발송 설정을 확인해 주세요.');
     } catch (e) { notice.textContent = e.message; }
     finally { button.disabled = false; }
   };

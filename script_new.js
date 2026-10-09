@@ -1636,18 +1636,26 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
   const lookupSpinner = document.getElementById('lookupSpinner');
   const lookupResultsContainer = document.getElementById('lookupResultsContainer');
 
+  function openLookupModal() {
+    if (!orderLookupModal) return;
+    orderLookupModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    if (lookupPhoneInput) lookupPhoneInput.focus();
+  }
+
   // Open lookup modal
   if (btnOrderLookup) {
     btnOrderLookup.addEventListener('click', (e) => {
       e.preventDefault();
-      if (orderLookupModal) {
-        orderLookupModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-        if (lookupPhoneInput) {
-          lookupPhoneInput.focus();
-        }
-      }
+      openLookupModal();
     });
+  }
+
+  // Open order lookup directly from notification links without putting a
+  // customer's phone number in the URL or browser history.
+  const pageUrl = new URL(window.location.href);
+  if (pageUrl.searchParams.get('view') === 'order-lookup' || pageUrl.hash === '#order-lookup') {
+    openLookupModal();
   }
 
   // Close lookup modal function
@@ -1857,15 +1865,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
   if (btnHeaderOrderLookup) {
     btnHeaderOrderLookup.addEventListener('click', (e) => {
       e.preventDefault();
-      const orderLookupModal = document.getElementById('orderLookupModal');
-      const lookupPhoneInput = document.getElementById('lookupPhoneInput');
-      if (orderLookupModal) {
-        orderLookupModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-        if (lookupPhoneInput) {
-          lookupPhoneInput.focus();
-        }
-      }
+      openLookupModal();
     });
   }
 

@@ -468,8 +468,9 @@ app.post('/api/admin/upload', authenticateAdmin, (req, res) => {
   });
 });
 
-// Durable order receipt and a disabled-by-default notification audit.
-const lifecycle = require('./internal/order-lifecycle.cjs').createLifecycle(db);
+// Send only after the order and notification snapshot have committed.
+const notifier = require('./internal/solapi.cjs').createSolapi();
+const lifecycle = require('./internal/order-lifecycle.cjs').createLifecycle(db, { notifier });
 const orderService = require('./internal/order-service.cjs').createOrderService(db, { lifecycle });
 const visitorAnalytics = require('./internal/visitor-analytics.cjs').createVisitorAnalytics(db);
 require('./internal/product-images.cjs')(app, db, authenticateAdmin);
@@ -498,7 +499,7 @@ app.get('/api/admin/notifications', authenticateAdmin, async (req, res) => {
   try {
     const previous = await orderService.logs();
     const recent = await lifecycle.logs();
-    res.json({ ...previous, logs: [...recent, ...previous.logs].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 100) });
+    res.json({ readiness: lifecycle.readiness(), logs: [...recent, ...previous.logs].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 100) });
   }
   catch { res.status(503).json({ error: '알림톡 기록을 불러오지 못했습니다.' }); }
 });
@@ -657,6 +658,11 @@ app.get('/api/admin/orders', authenticateAdmin, async (req, res) => {
   });
 });
 
+app.post('/api/admin/notifications/sync', authenticateAdmin, async (req, res) => {
+  try { res.json(await lifecycle.syncResults()); }
+  catch { res.status(503).json({ error: '솔라피 결과를 조회하지 못했습니다. 연결 설정과 솔라피 발송 내역을 확인해 주세요. 재발송은 하지 않았습니다.' }); }
+});
+
 app.get('/api/admin/visitors', authenticateAdmin, async (req, res) => {
   try {
     res.json(await visitorAnalytics.stats());
@@ -666,7 +672,7 @@ app.get('/api/admin/visitors', authenticateAdmin, async (req, res) => {
   }
 });
 
-// Persist order changes and audit records together. No live notification transport.
+// Persist changes before sending notifications; transport failures do not undo orders.
 app.put('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
   const { name, phone, address, memo, items, total_price, status, tracking_number, courier } = req.body;
   if (!/^\d+$/.test(req.params.id) || typeof name !== 'string' || !name.trim() ||

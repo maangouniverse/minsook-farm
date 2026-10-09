@@ -15,7 +15,7 @@
       for (const event of data.events) {
         const row = document.createElement('article'); row.className = 'order-history-row';
         const title = document.createElement('strong'); title.textContent = event.before ? `${labels[event.before.status]} → ${labels[event.after.status]}` : labels[event.after.status];
-        if (event.kind === 'shipping') title.textContent = '운송장 정보 변경 · 알림 재전송 준비';
+        if (event.kind === 'shipping') title.textContent = '운송장 정보 변경';
         const time = document.createElement('time'); time.textContent = new Date(event.created_at).toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' });
         const source = document.createElement('p'); source.textContent = `${event.actor} · ${event.source}`;
         row.append(title, time, source);

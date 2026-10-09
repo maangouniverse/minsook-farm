@@ -2490,13 +2490,14 @@
       <h2>민숙농장 어드민</h2>
       <p>주문 및 품목 관리를 위한 로그인</p>
 
-      <form id="loginForm" onsubmit="handleLogin(event)">
+      <form id="loginForm" onsubmit="handleLogin(event)" autocomplete="off">
         <div class="form-group">
           <label class="form-label" for="loginPassword" id="passwordLabel">관리자 비밀번호</label>
-          <input type="password" id="loginPassword" class="input-field" placeholder="비밀번호 입력" required autocomplete="current-password">
+          <input type="password" id="loginPassword" class="input-field" placeholder="비밀번호를 직접 입력해 주세요" required autocomplete="new-password" autocapitalize="none" spellcheck="false">
         </div>
 
-        <button type="submit" class="btn-login">로그인하기</button>
+        <button type="submit" id="loginSubmit" class="btn-login">로그인하기</button>
+        <p id="loginError" role="alert" hidden style="color: #b91c1c; margin: 12px 0 0;"></p>
       </form>
     </div>
   </div>
@@ -2808,6 +2809,10 @@
     async function handleLogin(e) {
       e.preventDefault();
       const password = document.getElementById('loginPassword').value;
+      const submit = document.getElementById('loginSubmit');
+      const errorBox = document.getElementById('loginError');
+      errorBox.hidden = true;
+      if (submit.disabled) return;
 
       // Local offline fallback check for file:// static mode
       if (window.location.protocol === 'file:') {
@@ -2825,36 +2830,40 @@
         return;
       }
 
+      submit.disabled = true;
+      submit.textContent = '로그인 확인 중…';
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
       try {
         const res = await fetch('/api/admin/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password })
+          body: JSON.stringify({ password }),
+          credentials: 'same-origin',
+          signal: controller.signal
         });
         
         const data = await res.json();
         if (res.ok && data.success) {
+          document.getElementById('loginPassword').value = '';
           showToast('🔓 로그인에 성공하였습니다!');
           currentUserRole = data.role;
           currentUsername = 'admin';
           sessionStorage.setItem('minsook_admin_logged_in', 'true');
           showDashboard();
         } else {
-          showToast(`❌ 로그인 실패: ${data.error || '비밀번호가 올바르지 않습니다.'}`);
+          errorBox.textContent = res.status >= 500
+            ? '서버에 연결하지 못했습니다. 잠시 후 다시 로그인해 주세요.'
+            : '비밀번호가 올바르지 않습니다. 다시 입력해 주세요.';
+          errorBox.hidden = false;
         }
       } catch (err) {
-        // Network offline fallback
-        const savedPass = localStorage.getItem('minsook_admin_password') || '6138';
-        if (password === savedPass) {
-          showToast('🔓 오프라인 로컬 모드로 로그인에 성공하였습니다!');
-          currentUserRole = 'admin';
-          currentUsername = 'admin';
-          sessionStorage.setItem('minsook_admin_logged_in', 'true');
-          showDashboard();
-        } else {
-          showToast('❌ 네트워크 오류가 발생하였으며 로컬 비밀번호도 틀립니다.');
-          console.error(err);
-        }
+        errorBox.textContent = '서버 응답이 없습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.';
+        errorBox.hidden = false;
+      } finally {
+        clearTimeout(timeout);
+        submit.disabled = false;
+        submit.textContent = '로그인하기';
       }
     }
 
@@ -2888,6 +2897,7 @@
       document.getElementById('loginSection').style.display = 'flex';
       document.getElementById('dashboardSection').style.display = 'none';
       document.getElementById('loginPassword').value = '';
+      document.getElementById('loginError').hidden = true;
     }
 
     // Fetch and render orders from DB
@@ -4231,6 +4241,9 @@
       }
     }
 
+    window.addEventListener('pageshow', () => {
+      document.getElementById('loginPassword').value = '';
+    });
     window.onload = () => {
       initializeDateFilter();
       checkAuthOnLoad();
