@@ -97,9 +97,6 @@
     if (isPickup(order)) {
       row.querySelector('.order-date').textContent = parts ? `${parts.date} ${parts.time}` : '픽업 일시 미등록';
       row.querySelector('.order-card-meta').dataset.label = '번호·픽업일시';
-      row.querySelector('option[value="택배사"]')?.remove();
-      // Preserve legacy stored status without offering parcel dispatch as a pickup action.
-      if (order.status === '택배사') row.querySelector('.status-select').selectedIndex = -1;
     }
     row.querySelectorAll('td').forEach((cell, index) => {
       if (!index) return;
@@ -191,12 +188,8 @@
     field('total_price', '총 결제금액 (원)', editing.total_price, 'number').required = true;
     const state = field('status', '주문상태', editing.status);
     const select = document.createElement('select'); select.className = 'input-field'; select.name = state.name; select.id = state.id;
-    (isPickup(editing) ? ['주문', '결제', '주문취소'] : ['주문', '결제', '택배사', '주문취소'])
+    window.orderStatusOptions(editing)
       .forEach(value => select.add(new Option(window.orderStatusLabel(value), value, false, value === editing.status)));
-    if (isPickup(editing) && editing.status === '택배사') {
-      const legacy = new Option('기존 상태 유지', editing.status, true, true);
-      legacy.disabled = true; select.add(legacy);
-    }
     state.replaceWith(select);
     field('courier', '택배사', editing.courier);
     field('tracking_number', '송장번호', editing.tracking_number);

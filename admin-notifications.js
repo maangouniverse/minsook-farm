@@ -5,7 +5,7 @@
   const dialog = document.createElement('dialog');
   dialog.className = 'admin-audit-dialog';
   dialog.setAttribute('aria-labelledby', 'notificationTitle');
-  dialog.innerHTML = '<div class="admin-modal-header"><h3 id="notificationTitle">주문 알림톡 상태·기록</h3><button type="button" class="btn-cancel" data-close>닫기</button></div><div class="admin-audit-body"><p class="admin-audit-readiness" role="status"></p><p>주문완료·입금확인·택배발송 알림의 최근 100건입니다. 요청 접수는 수신 성공과 다릅니다. 수신 결과는 아래 버튼으로 솔라피에서 조회하세요.</p><p>비활성 기간의 알림과 결과가 불명확한 요청은 자동 재발송하지 않습니다.</p><div class="admin-audit-list"></div><button type="button" class="btn-action" data-refresh>기록 새로고침</button> <button type="button" class="btn-action" data-sync>솔라피 수신 결과 확인</button></div>';
+  dialog.innerHTML = '<div class="admin-modal-header"><h3 id="notificationTitle">주문 알림톡 상태·기록</h3><button type="button" class="btn-cancel" data-close>닫기</button></div><div class="admin-audit-body"><p class="admin-audit-readiness" role="status"></p><p>주문접수·입금확인·택배발송 알림의 최근 100건입니다. 요청 접수는 수신 성공과 다릅니다. 수신 결과는 아래 버튼으로 솔라피에서 조회하세요.</p><p>비활성 기간의 알림과 결과가 불명확한 요청은 자동 재발송하지 않습니다.</p><div class="admin-audit-list"></div><button type="button" class="btn-action" data-refresh>기록 새로고침</button> <button type="button" class="btn-action" data-sync>솔라피 수신 결과 확인</button></div>';
   document.body.appendChild(dialog);
   const statusNames = { disabled: '비활성 · 미발송', queued: '처리 대기', processing: '결과 확인 필요', blocked: '발송 차단', accepted: '요청 접수 · 수신 미확인', delivered: '수신 성공', failed: '발송 실패', unknown: '결과 미확인' };
   async function refresh() {
@@ -24,7 +24,7 @@
         const row = document.createElement('article');
         row.className = 'admin-audit-row';
         const title = document.createElement('strong');
-        const labels = { 주문: '주문완료', 결제: '입금확인', 택배사: '택배발송', 주문취소: '주문취소' };
+        const labels = { 주문: '주문접수', 결제: '입금확인', 택배사: '택배발송', 주문취소: '주문취소' };
         title.textContent = `주문 #${log.order_id} · ${labels[log.template_status] || '기존 알림'} · ${statusNames[log.status] || '확인 필요'}`;
         const time = document.createElement('time');
         const rawTime = String(log.updated_at || '');

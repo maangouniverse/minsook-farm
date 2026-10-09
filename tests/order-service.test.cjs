@@ -23,7 +23,7 @@ const row = (db, sql) => new Promise((ok, fail) => db.get(sql, (e, r) => e ? fai
   assert.equal(new Set(receipts.map(r => r.orderId)).size, 1);
   assert.equal((await row(db, 'SELECT count(*) AS n FROM orders')).n, 1);
   assert.equal((await row(db, 'SELECT count(*) AS n FROM order_notifications')).n, 1);
-  assert.equal((await row(db, 'SELECT status FROM orders')).status, '주문');
+  assert.equal((await row(db, 'SELECT status FROM orders')).status, '주문접수-택배');
   assert.equal(receipts[0].totalPrice, 19480);
   assert.deepEqual(receipts[0].paymentAccount, paymentAccount());
   assert.equal((await service.logs()).logs[0].status, 'disabled');
@@ -33,6 +33,7 @@ const row = (db, sql) => new Promise((ok, fail) => db.get(sql, (e, r) => e ? fai
   pickup.address = '[직접 픽업] 2026-09-10 13:00'; pickup.memo = '결제 방식: 현장결제';
   const onsite = await service.submit(pickup);
   assert.equal(onsite.paymentMethod, 'onsite'); assert.equal(onsite.paymentAccount, null);
+  assert.equal((await new Promise((ok, fail) => db.get('SELECT status FROM orders WHERE id = ?', [onsite.orderId], (e, r) => e ? fail(e) : ok(r)))).status, '주문접수-픽업(현장결제)');
   db.close();
   const auditDb = await database();
   const auditService = createOrderService(auditDb);
@@ -58,7 +59,7 @@ const row = (db, sql) => new Promise((ok, fail) => db.get(sql, (e, r) => e ? fai
     await fake.submit(request);
     assert.equal(calls, outcome === 'blocked' ? 0 : 1);
     assert.equal((await fake.logs()).logs[0].status, outcome);
-    assert.equal((await row(fakeDb, 'SELECT status FROM orders')).status, '주문');
+    assert.equal((await row(fakeDb, 'SELECT status FROM orders')).status, '주문접수-택배');
     fakeDb.close();
   }
   console.log('PASS: optional addresses, base validation, 8 concurrent replays, conflict, saved totals/account, onsite exclusion, disabled audit, 5 fake notification outcomes. No network or customer data used.');

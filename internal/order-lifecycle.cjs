@@ -1,6 +1,35 @@
 // Commit order history before invoking the optional notification transport.
 const { randomUUID } = require('node:crypto');
-const STATUS = { 주문: '주문완료', 결제: '입금확인', 택배사: '택배발송', 주문취소: '주문취소' };
+const TEMPLATE_STATUS = { 주문: '주문접수', 결제: '입금확인', 택배사: '택배발송', 주문취소: '주문취소' };
+const ORDER_STATUSES = [
+  '주문접수-택배',
+  '주문접수-픽업(계좌이체)',
+  '주문접수-픽업(현장결제)',
+  '입금확인-택배',
+  '입금확인-픽업',
+  '택배발송',
+  '주문취소'
+];
+const PICKUP_STATUSES = new Set(['주문접수-픽업(계좌이체)', '주문접수-픽업(현장결제)', '입금확인-픽업']);
+const DELIVERY_STATUSES = new Set(['주문접수-택배', '입금확인-택배', '택배발송']);
+const notificationStatus = status => String(status || '').startsWith('주문접수-') ? '주문'
+  : String(status || '').startsWith('입금확인-') ? '결제'
+  : status === '택배발송' ? '택배사'
+  : status === '주문' ? '주문'
+  : status === '결제' ? '결제'
+  : status === '택배사' ? '택배사'
+  : null;
+const isPickupOrder = order => text(order.address).includes('[직접 픽업]');
+function normalizeOrderStatus(status, order = {}) {
+  if (ORDER_STATUSES.includes(status)) return status;
+  if (status === '택배사') return '택배발송';
+  if (status === '결제') return isPickupOrder(order) ? '입금확인-픽업' : '입금확인-택배';
+  if (status === '주문') {
+    if (!isPickupOrder(order)) return '주문접수-택배';
+    return text(order.memo).includes('현장결제') ? '주문접수-픽업(현장결제)' : '주문접수-픽업(계좌이체)';
+  }
+  return status;
+}
 const VARIABLES = ['주문자명', '고객명', '주문번호', '주문일시', '주문금액', '결제금액', '상품명', '수량', '배송지', '운송장번호', '택배사', '배송조회링크', '픽업일시'];
 const HANJIN = 'https://www.hanjin.com/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&schLang=KR&wblnum=';
 const fail = (message, status = 400) => Object.assign(new Error(message), { status });
@@ -71,9 +100,18 @@ function createLifecycle(db, { notifier = null } = {}) {
         try { await connection.run(`ALTER TABLE order_event_notifications ADD COLUMN ${column}`); }
         catch (e) { if (e.code !== '42701' && !/duplicate column|already exists/i.test(e.message)) throw e; }
       }
-      for (const [status, label] of Object.entries(STATUS)) {
+      for (const [status, label] of Object.entries(TEMPLATE_STATUS)) {
         await connection.run('INSERT INTO notification_templates (status, body, provider_code, button_label, button_url) VALUES (?, ?, ?, ?, ?) ON CONFLICT (status) DO NOTHING', [status, `#{주문자명}님, 주문 #{주문번호} ${label} 안내입니다.` + (status === '택배사' ? '\n#{택배사} 운송장 번호: #{운송장번호}' : ''), '', status === '택배사' ? '배송조회' : '', status === '택배사' ? '#{배송조회링크}' : '']);
       }
+      await connection.run(`UPDATE orders SET status = CASE
+        WHEN status = '주문' AND address LIKE '%[직접 픽업]%' AND COALESCE(memo, '') LIKE '%현장결제%' THEN '주문접수-픽업(현장결제)'
+        WHEN status = '주문' AND address LIKE '%[직접 픽업]%' THEN '주문접수-픽업(계좌이체)'
+        WHEN status = '주문' THEN '주문접수-택배'
+        WHEN status = '결제' AND address LIKE '%[직접 픽업]%' THEN '입금확인-픽업'
+        WHEN status = '결제' THEN '입금확인-택배'
+        WHEN status = '택배사' THEN '택배발송'
+        ELSE status END
+        WHERE status IN ('주문', '결제', '택배사')`);
     })().catch(e => { ready = null; throw e; });
     return ready;
   }
@@ -95,8 +133,10 @@ function createLifecycle(db, { notifier = null } = {}) {
     const event = randomUUID(), at = new Date().toISOString();
     const snapshot = o => o ? JSON.stringify({ status: o.status, courier: o.courier || '', tracking_number: o.tracking_number || '', revision: o === after ? (before ? before.revision + 1 : 0) : o.revision }) : null;
     await tx.run('INSERT INTO order_events (id, order_id, kind, actor, source, before_json, after_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [event, after.id, !before ? 'created' : statusChanged && shippingChanged ? 'status_shipping' : shippingChanged ? 'shipping' : 'status', before ? '관리자' : '신규 주문 접수', source, snapshot(before), snapshot(after), at]);
-    const target = after.status;
-    const template = await tx.get('SELECT * FROM notification_templates WHERE status = ?', [target]);
+    const target = notificationStatus(after.status);
+    const previousTarget = before ? notificationStatus(before.status) : null;
+    const templateStatus = target || '주문취소';
+    const template = await tx.get('SELECT * FROM notification_templates WHERE status = ?', [templateStatus]);
     const rendered = renderTemplate(template, after);
     let state = 'disabled', reason = '실제 발송은 꺼져 있습니다. 자동 발송하거나 재시도하지 않습니다.';
     if (!template.enabled) reason = '이 상태의 템플릿이 사용 안 함으로 설정되어 있습니다. 실제 발송하지 않았습니다.';
@@ -104,13 +144,11 @@ function createLifecycle(db, { notifier = null } = {}) {
     else if (rendered.body.length > 1000) { state = 'blocked'; reason = '변수 치환 후 알림톡 본문이 1,000자를 초과합니다.'; }
     else if (!template.provider_code) { state = 'blocked'; reason = '솔라피 승인 템플릿 ID가 없습니다. 실제 발송하지 않았습니다.'; }
     else if (notifier) { const eligible = notifier.eligibility(after.phone); state = eligible.status; reason = eligible.reason; }
-    if (target === '주문취소' || (before && !statusChanged && after.status !== '택배사')) {
-      state = 'disabled'; reason = '주문완료·입금확인·택배발송 시점의 알림만 발송합니다.';
+    const shouldNotify = !!target && (!before || target !== previousTarget || (target === '택배사' && shippingChanged));
+    if (!shouldNotify) {
+      state = 'disabled'; reason = '주문접수·입금확인·택배발송 시점의 알림만 발송합니다.';
     }
-    if (target === '결제' && text(after.address).includes('[직접 픽업]') && text(after.memo).includes('현장결제')) {
-      state = 'blocked'; reason = '현장결제 픽업 주문에는 입금확인 알림을 발송하지 않습니다.';
-    }
-    await tx.run('INSERT INTO order_event_notifications (event_id, order_id, template_status, template_version, template_json, rendered_json, status, reason, created_at, recipient_phone, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [event, after.id, target, template.version, JSON.stringify(template), JSON.stringify(rendered), state, reason, at, after.phone, at]);
+    await tx.run('INSERT INTO order_event_notifications (event_id, order_id, template_status, template_version, template_json, rendered_json, status, reason, created_at, recipient_phone, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [event, after.id, templateStatus, template.version, JSON.stringify(template), JSON.stringify(rendered), state, reason, at, after.phone, at]);
     return event;
   }
   function readiness() {
@@ -147,11 +185,17 @@ function createLifecycle(db, { notifier = null } = {}) {
       const before = await tx.get('SELECT * FROM orders WHERE id = ?', [id]);
       if (!before) throw fail('주문을 찾을 수 없습니다.', 404);
       const after = { ...before, ...patch };
-      if (!STATUS[after.status]) throw fail('주문 상태를 확인해 주세요.');
+      if (!ORDER_STATUSES.includes(after.status)) throw fail('주문 상태를 확인해 주세요.');
       after.courier = text(after.courier); after.tracking_number = text(after.tracking_number);
       const shippingChanged = text(before.courier) !== after.courier || text(before.tracking_number) !== after.tracking_number;
-      if (after.status === '택배사' || shippingChanged) {
-        if (text(after.address).includes('[직접 픽업]')) throw fail('직접 픽업 주문에는 택배발송을 적용할 수 없습니다.');
+      const pickup = isPickupOrder(after);
+      if (pickup && DELIVERY_STATUSES.has(after.status)) throw fail('직접 픽업 주문에는 픽업 상태를 선택해 주세요.');
+      if (!pickup && PICKUP_STATUSES.has(after.status)) throw fail('택배 주문에는 택배 상태를 선택해 주세요.');
+      const onsitePickup = pickup && text(after.memo).includes('현장결제');
+      if (onsitePickup && !['주문접수-픽업(현장결제)', '주문취소'].includes(after.status)) throw fail('현장결제 픽업 주문에는 입금확인 상태를 적용할 수 없습니다.');
+      if (pickup && !onsitePickup && after.status === '주문접수-픽업(현장결제)') throw fail('계좌이체 픽업 주문에는 계좌이체 상태를 선택해 주세요.');
+      if (after.status === '택배발송' || shippingChanged) {
+        if (pickup) throw fail('직접 픽업 주문에는 택배발송을 적용할 수 없습니다.');
         if (!after.courier || !after.tracking_number) throw fail('택배사와 운송장 번호를 모두 입력해 주세요.');
       }
       const keys = ['name', 'phone', 'address', 'memo', 'items', 'total_price', 'status', 'tracking_number', 'courier'];
@@ -171,9 +215,9 @@ function createLifecycle(db, { notifier = null } = {}) {
     const events = await connection.all('SELECT e.*, n.reason AS notification_reason, n.status AS notification_status, n.template_status FROM order_events e LEFT JOIN order_event_notifications n ON n.event_id = e.id WHERE e.order_id = ? ORDER BY e.created_at DESC, e.id DESC', [id]);
     return { legacy: !events.some(e => e.kind === 'created'), events: events.map(e => ({ ...e, before: e.before_json ? JSON.parse(e.before_json) : null, after: JSON.parse(e.after_json) })).sort((a, b) => (b.after.revision ?? 0) - (a.after.revision ?? 0) || b.created_at.localeCompare(a.created_at)) };
   }
-  async function templates() { await ensureSchema(); return { templates: await connection.all('SELECT * FROM notification_templates'), variables: VARIABLES, statuses: STATUS, sendingEnabled: readiness().enabled, readiness: readiness() }; }
+  async function templates() { await ensureSchema(); return { templates: await connection.all('SELECT * FROM notification_templates'), variables: VARIABLES, statuses: TEMPLATE_STATUS, sendingEnabled: readiness().enabled, readiness: readiness() }; }
   async function saveTemplate(status, value) {
-    if (!STATUS[status]) throw fail('주문 상태를 확인해 주세요.');
+    if (!TEMPLATE_STATUS[status]) throw fail('주문 상태를 확인해 주세요.');
     const valid = validateTemplate(value);
     if (status === '택배사' && (!valid.body.includes('#{운송장번호}') || !valid.button_label || !valid.button_url)) throw fail('택배발송 문구에는 #{운송장번호}와 배송조회 버튼이 필요합니다.');
     if (!Number.isInteger(value.version)) throw fail('템플릿을 다시 불러와 주세요.', 409);
@@ -188,4 +232,4 @@ function createLifecycle(db, { notifier = null } = {}) {
   }
   return { ensureSchema, transaction, record, dispatch, readiness, syncResults, update, history, templates, saveTemplate, logs };
 }
-module.exports = { createLifecycle, sql, STATUS, VARIABLES, HANJIN, validateTemplate, renderTemplate };
+module.exports = { createLifecycle, sql, TEMPLATE_STATUS, ORDER_STATUSES, PICKUP_STATUSES, DELIVERY_STATUSES, normalizeOrderStatus, notificationStatus, VARIABLES, HANJIN, validateTemplate, renderTemplate };

@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const multer = require('multer');
+const { createLifecycle, ORDER_STATUSES, normalizeOrderStatus } = require('./internal/order-lifecycle.cjs');
 require('dotenv').config();
 
 const app = express();
@@ -198,7 +199,7 @@ function initializeDatabase() {
       memo TEXT,
       items TEXT NOT NULL, -- JSON string representation
       total_price INTEGER NOT NULL,
-      status TEXT DEFAULT '주문', -- '주문', '결제', '택배사'
+      status TEXT DEFAULT '주문접수-택배',
       tracking_number TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
@@ -470,7 +471,7 @@ app.post('/api/admin/upload', authenticateAdmin, (req, res) => {
 
 // Send only after the order and notification snapshot have committed.
 const notifier = require('./internal/solapi.cjs').createSolapi();
-const lifecycle = require('./internal/order-lifecycle.cjs').createLifecycle(db, { notifier });
+const lifecycle = createLifecycle(db, { notifier });
 const orderService = require('./internal/order-service.cjs').createOrderService(db, { lifecycle });
 const visitorAnalytics = require('./internal/visitor-analytics.cjs').createVisitorAnalytics(db);
 require('./internal/product-images.cjs')(app, db, authenticateAdmin);
@@ -505,7 +506,7 @@ app.get('/api/admin/notifications', authenticateAdmin, async (req, res) => {
 });
 
 // 1-1. Query Order History by Phone Number (Public)
-app.post('/api/orders/query', (req, res) => {
+app.post('/api/orders/query', async (req, res) => {
   const { phone } = req.body;
 
   if (!phone) {
@@ -518,6 +519,8 @@ app.post('/api/orders/query', (req, res) => {
   if (cleanPhone.length < 9) {
     return res.status(400).json({ error: '올바른 전화번호 형식이 아닙니다.' });
   }
+  try { await lifecycle.ensureSchema(); }
+  catch { return res.status(503).json({ error: '주문 내역을 준비하고 있습니다. 잠시 후 다시 확인해 주세요.' }); }
 
   // SQLite와 PostgreSQL 모두에서 호환되는 replace 쿼리 사용
   const query = `
@@ -679,7 +682,7 @@ app.put('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
       typeof phone !== 'string' || !phone.trim() || typeof address !== 'string' || !address.trim() ||
       typeof memo !== 'string' || typeof tracking_number !== 'string' || typeof courier !== 'string' ||
       !Number.isFinite(total_price) || total_price < 0 ||
-      !['주문', '결제', '택배사', '주문취소'].includes(status) || !Array.isArray(items) ||
+      !ORDER_STATUSES.includes(status) || !Array.isArray(items) ||
       items.some(item => !item || typeof item.name !== 'string' || !item.name.trim() ||
         !Number.isFinite(item.quantity) || item.quantity <= 0 || typeof item.unit !== 'string')) {
     return res.status(400).json({ error: '주문 입력값을 확인해 주세요.' });
@@ -691,7 +694,7 @@ app.put('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
 
 app.put('/api/admin/orders/:id/status', authenticateAdmin, async (req, res) => {
   const patch = { status: req.body.status };
-  if (req.body.status === '택배사') {
+  if (req.body.status === '택배발송') {
     if (typeof req.body.trackingNumber !== 'string' || typeof req.body.courier !== 'string') return res.status(400).json({ error: '택배사와 운송장 번호를 입력해 주세요.' });
     patch.tracking_number = req.body.trackingNumber; patch.courier = req.body.courier;
   }
@@ -998,7 +1001,7 @@ async function migrateLocalSqliteToSupabase(pool) {
             order.memo,
             order.items,
             order.total_price,
-            order.status,
+            normalizeOrderStatus(order.status, order),
             order.tracking_number,
             order.courier,
             order.created_at ? new Date(order.created_at) : new Date()
@@ -1050,7 +1053,7 @@ app.post('/api/admin/migrate-local-data', authenticateAdmin, async (req, res) =>
         const memo = order.memo || null;
         const trackingNumber = order.trackingNumber || order.tracking_number || null;
         const courier = order.courier || null;
-        const status = order.status || '주문';
+        const status = normalizeOrderStatus(order.status || '주문', order);
         const createdAt = order.createdAt || order.created_at || new Date().toISOString();
 
         // Check if duplicate exists

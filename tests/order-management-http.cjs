@@ -1,6 +1,6 @@
 // Explicitly local-only. Never point this test at a hosted site.
 const assert = require('node:assert/strict');
-const base = 'http://127.0.0.1:3017';
+const base = process.env.TEST_BASE || 'http://127.0.0.1:3017';
 const { randomUUID } = require('node:crypto');
 (async () => {
   for (const path of ['/api/admin/orders/1/history', '/api/admin/notification-templates']) assert.equal((await fetch(base + path)).status, 401);
@@ -16,7 +16,7 @@ const { randomUUID } = require('node:crypto');
   const body = { name: '가상 배송 주문', phone: '01000000000', basicAddress: '가상 배송지', memo: '화면 확인용 가상 주문', items: [{ name: '가상 오이', quantity: 1, unit: 'kg' }], totalPrice: 1000, requestKey: randomUUID() };
   const created = await fetch(base + '/api/orders', { method: 'POST', headers, body: JSON.stringify(body) });
   assert.equal(created.status, 201); const { orderId } = await created.json();
-  const status = await fetch(base + `/api/admin/orders/${orderId}/status`, { method: 'PUT', headers, body: JSON.stringify({ status: '택배사', trackingNumber: '000000000001', courier: '한진택배', revision: 0 }) });
+  const status = await fetch(base + `/api/admin/orders/${orderId}/status`, { method: 'PUT', headers, body: JSON.stringify({ status: '택배발송', trackingNumber: '000000000001', courier: '한진택배', revision: 0 }) });
   assert.equal(status.status, 200);
   const stale = await fetch(base + `/api/admin/orders/${orderId}/status`, { method: 'PUT', headers, body: JSON.stringify({ status: '주문취소', revision: 0 }) });
   assert.equal(stale.status, 409);

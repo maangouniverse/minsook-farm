@@ -3,6 +3,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const clean = value => typeof value === 'string' && !['undefined', 'null'].includes(value.trim()) ? value.trim().replace(/\s+/g, ' ') : '';
+const initialOrderStatus = order => {
+  if (!String(order.address || '').includes('[직접 픽업]')) return '주문접수-택배';
+  return String(order.memo || '').includes('현장결제')
+    ? '주문접수-픽업(현장결제)'
+    : '주문접수-픽업(계좌이체)';
+};
 function paymentAccount() {
   // The existing published account is the source of truth, not a second constant.
   const html = fs.readFileSync(path.join(__dirname, '../index_new.html'), 'utf8');
@@ -73,6 +79,7 @@ function createOrderService(db, { env = process.env, sendApprovedTemplate = null
   }
   async function submit(body) {
     const order = normalizeOrder(body);
+    order.status = initialOrderStatus(order);
     const isOnsiteOrder = order.address.includes('[직접 픽업]') && order.memo.includes('현장결제');
     // Resolve receipt data before saving, so a missing source file cannot make
     // an already accepted order look like a failed order.
@@ -85,7 +92,7 @@ function createOrderService(db, { env = process.env, sendApprovedTemplate = null
     let saved;
     if (lifecycle) {
       saved = await lifecycle.transaction(async tx => {
-        const inserted = await tx.run('INSERT INTO orders (name, phone, address, memo, items, total_price, request_key, request_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (request_key) DO NOTHING', [order.name, order.phone, order.address, order.memo, JSON.stringify(order.items), order.totalPrice, key, hash]);
+        const inserted = await tx.run('INSERT INTO orders (name, phone, address, memo, items, total_price, status, request_key, request_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (request_key) DO NOTHING', [order.name, order.phone, order.address, order.memo, JSON.stringify(order.items), order.totalPrice, order.status, key, hash]);
         const row = await tx.get('SELECT * FROM orders WHERE request_key = ?', [key]);
         if (!row || row.request_hash !== hash) throw Object.assign(new Error('이미 사용된 주문 확인번호입니다. 기존 접수 내역을 먼저 확인해 주세요.'), { status: 409 });
         const eventId = inserted.changes ? await lifecycle.record(tx, null, row, '주문 접수') : null;
@@ -93,7 +100,7 @@ function createOrderService(db, { env = process.env, sendApprovedTemplate = null
       });
       await lifecycle.dispatch(saved.eventId);
     } else {
-    await run('INSERT INTO orders (name, phone, address, memo, items, total_price, request_key, request_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (request_key) DO NOTHING', [order.name, order.phone, order.address, order.memo, JSON.stringify(order.items), order.totalPrice, key, hash]);
+    await run('INSERT INTO orders (name, phone, address, memo, items, total_price, status, request_key, request_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (request_key) DO NOTHING', [order.name, order.phone, order.address, order.memo, JSON.stringify(order.items), order.totalPrice, order.status, key, hash]);
     saved = await get('SELECT * FROM orders WHERE request_key = ?', [key]);
     if (!saved || saved.request_hash !== hash) throw Object.assign(new Error('이미 사용된 주문 확인번호입니다. 기존 접수 내역을 먼저 확인해 주세요.'), { status: 409 });
     // This point is reached only after the order has been durably saved.
@@ -109,4 +116,4 @@ function createOrderService(db, { env = process.env, sendApprovedTemplate = null
   }
   return { submit, logs, ensureSchema };
 }
-module.exports = { createOrderService, normalizeOrder, paymentAccount };
+module.exports = { createOrderService, normalizeOrder, initialOrderStatus, paymentAccount };

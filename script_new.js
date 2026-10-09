@@ -1778,20 +1778,20 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
       }
 
       let statusClass = 'status-pending';
-      let statusText = '입금 대기 ⏳';
-      if (order.status === '결제') {
+      let statusText = `${order.status || '주문접수'} ⏳`;
+      if (String(order.status || '').startsWith('입금확인-')) {
         statusClass = 'status-completed';
-        statusText = '결제 완료 (배송 준비 중) 📦';
-      } else if (order.status === '택배사') {
+        statusText = `${order.status} 📦`;
+      } else if (order.status === '택배발송') {
         statusClass = 'status-shipping';
-        statusText = '배송 중 🚚';
+        statusText = '택배발송 🚚';
       } else if (order.status === '주문취소') {
         statusClass = 'status-cancelled';
         statusText = '주문 취소 ❌';
       }
 
       let trackingHTML = '';
-      if (order.status === '택배사' && order.trackingNumber) {
+      if (order.status === '택배발송' && order.trackingNumber) {
         const courierName = order.courier || '우체국택배';
         let trackingUrl = '';
 

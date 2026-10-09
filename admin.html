@@ -2580,11 +2580,11 @@
               <div class="stat-value" id="statTotalOrders">0건</div>
             </div>
             <div class="stat-card stat-order">
-              <h4>주문완료</h4>
+              <h4>주문접수</h4>
               <div class="stat-value" id="statStatusOrder">0건</div>
             </div>
             <div class="stat-card stat-pay">
-              <h4>입금완료</h4>
+              <h4>입금확인</h4>
               <div class="stat-value" id="statStatusPay">0건</div>
             </div>
             <div class="stat-card stat-delivery">
@@ -2631,9 +2631,12 @@
                 <label class="admin-form-label" style="margin-bottom: 6px; font-weight: 800; font-size: 0.8rem;">🚦 상태별 구분</label>
                 <select id="filterStatus" class="input-field" style="padding: 8px 10px; font-size: 0.85rem; font-weight: 700; height: 38px;">
                   <option value="all">전체 주문 상태</option>
-                  <option value="주문">주문완료 (접수)</option>
-                  <option value="결제">입금완료 (결제)</option>
-                  <option value="택배사">택배발송 (택배사)</option>
+                  <option value="주문접수-택배">주문접수-택배</option>
+                  <option value="주문접수-픽업(계좌이체)">주문접수-픽업(계좌이체)</option>
+                  <option value="주문접수-픽업(현장결제)">주문접수-픽업(현장결제)</option>
+                  <option value="입금확인-택배">입금확인-택배</option>
+                  <option value="입금확인-픽업">입금확인-픽업</option>
+                  <option value="택배발송">택배발송</option>
                   <option value="주문취소">주문취소</option>
                 </select>
               </div>
@@ -3180,10 +3183,7 @@
       itemsHtml += '</ul>';
 
       // Status class badge mapper
-      let statusClass = 'status-order';
-      if (order.status === '결제') statusClass = 'status-pay';
-      if (order.status === '택배사') statusClass = 'status-delivery';
-      if (order.status === '주문취소') statusClass = 'status-cancel';
+      const statusClass = window.orderStatusClass(order.status);
 
       const isPickup = String(order.address || '').includes('[직접 픽업]');
 
@@ -3220,10 +3220,7 @@
           <div>
             <span class="status-badge ${statusClass}">${window.orderStatusLabel(order.status)}</span>
             <select class="status-select" onchange="updateOrderStatus(${order.id}, this.value, this)">
-              <option value="주문" ${order.status === '주문' ? 'selected' : ''}>주문완료 (접수)</option>
-              <option value="결제" ${order.status === '결제' ? 'selected' : ''}>입금완료 (결제)</option>
-              <option value="택배사" ${order.status === '택배사' ? 'selected' : ''}>택배발송 (택배사)</option>
-              <option value="주문취소" ${order.status === '주문취소' ? 'selected' : ''}>주문취소</option>
+              ${window.orderStatusOptions(order).map(value => `<option value="${value}" ${order.status === value ? 'selected' : ''}>${window.orderStatusLabel(value)}</option>`).join('')}
             </select>
           </div>
         </td>
@@ -3338,7 +3335,7 @@
           return `<li>${cleanName} - <strong>${item.quantity}${item.unit}</strong></li>`;
         }).join('');
         
-        const statusDetail = order.status === '택배사' && order.tracking_number
+        const statusDetail = order.status === '택배발송' && order.tracking_number
           ? `${window.orderStatusLabel(order.status)}<br><span style="font-size: 0.8em; color: #166534; font-weight: normal; white-space: nowrap;">${order.courier || ''} ${order.tracking_number}</span>`
           : window.orderStatusLabel(order.status);
         
@@ -3427,9 +3424,9 @@
     // Update statistics dashboard counts
     function updateStats(orders) {
       document.getElementById('statTotalOrders').textContent = `${orders.length}건`;
-      const countOrder = orders.filter(o => o.status === '주문').length;
-      const countPay = orders.filter(o => o.status === '결제').length;
-      const countDelivery = orders.filter(o => o.status === '택배사').length;
+      const countOrder = orders.filter(o => o.status.startsWith('주문접수-')).length;
+      const countPay = orders.filter(o => o.status.startsWith('입금확인-')).length;
+      const countDelivery = orders.filter(o => o.status === '택배발송').length;
       const countCancel = orders.filter(o => o.status === '주문취소').length;
 
       document.getElementById('statStatusOrder').textContent = `${countOrder}건`;
@@ -3481,7 +3478,7 @@
 
     // Update status API
     async function updateOrderStatus(orderId, newStatus, selectElement) {
-      if (newStatus === '택배사') {
+      if (newStatus === '택배발송') {
         currentOrderIdForDelivery = orderId;
         deliveryOrderRevision = window.allOrders.find(o => o.id === orderId)?.revision;
         previousSelectElement = selectElement;
@@ -3506,7 +3503,7 @@
       try {
         const res = await fetch(`/api/admin/orders/${orderId}/status`, {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...patch, revision: patch.status === '택배사' ? deliveryOrderRevision : order?.revision })
+          body: JSON.stringify({ ...patch, revision: patch.status === '택배발송' ? deliveryOrderRevision : order?.revision })
         });
         const result = await res.json();
         if (!res.ok) throw Error(result.error || '주문 변경을 저장하지 못했습니다.');
@@ -3515,7 +3512,7 @@
       await loadOrders();
     }
     async function submitDeliveryStatus(orderId, courier, trackingNumber) {
-      await persistOrderStatus(orderId, { status: '택배사', courier, trackingNumber });
+      await persistOrderStatus(orderId, { status: '택배발송', courier, trackingNumber });
     }
 
     // Toggle check/uncheck all orders for Pickup

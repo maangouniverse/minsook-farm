@@ -1,6 +1,26 @@
 (() => {
-  const labels = { 주문: '주문완료', 결제: '입금완료', 택배사: '택배발송', 주문취소: '주문취소' };
+  const labels = {
+    '주문접수-택배': '주문접수-택배',
+    '주문접수-픽업(계좌이체)': '주문접수-픽업(계좌이체)',
+    '주문접수-픽업(현장결제)': '주문접수-픽업(현장결제)',
+    '입금확인-택배': '입금확인-택배',
+    '입금확인-픽업': '입금확인-픽업',
+    '택배발송': '택배발송',
+    주문취소: '주문취소',
+    주문: '주문접수', 결제: '입금확인', 택배사: '택배발송'
+  };
+  const deliveryStatuses = ['주문접수-택배', '입금확인-택배', '택배발송', '주문취소'];
+  const pickupStatuses = ['주문접수-픽업(계좌이체)', '주문접수-픽업(현장결제)', '입금확인-픽업', '주문취소'];
   window.orderStatusLabel = value => labels[value] || value;
+  window.orderStatusOptions = order => {
+    if (!String(order.address || '').includes('[직접 픽업]')) return deliveryStatuses;
+    if (String(order.memo || '').includes('현장결제')) return ['주문접수-픽업(현장결제)', '주문취소'];
+    return pickupStatuses.filter(value => value !== '주문접수-픽업(현장결제)');
+  };
+  window.orderStatusClass = value => value === '주문취소' ? 'status-cancel'
+    : value === '택배발송' ? 'status-delivery'
+    : String(value || '').startsWith('입금확인-') ? 'status-pay'
+    : 'status-order';
   window.renderOrderHistory = async (id, container) => {
     container.replaceChildren();
     const heading = document.createElement('h3'); heading.textContent = `진행사항 · 주문 ${id}`;
