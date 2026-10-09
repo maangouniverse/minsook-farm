@@ -1,6 +1,5 @@
 // Commit order history before invoking the optional notification transport.
 const { randomUUID } = require('node:crypto');
-const TEMPLATE_STATUS = { 주문: '주문접수', 결제: '입금확인', 택배사: '택배발송', 주문취소: '주문취소' };
 const ORDER_STATUSES = [
   '주문접수-택배',
   '주문접수-픽업(계좌이체)',
@@ -10,14 +9,22 @@ const ORDER_STATUSES = [
   '택배발송',
   '주문취소'
 ];
+const TEMPLATE_STATUS = Object.fromEntries(ORDER_STATUSES.map(status => [status, status]));
+const LEGACY_TEMPLATE_STATUS = {
+  '주문접수-택배': '주문',
+  '주문접수-픽업(계좌이체)': '주문',
+  '주문접수-픽업(현장결제)': '주문',
+  '입금확인-택배': '결제',
+  '입금확인-픽업': '결제',
+  '택배발송': '택배사',
+  '주문취소': '주문취소'
+};
 const PICKUP_STATUSES = new Set(['주문접수-픽업(계좌이체)', '주문접수-픽업(현장결제)', '입금확인-픽업']);
 const DELIVERY_STATUSES = new Set(['주문접수-택배', '입금확인-택배', '택배발송']);
-const notificationStatus = status => String(status || '').startsWith('주문접수-') ? '주문'
-  : String(status || '').startsWith('입금확인-') ? '결제'
-  : status === '택배발송' ? '택배사'
-  : status === '주문' ? '주문'
-  : status === '결제' ? '결제'
-  : status === '택배사' ? '택배사'
+const notificationStatus = status => ORDER_STATUSES.includes(status) && status !== '주문취소' ? status
+  : status === '주문' ? '주문접수-택배'
+  : status === '결제' ? '입금확인-택배'
+  : status === '택배사' ? '택배발송'
   : null;
 const isPickupOrder = order => text(order.address).includes('[직접 픽업]');
 function normalizeOrderStatus(status, order = {}) {
@@ -101,8 +108,11 @@ function createLifecycle(db, { notifier = null } = {}) {
         catch (e) { if (e.code !== '42701' && !/duplicate column|already exists/i.test(e.message)) throw e; }
       }
       for (const [status, label] of Object.entries(TEMPLATE_STATUS)) {
-        await connection.run('INSERT INTO notification_templates (status, body, provider_code, button_label, button_url) VALUES (?, ?, ?, ?, ?) ON CONFLICT (status) DO NOTHING', [status, `#{주문자명}님, 주문 #{주문번호} ${label} 안내입니다.` + (status === '택배사' ? '\n#{택배사} 운송장 번호: #{운송장번호}' : ''), '', status === '택배사' ? '배송조회' : '', status === '택배사' ? '#{배송조회링크}' : '']);
+        const legacy = await connection.get('SELECT * FROM notification_templates WHERE status = ?', [LEGACY_TEMPLATE_STATUS[status]]);
+        const body = legacy?.body || `#{주문자명}님, 주문 #{주문번호} ${label} 안내입니다.` + (status === '택배발송' ? '\n#{택배사} 운송장 번호: #{운송장번호}' : '');
+        await connection.run('INSERT INTO notification_templates (status, body, provider_code, button_label, button_url, enabled, version) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (status) DO NOTHING', [status, body, legacy?.provider_code || '', legacy?.button_label || (status === '택배발송' ? '배송조회' : ''), legacy?.button_url || (status === '택배발송' ? '#{배송조회링크}' : ''), legacy?.enabled || 0, legacy?.version || 1]);
       }
+      await connection.run("DELETE FROM notification_templates WHERE status IN ('주문', '결제', '택배사')");
       await connection.run(`UPDATE orders SET status = CASE
         WHEN status = '주문' AND address LIKE '%[직접 픽업]%' AND COALESCE(memo, '') LIKE '%현장결제%' THEN '주문접수-픽업(현장결제)'
         WHEN status = '주문' AND address LIKE '%[직접 픽업]%' THEN '주문접수-픽업(계좌이체)'
@@ -144,7 +154,7 @@ function createLifecycle(db, { notifier = null } = {}) {
     else if (rendered.body.length > 1000) { state = 'blocked'; reason = '변수 치환 후 알림톡 본문이 1,000자를 초과합니다.'; }
     else if (!template.provider_code) { state = 'blocked'; reason = '솔라피 승인 템플릿 ID가 없습니다. 실제 발송하지 않았습니다.'; }
     else if (notifier) { const eligible = notifier.eligibility(after.phone); state = eligible.status; reason = eligible.reason; }
-    const shouldNotify = !!target && (!before || target !== previousTarget || (target === '택배사' && shippingChanged));
+    const shouldNotify = !!target && (!before || target !== previousTarget || (target === '택배발송' && shippingChanged));
     if (!shouldNotify) {
       state = 'disabled'; reason = '주문접수·입금확인·택배발송 시점의 알림만 발송합니다.';
     }
@@ -215,11 +225,15 @@ function createLifecycle(db, { notifier = null } = {}) {
     const events = await connection.all('SELECT e.*, n.reason AS notification_reason, n.status AS notification_status, n.template_status FROM order_events e LEFT JOIN order_event_notifications n ON n.event_id = e.id WHERE e.order_id = ? ORDER BY e.created_at DESC, e.id DESC', [id]);
     return { legacy: !events.some(e => e.kind === 'created'), events: events.map(e => ({ ...e, before: e.before_json ? JSON.parse(e.before_json) : null, after: JSON.parse(e.after_json) })).sort((a, b) => (b.after.revision ?? 0) - (a.after.revision ?? 0) || b.created_at.localeCompare(a.created_at)) };
   }
-  async function templates() { await ensureSchema(); return { templates: await connection.all('SELECT * FROM notification_templates'), variables: VARIABLES, statuses: TEMPLATE_STATUS, sendingEnabled: readiness().enabled, readiness: readiness() }; }
+  async function templates() {
+    await ensureSchema();
+    const rows = await connection.all('SELECT * FROM notification_templates');
+    return { templates: ORDER_STATUSES.map(status => rows.find(row => row.status === status)).filter(Boolean), variables: VARIABLES, statuses: TEMPLATE_STATUS, sendingEnabled: readiness().enabled, readiness: readiness() };
+  }
   async function saveTemplate(status, value) {
     if (!TEMPLATE_STATUS[status]) throw fail('주문 상태를 확인해 주세요.');
     const valid = validateTemplate(value);
-    if (status === '택배사' && (!valid.body.includes('#{운송장번호}') || !valid.button_label || !valid.button_url)) throw fail('택배발송 문구에는 #{운송장번호}와 배송조회 버튼이 필요합니다.');
+    if (status === '택배발송' && (!valid.body.includes('#{운송장번호}') || !valid.button_label || !valid.button_url)) throw fail('택배발송 문구에는 #{운송장번호}와 배송조회 버튼이 필요합니다.');
     if (!Number.isInteger(value.version)) throw fail('템플릿을 다시 불러와 주세요.', 409);
     await ensureSchema();
     const result = await connection.run('UPDATE notification_templates SET body = ?, provider_code = ?, button_label = ?, button_url = ?, enabled = ?, version = version + 1 WHERE status = ? AND version = ?', [valid.body, valid.provider_code, valid.button_label, valid.button_url, valid.enabled, status, value.version]);

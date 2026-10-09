@@ -33,7 +33,7 @@ const { createOrderService } = require('../internal/order-service.cjs');
   const lifecycle = createLifecycle(db, { notifier: transport }), service = createOrderService(db, { lifecycle });
   for (const template of (await lifecycle.templates()).templates) await lifecycle.saveTemplate(template.status, {
     ...template,
-    body: template.status === '주문' ? '#{주문자명} #{고객명} #{상품명} #{수량} #{결제금액} #{배송지}' : template.body,
+    body: template.status === '주문접수-택배' ? '#{주문자명} #{고객명} #{상품명} #{수량} #{결제금액} #{배송지}' : template.body,
     provider_code: `FAKE-${template.status}`,
     enabled: true
   });
@@ -92,7 +92,7 @@ const { createOrderService } = require('../internal/order-service.cjs');
   }
   responseMode = 'delivery-failed';
   await lifecycle.syncResults();
-  assert.equal((await lifecycle.logs()).find(row => row.order_id === onsite.orderId && row.template_status === '주문').status, 'failed');
+  assert.equal((await lifecycle.logs()).find(row => row.order_id === onsite.orderId && row.template_status === '주문접수-픽업(현장결제)').status, 'failed');
   const originalRun = db.run.bind(db), beforeRollback = requests.length;
   db.run = function(query, params, callback) {
     if (query.startsWith('INSERT INTO order_event_notifications')) { callback(new Error('SIMULATED_AUDIT_FAILURE')); return this; }

@@ -24,8 +24,8 @@
         const row = document.createElement('article');
         row.className = 'admin-audit-row';
         const title = document.createElement('strong');
-        const labels = { 주문: '주문접수', 결제: '입금확인', 택배사: '택배발송', 주문취소: '주문취소' };
-        title.textContent = `주문 #${log.order_id} · ${labels[log.template_status] || '기존 알림'} · ${statusNames[log.status] || '확인 필요'}`;
+        const labels = { 주문: '주문접수', 결제: '입금확인', 택배사: '택배발송' };
+        title.textContent = `주문 #${log.order_id} · ${labels[log.template_status] || log.template_status || '기존 알림'} · ${statusNames[log.status] || '확인 필요'}`;
         const time = document.createElement('time');
         const rawTime = String(log.updated_at || '');
         const timestamp = new Date(/^\d{4}-\d{2}-\d{2} /.test(rawTime) ? `${rawTime.replace(' ', 'T')}Z` : rawTime);
