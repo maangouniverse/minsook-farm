@@ -33,7 +33,7 @@ const { createOrderService } = require('../internal/order-service.cjs');
   const lifecycle = createLifecycle(db, { notifier: transport }), service = createOrderService(db, { lifecycle });
   for (const template of (await lifecycle.templates()).templates) await lifecycle.saveTemplate(template.status, {
     ...template,
-    body: template.status === '주문접수-택배' ? '#{주문자명} #{고객명} #{상품명} #{수량} #{결제금액} #{배송지}' : template.body,
+    body: template.status === '주문접수-택배' ? '#{주문자명} #{고객명} #{수령인} #{상품명} #{수량} #{결제금액} #{배송지}' : template.body,
     provider_code: `FAKE-${template.status}`,
     enabled: true
   });
@@ -45,6 +45,7 @@ const { createOrderService } = require('../internal/order-service.cjs');
   assert.equal(JSON.parse(requests[0].options.body).messages[0].kakaoOptions.variables['#{주문자명}'], payload.name);
   const orderVariables = JSON.parse(requests[0].options.body).messages[0].kakaoOptions.variables;
   assert.equal(orderVariables['#{고객명}'], payload.name);
+  assert.equal(orderVariables['#{수령인}'], payload.name);
   assert.equal(orderVariables['#{상품명}'], '가상상품');
   assert.equal(orderVariables['#{수량}'], '1개');
   assert.equal(orderVariables['#{결제금액}'], '1,000');

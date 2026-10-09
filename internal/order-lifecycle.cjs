@@ -37,7 +37,7 @@ function normalizeOrderStatus(status, order = {}) {
   }
   return status;
 }
-const VARIABLES = ['주문자명', '고객명', '주문번호', '주문일시', '주문금액', '결제금액', '상품명', '수량', '배송지', '운송장번호', '택배사', '배송조회링크', '픽업일시'];
+const VARIABLES = ['주문자명', '고객명', '수령인', '주문번호', '주문일시', '주문금액', '결제금액', '상품명', '수량', '배송지', '운송장번호', '택배사', '배송조회링크', '픽업일시'];
 const HANJIN = 'https://www.hanjin.com/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&schLang=KR&wblnum=';
 const fail = (message, status = 400) => Object.assign(new Error(message), { status });
 const sql = db => ({
@@ -72,7 +72,7 @@ function renderTemplate(template, order) {
   try { items = Array.isArray(order.items) ? order.items : JSON.parse(order.items || '[]'); } catch {}
   const amount = Number.isFinite(Number(order.total_price)) ? Number(order.total_price).toLocaleString('ko-KR') : '';
   const values = {
-    주문자명: text(order.name), 고객명: text(order.name), 주문번호: text(order.id), 주문일시: koreaTime(order.created_at),
+    주문자명: text(order.name), 고객명: text(order.name), 수령인: text(order.name), 주문번호: text(order.id), 주문일시: koreaTime(order.created_at),
     주문금액: amount ? amount + '원' : '', 결제금액: amount,
     상품명: items.map(item => text(item.name)).filter(Boolean).join(', '),
     수량: items.map(item => `${Number(item.quantity)}${text(item.unit)}`).filter(value => !value.startsWith('NaN')).join(', '),

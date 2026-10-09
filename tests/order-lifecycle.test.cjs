@@ -51,6 +51,7 @@ const { randomUUID } = require('node:crypto');
   assert.equal((await q.get('SELECT * FROM orders WHERE id = ?', [orderId])).courier, '한진');
   const fixture = { name: '가상', id: 1, total_price: 100, created_at: '2026-09-13 01:30:00', address: payload.address, tracking_number: '000', courier: '한진택배' };
   assert.equal(renderTemplate({ body: '#{픽업일시}' }, fixture).body, '2026-09-15 14:00');
+  assert.equal(renderTemplate({ body: '#{수령인}' }, fixture).body, '가상');
   assert.ok(renderTemplate({ body: '#{픽업일시}' }, { ...fixture, address: '가상 배송지' }).errors.length);
   assert.ok(renderTemplate({ button_url: '#{배송조회링크}' }, { ...fixture, courier: '다른택배' }).errors.length);
   assert.throws(() => validateTemplate({ body: '#{없는변수}' }), /변수/);
