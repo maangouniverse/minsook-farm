@@ -18,6 +18,7 @@ const { randomUUID } = require('node:crypto');
   assert.equal(created.status, 201); const { orderId } = await created.json();
   const status = await fetch(base + `/api/admin/orders/${orderId}/status`, { method: 'PUT', headers, body: JSON.stringify({ status: '택배발송', trackingNumber: '000000000001', courier: '한진택배', revision: 0 }) });
   assert.equal(status.status, 200);
+  const statusResult = await status.json(); assert.equal(statusResult.notification.status, 'disabled'); assert.ok(statusResult.notification.reason);
   const stale = await fetch(base + `/api/admin/orders/${orderId}/status`, { method: 'PUT', headers, body: JSON.stringify({ status: '주문취소', revision: 0 }) });
   assert.equal(stale.status, 409);
   const orders = await (await fetch(base + '/api/admin/orders', { headers })).json();

@@ -3507,7 +3507,20 @@
         });
         const result = await res.json();
         if (!res.ok) throw Error(result.error || '주문 변경을 저장하지 못했습니다.');
-        showToast('주문 변경을 저장했습니다. 실제 알림톡 발송은 꺼져 있습니다.');
+        const notification = result.notification;
+        if (!notification) {
+          showToast('주문 변경을 저장했습니다.');
+        } else if (notification.status === 'delivered') {
+          showToast('주문 변경을 저장했고 알림톡 전송이 완료되었습니다.');
+        } else if (notification.status === 'accepted') {
+          showToast('주문 변경을 저장했고 알림톡 발송 요청이 정상 접수되었습니다.');
+        } else if (notification.status === 'failed') {
+          showToast(`주문 변경은 저장했지만 알림톡 전송에 실패했습니다. ${notification.reason || ''}`.trim());
+        } else if (notification.status === 'blocked' || notification.status === 'disabled') {
+          showToast(`주문 변경은 저장했지만 알림톡은 전송되지 않았습니다. ${notification.reason || ''}`.trim());
+        } else {
+          showToast(`주문 변경을 저장했습니다. 알림톡 결과를 확인해 주세요. ${notification.reason || ''}`.trim());
+        }
       } catch (error) { showToast(error.message || '연결을 확인한 뒤 다시 시도해 주세요.'); }
       await loadOrders();
     }

@@ -218,7 +218,9 @@ function createLifecycle(db, { notifier = null } = {}) {
       return { success: true, revision: before.revision + 1, eventId };
     });
     await dispatch(result.eventId);
-    return result;
+    if (!result.eventId) return result;
+    const notification = await connection.get('SELECT status, reason, provider_message_id, provider_status_code FROM order_event_notifications WHERE event_id = ?', [result.eventId]);
+    return { ...result, notification };
   }
   async function history(id) {
     await ensureSchema();
