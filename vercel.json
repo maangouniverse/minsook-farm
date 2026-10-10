@@ -48,7 +48,7 @@
       "dest": "server.js"
     },
     {
-      "src": "/admin",
+      "src": "/admin(?:/orders|/products|/settings)?/?",
       "dest": "admin.html"
     },
     {
