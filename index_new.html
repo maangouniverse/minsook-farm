@@ -25,7 +25,7 @@
   <meta name="twitter:image" content="https://minsook-farm.vercel.app/minsook_main.jpg">
   
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="styles_new.css?v=5">
+  <link rel="stylesheet" href="styles_new.css?v=6">
   <link rel="stylesheet" href="shop.css?v=4">
 
   <!-- Daum Postcode SDK -->
@@ -613,10 +613,13 @@
       </div>
       <div class="lookup-modal-body">
         <p class="modal-info-text">
-          주문하실 때 입력하신 휴대전화 번호를 넣어주세요.
+          주문하실 때 입력하신 주문자명과 휴대전화 번호를 모두 넣어주세요.
         </p>
         <div class="lookup-input-group">
-          <input type="tel" id="lookupPhoneInput" placeholder="예: 010-1234-5678" maxlength="13">
+          <div class="lookup-input-fields">
+            <input type="text" id="lookupNameInput" placeholder="주문자명" maxlength="50" autocomplete="name">
+            <input type="tel" id="lookupPhoneInput" placeholder="예: 010-1234-5678" maxlength="13" autocomplete="tel">
+          </div>
           <button type="button" id="btnLookupSubmit" class="btn-lookup-action">조회하기</button>
         </div>
         
@@ -831,7 +834,7 @@
 
   <!-- Scripts -->
   <script src="product-gallery.js?v=1"></script>
-  <script src="script_new.js?v=9"></script>
+  <script src="script_new.js?v=10"></script>
   <script src="shop.js?v=4"></script>
 </body>
 </html>

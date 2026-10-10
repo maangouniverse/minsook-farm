@@ -103,6 +103,7 @@ function createLifecycle(db, { notifier = null } = {}) {
       await connection.run('CREATE TABLE IF NOT EXISTS order_events (id TEXT PRIMARY KEY, order_id INTEGER NOT NULL, kind TEXT NOT NULL, actor TEXT NOT NULL, source TEXT NOT NULL, before_json TEXT, after_json TEXT NOT NULL, created_at TEXT NOT NULL)');
       await connection.run('CREATE INDEX IF NOT EXISTS idx_order_events_order ON order_events(order_id, created_at)');
       await connection.run('CREATE TABLE IF NOT EXISTS notification_templates (status TEXT PRIMARY KEY, body TEXT NOT NULL, provider_code TEXT NOT NULL, button_label TEXT NOT NULL, button_url TEXT NOT NULL, enabled INTEGER NOT NULL DEFAULT 0, version INTEGER NOT NULL DEFAULT 1)');
+      await connection.run('CREATE TABLE IF NOT EXISTS notification_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
       await connection.run('CREATE TABLE IF NOT EXISTS order_event_notifications (event_id TEXT PRIMARY KEY, order_id INTEGER NOT NULL, template_status TEXT NOT NULL, template_version INTEGER NOT NULL, template_json TEXT NOT NULL, rendered_json TEXT NOT NULL, status TEXT NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL)');
       for (const column of ['recipient_phone TEXT', 'provider_message_id TEXT', 'provider_status_code TEXT', 'updated_at TEXT']) {
         try { await connection.run(`ALTER TABLE order_event_notifications ADD COLUMN ${column}`); }
@@ -168,12 +169,27 @@ function createLifecycle(db, { notifier = null } = {}) {
       state = 'disabled'; reason = '같은 주문 상태의 알림톡은 중복 발송하지 않습니다.';
     }
     await tx.run('INSERT INTO order_event_notifications (event_id, order_id, template_status, template_version, template_json, rendered_json, status, reason, created_at, recipient_phone, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [event, after.id, templateStatus, template.version, JSON.stringify(template), JSON.stringify(rendered), state, reason, at, after.phone, at]);
+    const sellerNotice = !!target && (!before || (statusChanged && target === '주문취소'));
+    if (sellerNotice) {
+      const sellerSetting = await tx.get("SELECT value FROM notification_settings WHERE key = 'seller_phone'");
+      const sellerPhone = text(sellerSetting?.value);
+      if (sellerPhone) {
+        let sellerState = 'disabled', sellerReason = '실제 발송은 꺼져 있습니다.';
+        if (!template.enabled) sellerReason = '이 상태의 템플릿이 사용 안 함으로 설정되어 있습니다.';
+        else if (rendered.errors.length) { sellerState = 'blocked'; sellerReason = rendered.errors.join(' '); }
+        else if (rendered.body.length > 1000) { sellerState = 'blocked'; sellerReason = '변수 치환 후 알림톡 본문이 1,000자를 초과합니다.'; }
+        else if (!template.provider_code) { sellerState = 'blocked'; sellerReason = '솔라피 승인 템플릿 ID가 없습니다.'; }
+        else if (notifier) { const eligible = notifier.eligibility(sellerPhone); sellerState = eligible.status; sellerReason = eligible.reason; }
+        const sellerEvent = `${event}-seller`;
+        await tx.run('INSERT INTO order_event_notifications (event_id, order_id, template_status, template_version, template_json, rendered_json, status, reason, created_at, recipient_phone, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [sellerEvent, after.id, `판매자 · ${templateStatus}`, template.version, JSON.stringify(template), JSON.stringify(rendered), sellerState, sellerReason, at, sellerPhone, at]);
+      }
+    }
     return event;
   }
   function readiness() {
     return notifier?.readiness() || { provider: 'solapi', mode: 'off', enabled: false, reason: '솔라피 발송이 꺼져 있습니다. 채널 연결과 승인 템플릿 설정이 필요합니다.' };
   }
-  async function dispatch(eventId) {
+  async function dispatchOne(eventId) {
     if (!eventId || !notifier) return;
     // A committed event can be claimed only once, across processes as well.
     // Never throw a notification error back as an order-save failure.
@@ -186,6 +202,10 @@ function createLifecycle(db, { notifier = null } = {}) {
       catch (error) { result = { status: error.uncertain ? 'unknown' : 'failed', reason: error.uncertain ? '응답을 확인하지 못했습니다. 솔라피 발송 내역을 확인해 주세요. 자동 재발송하지 않습니다.' : '솔라피 요청 실패. 인증·채널·승인 템플릿·잔액을 확인해 주세요.' }; }
       await connection.run('UPDATE order_event_notifications SET status = ?, reason = ?, provider_message_id = ?, provider_status_code = ?, updated_at = ? WHERE event_id = ?', [result.status, result.reason, result.messageId || null, result.code || null, new Date().toISOString(), eventId]);
     } catch { console.error('Notification audit requires review', { eventId, code: 'NOTIFICATION_AUDIT_FAILED' }); }
+  }
+  async function dispatch(eventId) {
+    if (!eventId) return;
+    await Promise.all([dispatchOne(eventId), dispatchOne(`${eventId}-seller`)]);
   }
   async function syncResults() {
     await ensureSchema();
@@ -243,7 +263,20 @@ function createLifecycle(db, { notifier = null } = {}) {
   async function templates() {
     await ensureSchema();
     const rows = await connection.all('SELECT * FROM notification_templates');
-    return { templates: ORDER_STATUSES.map(status => rows.find(row => row.status === status)).filter(Boolean), variables: VARIABLES, statuses: TEMPLATE_STATUS, sendingEnabled: readiness().enabled, readiness: readiness() };
+    const notificationSettings = await settings();
+    return { templates: ORDER_STATUSES.map(status => rows.find(row => row.status === status)).filter(Boolean), variables: VARIABLES, statuses: TEMPLATE_STATUS, sellerPhone: notificationSettings.sellerPhone, sendingEnabled: readiness().enabled, readiness: readiness() };
+  }
+  async function settings() {
+    await ensureSchema();
+    const row = await connection.get("SELECT value FROM notification_settings WHERE key = 'seller_phone'");
+    return { sellerPhone: row?.value || '' };
+  }
+  async function saveSettings(value) {
+    const sellerPhone = text(value?.sellerPhone).replace(/[^0-9]/g, '');
+    if (sellerPhone && !/^01[016789]\d{7,8}$/.test(sellerPhone)) throw fail('판매자 휴대전화 번호를 확인해 주세요.');
+    await ensureSchema();
+    await connection.run("INSERT INTO notification_settings (key, value) VALUES ('seller_phone', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value", [sellerPhone]);
+    return settings();
   }
   async function saveTemplate(status, value) {
     if (!TEMPLATE_STATUS[status]) throw fail('주문 상태를 확인해 주세요.');
@@ -259,6 +292,6 @@ function createLifecycle(db, { notifier = null } = {}) {
     await ensureSchema();
     return connection.all("SELECT event_id, order_id, 'solapi' AS provider, template_status, status, reason, provider_message_id, provider_status_code, created_at, COALESCE(updated_at, created_at) AS updated_at FROM order_event_notifications ORDER BY created_at DESC LIMIT 100");
   }
-  return { ensureSchema, transaction, record, dispatch, readiness, syncResults, update, history, templates, saveTemplate, logs };
+  return { ensureSchema, transaction, record, dispatch, readiness, syncResults, update, history, templates, saveTemplate, settings, saveSettings, logs };
 }
 module.exports = { createLifecycle, sql, TEMPLATE_STATUS, ORDER_STATUSES, PICKUP_STATUSES, DELIVERY_STATUSES, normalizeOrderStatus, notificationStatus, VARIABLES, HANJIN, hanjinTrackingUrl, validateTemplate, renderTemplate };

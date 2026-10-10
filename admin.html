@@ -3000,8 +3000,12 @@
     }
 
     let ordersLoadPromise = null;
+    let ordersRefreshQueued = false;
     async function loadOrders({ force = false } = {}) {
-      if (ordersLoadPromise) return ordersLoadPromise;
+      if (ordersLoadPromise) {
+        if (force) ordersRefreshQueued = true;
+        return ordersLoadPromise;
+      }
       if (!force && Array.isArray(window.allOrders)) {
         renderOrdersTable(window.allOrders);
         return;
@@ -3050,7 +3054,13 @@
         showToast('❌ 주문내역 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.');
       } })();
       try { return await ordersLoadPromise; }
-      finally { ordersLoadPromise = null; }
+      finally {
+        ordersLoadPromise = null;
+        if (ordersRefreshQueued) {
+          ordersRefreshQueued = false;
+          setTimeout(() => loadOrders({ force: true }), 0);
+        }
+      }
     }
 
     // Filter and Render Orders Table
@@ -3238,6 +3248,7 @@
     function applyFilters() {
       syncFilterUrl();
       if (window.allOrders) renderOrdersTable(window.allOrders);
+      loadOrders({ force: true });
       showToast('🔍 필터가 적용되었습니다.');
     }
 
@@ -3250,8 +3261,22 @@
       document.getElementById('filterStatus').value = 'all';
       syncFilterUrl();
       if (window.allOrders) renderOrdersTable(window.allOrders);
+      loadOrders({ force: true });
       showToast('🔄 필터가 초기화되었습니다.');
     }
+
+    let filterDatabaseRefreshTimer = null;
+    function handleFilterControlChange(delay = 0) {
+      syncFilterUrl();
+      if (window.allOrders) renderOrdersTable(window.allOrders);
+      clearTimeout(filterDatabaseRefreshTimer);
+      filterDatabaseRefreshTimer = setTimeout(() => loadOrders({ force: true }), delay);
+    }
+
+    for (const id of ['filterStartDate', 'filterEndDate', 'filterSearchType', 'filterStatus']) {
+      document.getElementById(id).addEventListener('change', () => handleFilterControlChange());
+    }
+    document.getElementById('filterSearchKeyword').addEventListener('input', () => handleFilterControlChange(250));
 
     // Clean and Format Product Name (e.g. 특품 오이 (무게) -> 특품, 한입 오이 -> 한입오이)
     function cleanItemName(name) {
@@ -4411,7 +4436,7 @@
   <script src="/html2canvas.min.js"></script>
   <script src="/admin-order-history.js?v=2"></script>
   <script src="/admin-orders.js?v=6"></script>
-  <script src="/admin-templates.js?v=3"></script>
+  <script src="/admin-templates.js?v=4"></script>
   <script src="/admin-print.js?v=1"></script>
   <script src="/admin-notifications.js?v=4"></script>
   <script src="/product-gallery.js?v=1"></script>

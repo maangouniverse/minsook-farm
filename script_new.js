@@ -1631,16 +1631,18 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
   const orderLookupModal = document.getElementById('orderLookupModal');
   const btnOrderLookupClose = document.getElementById('btnOrderLookupClose');
   const orderLookupOverlay = document.getElementById('orderLookupOverlay');
+  const lookupNameInput = document.getElementById('lookupNameInput');
   const lookupPhoneInput = document.getElementById('lookupPhoneInput');
   const btnLookupSubmit = document.getElementById('btnLookupSubmit');
   const lookupSpinner = document.getElementById('lookupSpinner');
   const lookupResultsContainer = document.getElementById('lookupResultsContainer');
+  let lastLookupCredentials = null;
 
   function openLookupModal() {
     if (!orderLookupModal) return;
     orderLookupModal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-    if (lookupPhoneInput) lookupPhoneInput.focus();
+    if (lookupNameInput) lookupNameInput.focus();
   }
 
   // Open lookup modal
@@ -1663,7 +1665,9 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
     if (orderLookupModal) {
       orderLookupModal.classList.add('hidden');
       document.body.style.overflow = '';
+      if (lookupNameInput) lookupNameInput.value = '';
       if (lookupPhoneInput) lookupPhoneInput.value = '';
+      lastLookupCredentials = null;
       if (lookupResultsContainer) lookupResultsContainer.innerHTML = '';
       if (lookupSpinner) lookupSpinner.classList.add('hidden');
     }
@@ -1697,12 +1701,22 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
     });
   }
 
+  if (lookupNameInput) {
+    lookupNameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (btnLookupSubmit) btnLookupSubmit.click();
+      }
+    });
+  }
+
   // Submit lookup request
   if (btnLookupSubmit) {
     btnLookupSubmit.addEventListener('click', async () => {
+      const name = lookupNameInput ? lookupNameInput.value.trim() : '';
       const phone = lookupPhoneInput ? lookupPhoneInput.value.trim() : '';
-      if (!phone) {
-        showLookupError('휴대전화 번호를 입력해 주세요.');
+      if (!name || !phone) {
+        showLookupError('주문자명과 휴대전화 번호를 모두 입력해 주세요.');
         return;
       }
 
@@ -1711,6 +1725,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
         showLookupError('올바른 휴대전화 번호 형식을 입력해 주세요.');
         return;
       }
+      lastLookupCredentials = { name, phone };
 
       // Start loading
       if (lookupSpinner) lookupSpinner.classList.remove('hidden');
@@ -1723,7 +1738,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ phone }),
+          body: JSON.stringify({ name, phone }),
         });
 
         const data = await response.json();
@@ -1739,6 +1754,31 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
       } finally {
         if (lookupSpinner) lookupSpinner.classList.add('hidden');
         if (btnLookupSubmit) btnLookupSubmit.disabled = false;
+      }
+    });
+  }
+
+  if (lookupResultsContainer) {
+    lookupResultsContainer.addEventListener('click', async (event) => {
+      const button = event.target.closest('[data-cancel-order]');
+      if (!button || !lastLookupCredentials) return;
+      if (!window.confirm('입금 전 주문을 취소하시겠습니까? 취소 후에는 되돌릴 수 없습니다.')) return;
+      button.disabled = true;
+      const originalLabel = button.textContent;
+      button.textContent = '주문 취소 처리 중…';
+      try {
+        const response = await fetch(`/api/orders/${encodeURIComponent(button.dataset.cancelOrder)}/cancel`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(lastLookupCredentials)
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '주문을 취소하지 못했습니다.');
+        btnLookupSubmit.click();
+      } catch (error) {
+        showLookupError(error.message || '주문을 취소하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+        button.disabled = false;
+        button.textContent = originalLabel;
       }
     });
   }
@@ -1761,7 +1801,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
     if (!orders || orders.length === 0) {
       lookupResultsContainer.innerHTML = `
         <div class="lookup-empty-message">
-          입력하신 번호로 등록된 주문 내역이 없습니다. 🥒
+          입력하신 주문자명과 전화번호가 모두 일치하는 주문 내역이 없습니다. 🥒
         </div>
       `;
       return;
@@ -1800,7 +1840,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
         } else if (courierName.includes('CJ') || courierName.includes('대한통운')) {
           trackingUrl = `https://www.doortodoor.co.kr/link/tracking.jsp?QueryType=3&tongno=${order.trackingNumber}`;
         } else if (courierName.includes('한진')) {
-          trackingUrl = `https://www.hanjin.com/ko/delivery/delivery/tracking.do?wblnum=${order.trackingNumber}`;
+          trackingUrl = `https://www.hanjin.com/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&wblnum=${encodeURIComponent(order.trackingNumber)}&schLang=KR&wblnumText=`;
         } else if (courierName.includes('롯데')) {
           trackingUrl = `https://www.lotteglogis.com/home/personal/inquiry/track?InvNo=${order.trackingNumber}`;
         }
@@ -1852,6 +1892,7 @@ ${itemsText}■ 픽업 일시: ${pickupDateVal} ${pickupTimeVal}
           <div class="order-card-footer">
             <span class="order-status-badge ${statusClass}">${statusText}</span>
             ${trackingHTML}
+            ${order.canCancel ? `<button type="button" class="btn-order-cancel" data-cancel-order="${Number(order.id)}">주문 취소</button>` : ''}
           </div>
         </div>
       `;

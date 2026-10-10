@@ -1,0 +1,11 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const html = fs.readFileSync('index_new.html', 'utf8');
+const script = fs.readFileSync('script_new.js', 'utf8');
+assert.match(html, /id="lookupNameInput"/);
+assert.match(html, /id="lookupPhoneInput"/);
+assert.match(script, /JSON\.stringify\(\{ name, phone \}\)/);
+assert.match(script, /data-cancel-order/);
+assert.match(script, /\/api\/orders\/\$\{encodeURIComponent\(button\.dataset\.cancelOrder\)\}\/cancel/);
+assert.match(script, /https:\/\/www\.hanjin\.com\/kor\/CMS\/DeliveryMgr\/WaybillResult\.do\?mCode=MN038&wblnum=\$\{encodeURIComponent\(order\.trackingNumber\)\}&schLang=KR&wblnumText=/);
+console.log('PASS: order lookup requires name+phone, exposes eligible cancellation, and uses the current Hanjin tracking URL.');

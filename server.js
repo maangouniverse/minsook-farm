@@ -505,12 +505,13 @@ app.get('/api/admin/notifications', authenticateAdmin, async (req, res) => {
   catch { res.status(503).json({ error: '알림톡 기록을 불러오지 못했습니다.' }); }
 });
 
-// 1-1. Query Order History by Phone Number (Public)
+// 1-1. Query Order History by exact customer name and phone number (Public)
 app.post('/api/orders/query', async (req, res) => {
+  const name = typeof req.body.name === 'string' ? req.body.name.trim().replace(/\s+/g, ' ') : '';
   const { phone } = req.body;
 
-  if (!phone) {
-    return res.status(400).json({ error: '전화번호를 입력해 주세요.' });
+  if (!name || !phone) {
+    return res.status(400).json({ error: '주문자명과 전화번호를 모두 입력해 주세요.' });
   }
 
   // 검색어 정제: 숫자만 남김
@@ -526,11 +527,11 @@ app.post('/api/orders/query', async (req, res) => {
   const query = `
     SELECT id, name, phone, address, memo, items, total_price, status, tracking_number, courier, created_at
     FROM orders
-    WHERE replace(phone, '-', '') = ? OR phone = ?
+    WHERE name = ? AND replace(replace(replace(replace(phone, '-', ''), ' ', ''), '(', ''), ')', '') = ?
     ORDER BY created_at DESC
   `;
 
-  db.all(query, [cleanPhone, phone], (err, rows) => {
+  db.all(query, [name, cleanPhone], (err, rows) => {
     if (err) {
       console.error('Order query failed:', err);
       return res.status(500).json({ error: '주문 내역 조회 중 오류가 발생했습니다.' });
@@ -593,6 +594,7 @@ app.post('/api/orders/query', async (req, res) => {
         items: parsedItems,
         totalPrice: row.total_price,
         status: row.status,
+        canCancel: String(row.status || '').startsWith('주문접수-'),
         trackingNumber: row.tracking_number,
         courier: row.courier,
         createdAt: row.created_at
@@ -631,6 +633,28 @@ app.post('/api/admin/login', (req, res) => {
     res.cookie('admin_token', token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' || !!process.env.VERCEL, path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
     return res.json({ success: true, role: 'admin' });
   });
+});
+
+app.post('/api/orders/:id/cancel', async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: '주문번호를 확인해 주세요.' });
+  const name = typeof req.body.name === 'string' ? req.body.name.trim().replace(/\s+/g, ' ') : '';
+  const phone = typeof req.body.phone === 'string' ? req.body.phone.replace(/[^0-9]/g, '') : '';
+  if (!name || phone.length < 9) return res.status(400).json({ error: '주문자명과 전화번호를 확인해 주세요.' });
+  try {
+    await lifecycle.ensureSchema();
+    const order = await new Promise((resolve, reject) => db.get(
+      "SELECT * FROM orders WHERE id = ? AND name = ? AND replace(replace(replace(replace(phone, '-', ''), ' ', ''), '(', ''), ')', '') = ?",
+      [req.params.id, name, phone],
+      (error, row) => error ? reject(error) : resolve(row)
+    ));
+    if (!order) return res.status(404).json({ error: '입력하신 정보와 일치하는 주문을 찾지 못했습니다.' });
+    if (!String(order.status || '').startsWith('주문접수-')) return res.status(409).json({ error: '입금 확인 또는 발송 처리된 주문은 고객 화면에서 취소할 수 없습니다. 고객센터로 문의해 주세요.' });
+    await lifecycle.update(order.id, { status: '주문취소' }, Number(order.revision), '고객 주문조회 · 주문취소');
+    res.json({ success: true, status: '주문취소' });
+  } catch (error) {
+    if (!error.status) console.error('Public order cancellation failed', { orderId: req.params.id, error: error.message });
+    res.status(error.status || 503).json({ error: error.status ? error.message : '주문 취소를 처리하지 못했습니다. 잠시 후 다시 확인해 주세요.' });
+  }
 });
 
 app.get('/api/admin/session', authenticateAdmin, (req, res) => {
@@ -718,6 +742,10 @@ app.get('/api/admin/notification-templates', authenticateAdmin, async (req, res)
 app.put('/api/admin/notification-templates/:status', authenticateAdmin, async (req, res) => {
   try { res.json(await lifecycle.saveTemplate(req.params.status, req.body)); }
   catch (error) { res.status(error.status || 503).json({ error: error.status ? error.message : '템플릿을 저장하지 못했습니다.' }); }
+});
+app.put('/api/admin/notification-settings', authenticateAdmin, async (req, res) => {
+  try { res.json(await lifecycle.saveSettings(req.body)); }
+  catch (error) { res.status(error.status || 503).json({ error: error.status ? error.message : '판매자 알림 설정을 저장하지 못했습니다.' }); }
 });
 app.post('/api/admin/notification-templates/preview', authenticateAdmin, (req, res) => {
   const { validateTemplate, renderTemplate } = require('./internal/order-lifecycle.cjs');

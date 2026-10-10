@@ -3028,8 +3028,15 @@ footer {
 
 .lookup-input-group {
   display: flex;
+  align-items: stretch;
   gap: 10px;
   margin-bottom: 24px;
+}
+
+.lookup-input-fields {
+  flex: 1;
+  display: grid;
+  gap: 8px;
 }
 
 .lookup-input-group input {
@@ -3195,6 +3202,8 @@ footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   border-top: 1px dashed var(--border-light);
   padding-top: 12px;
   margin-top: 4px;
@@ -3250,6 +3259,21 @@ footer {
   background: var(--bg-light);
   border-color: var(--text-muted);
 }
+
+.btn-order-cancel {
+  border: 1px solid #ef4444;
+  background: #fff;
+  color: #b91c1c;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-order-cancel:hover { background: #fef2f2; }
+.btn-order-cancel:disabled { cursor: wait; opacity: 0.65; }
 
 
 
