@@ -38,7 +38,8 @@ function normalizeOrderStatus(status, order = {}) {
   return status;
 }
 const VARIABLES = ['주문자명', '고객명', '수령인', '주문번호', '주문일시', '주문금액', '결제금액', '상품명', '수량', '배송지', '운송장번호', '택배사', '배송조회링크', '픽업일시'];
-const HANJIN = 'https://www.hanjin.com/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&schLang=KR&wblnum=';
+const HANJIN = 'https://www.hanjin.com/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&wblnum=';
+const hanjinTrackingUrl = tracking => `${HANJIN}${encodeURIComponent(tracking)}&schLang=KR&wblnumText=`;
 const fail = (message, status = 400) => Object.assign(new Error(message), { status });
 const sql = db => ({
   run: (q, p = []) => new Promise((yes, no) => db.run(q, p, function(e) { e ? no(e) : yes({ id: this.lastID, changes: this.changes }); })),
@@ -77,7 +78,7 @@ function renderTemplate(template, order) {
     상품명: items.map(item => text(item.name)).filter(Boolean).join(', '),
     수량: items.map(item => `${Number(item.quantity)}${text(item.unit)}`).filter(value => !value.startsWith('NaN')).join(', '),
     배송지: text(order.address), 운송장번호: tracking, 택배사: courier,
-    배송조회링크: hanjin && tracking ? HANJIN + encodeURIComponent(tracking) : '', 픽업일시: date && time ? `${date} ${time.padStart(5, '0')}` : ''
+    배송조회링크: hanjin && tracking ? hanjinTrackingUrl(tracking) : '', 픽업일시: date && time ? `${date} ${time.padStart(5, '0')}` : ''
   };
   const errors = new Set(), variables = {};
   const replace = value => text(value).replace(/#\{([^}]+)\}/g, (_, key) => {
@@ -246,4 +247,4 @@ function createLifecycle(db, { notifier = null } = {}) {
   }
   return { ensureSchema, transaction, record, dispatch, readiness, syncResults, update, history, templates, saveTemplate, logs };
 }
-module.exports = { createLifecycle, sql, TEMPLATE_STATUS, ORDER_STATUSES, PICKUP_STATUSES, DELIVERY_STATUSES, normalizeOrderStatus, notificationStatus, VARIABLES, HANJIN, validateTemplate, renderTemplate };
+module.exports = { createLifecycle, sql, TEMPLATE_STATUS, ORDER_STATUSES, PICKUP_STATUSES, DELIVERY_STATUSES, normalizeOrderStatus, notificationStatus, VARIABLES, HANJIN, hanjinTrackingUrl, validateTemplate, renderTemplate };
