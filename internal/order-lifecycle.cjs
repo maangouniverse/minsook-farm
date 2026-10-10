@@ -21,7 +21,7 @@ const LEGACY_TEMPLATE_STATUS = {
 };
 const PICKUP_STATUSES = new Set(['주문접수-픽업(계좌이체)', '주문접수-픽업(현장결제)', '입금확인-픽업']);
 const DELIVERY_STATUSES = new Set(['주문접수-택배', '입금확인-택배', '택배발송']);
-const notificationStatus = status => ORDER_STATUSES.includes(status) && status !== '주문취소' ? status
+const notificationStatus = status => ORDER_STATUSES.includes(status) ? status
   : status === '주문' ? '주문접수-택배'
   : status === '결제' ? '입금확인-택배'
   : status === '택배사' ? '택배발송'
@@ -114,6 +114,12 @@ function createLifecycle(db, { notifier = null } = {}) {
         await connection.run('INSERT INTO notification_templates (status, body, provider_code, button_label, button_url, enabled, version) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (status) DO NOTHING', [status, body, legacy?.provider_code || '', legacy?.button_label || (status === '택배발송' ? '배송조회' : ''), legacy?.button_url || (status === '택배발송' ? '#{배송조회링크}' : ''), legacy?.enabled || 0, legacy?.version || 1]);
       }
       await connection.run("DELETE FROM notification_templates WHERE status IN ('주문', '결제', '택배사')");
+      await connection.run('CREATE TABLE IF NOT EXISTS app_migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL)');
+      const activationMigration = 'enable-configured-notification-templates-v1';
+      if (!await connection.get('SELECT name FROM app_migrations WHERE name = ?', [activationMigration])) {
+        await connection.run("UPDATE notification_templates SET enabled = 1 WHERE TRIM(provider_code) <> ''");
+        await connection.run('INSERT INTO app_migrations (name, applied_at) VALUES (?, ?) ON CONFLICT (name) DO NOTHING', [activationMigration, new Date().toISOString()]);
+      }
       await connection.run(`UPDATE orders SET status = CASE
         WHEN status = '주문' AND address LIKE '%[직접 픽업]%' AND COALESCE(memo, '') LIKE '%현장결제%' THEN '주문접수-픽업(현장결제)'
         WHEN status = '주문' AND address LIKE '%[직접 픽업]%' THEN '주문접수-픽업(계좌이체)'
@@ -157,7 +163,7 @@ function createLifecycle(db, { notifier = null } = {}) {
     else if (notifier) { const eligible = notifier.eligibility(after.phone); state = eligible.status; reason = eligible.reason; }
     const shouldNotify = !!target && (!before || target !== previousTarget || (target === '택배발송' && shippingChanged));
     if (!shouldNotify) {
-      state = 'disabled'; reason = '주문접수·입금확인·택배발송 시점의 알림만 발송합니다.';
+      state = 'disabled'; reason = '같은 주문 상태의 알림톡은 중복 발송하지 않습니다.';
     }
     await tx.run('INSERT INTO order_event_notifications (event_id, order_id, template_status, template_version, template_json, rendered_json, status, reason, created_at, recipient_phone, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [event, after.id, templateStatus, template.version, JSON.stringify(template), JSON.stringify(rendered), state, reason, at, after.phone, at]);
     return event;
