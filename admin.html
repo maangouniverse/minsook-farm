@@ -873,6 +873,49 @@
     .btn-confirm:hover {
       background: var(--primary-hover);
     }
+    .btn-confirm:disabled,
+    .btn-cancel:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+    .button-spinner {
+      display: none;
+      width: 14px;
+      height: 14px;
+      margin-right: 7px;
+      border: 2px solid rgba(255, 255, 255, 0.45);
+      border-top-color: #fff;
+      border-radius: 50%;
+      vertical-align: -2px;
+      animation: buttonSpin 0.7s linear infinite;
+    }
+    .btn-confirm.is-loading .button-spinner { display: inline-block; }
+    @keyframes buttonSpin { to { transform: rotate(360deg); } }
+    .status-chip-button {
+      border: 0;
+      cursor: pointer;
+      font: inherit;
+    }
+    .status-chip-button:hover,
+    .status-chip-button:focus-visible {
+      filter: brightness(0.94);
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+    .status-modal-order {
+      margin: -8px 0 18px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    .status-action-message {
+      min-height: 22px;
+      margin: 4px 0 0;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      line-height: 1.45;
+    }
+    .status-action-message.error { color: #b42318; }
+    .status-action-message.success { color: #166534; }
     @keyframes slideDown {
       from { transform: translateY(-20px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
@@ -2334,47 +2377,55 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="admin-design-system.css?v=6">
-  <link rel="stylesheet" href="admin-order-management.css?v=1">
+  <link rel="stylesheet" href="/admin-design-system.css?v=6">
+  <link rel="stylesheet" href="/admin-order-management.css?v=1">
 </head>
 <body>
 
   <!-- Toast system -->
   <div id="toast" class="toast"></div>
 
-  <!-- Delivery Tracking Modal -->
-  <div id="deliveryModal" class="admin-modal hidden">
-    <div class="admin-modal-overlay"></div>
+  <!-- Order status and notification modal -->
+  <div id="orderStatusModal" class="admin-modal hidden" aria-hidden="true">
+    <div class="admin-modal-overlay" id="orderStatusModalOverlay"></div>
     <div class="admin-modal-content">
       <div class="admin-modal-header">
-        <h3>택배사 전달 & 송장 번호 입력</h3>
-        <button type="button" class="admin-modal-close" id="btnDeliveryModalClose">&times;</button>
+        <h3>주문 상태 및 알림톡</h3>
+        <button type="button" class="admin-modal-close" id="btnOrderStatusModalClose" aria-label="닫기">&times;</button>
       </div>
-      <form id="deliveryForm">
+      <p class="status-modal-order" id="orderStatusModalOrder"></p>
+      <form id="orderStatusForm">
         <div class="admin-form-group">
-          <label class="admin-form-label">택배사 선택</label>
-          <div class="courier-options">
+          <label class="admin-form-label" for="modalOrderStatus">변경할 주문 상태</label>
+          <select id="modalOrderStatus" class="input-field" required></select>
+        </div>
+        <div id="statusShippingFields" hidden>
+          <div class="admin-form-group">
+            <label class="admin-form-label">택배사 선택</label>
+            <div class="courier-options">
             <label class="courier-option">
-              <input type="radio" name="courier" value="한진택배" checked>
+              <input type="radio" name="statusCourier" value="한진택배" checked>
               <span class="courier-box">
                 <span class="courier-name">한진택배</span>
               </span>
             </label>
             <label class="courier-option">
-              <input type="radio" name="courier" value="로젠택배">
+              <input type="radio" name="statusCourier" value="로젠택배">
               <span class="courier-box">
                 <span class="courier-name">로젠택배</span>
               </span>
             </label>
+            </div>
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label" for="modalTrackingNumber">송장 번호</label>
+            <input type="text" id="modalTrackingNumber" class="input-field" placeholder="송장 번호를 입력하세요 (숫자만)" inputmode="numeric" pattern="[0-9\-]+">
           </div>
         </div>
-        <div class="admin-form-group">
-          <label class="admin-form-label" for="modalTrackingNumber">송장 번호</label>
-          <input type="text" id="modalTrackingNumber" class="input-field" placeholder="송장 번호를 입력하세요 (숫자만)" required pattern="[0-9\-]+">
-        </div>
+        <p id="orderStatusMessage" class="status-action-message" role="status" aria-live="polite"></p>
         <div class="admin-modal-footer">
-          <button type="button" class="btn-cancel" id="btnDeliveryCancel">취소</button>
-          <button type="submit" class="btn-confirm">송장 저장</button>
+          <button type="button" class="btn-cancel" id="btnOrderStatusCancel">취소</button>
+          <button type="submit" class="btn-confirm" id="btnOrderStatusSubmit"><span class="button-spinner" aria-hidden="true"></span><span data-label>알림톡 전송</span></button>
         </div>
       </form>
     </div>
@@ -2486,7 +2537,7 @@
   <!-- Login view -->
   <div id="loginSection" class="login-container">
     <div class="login-card">
-      <img src="민숙농장로고가로형-배경없음.png" alt="민숙농장" class="login-logo">
+      <img src="/민숙농장로고가로형-배경없음.png" alt="민숙농장" class="login-logo">
       <h2>민숙농장 어드민</h2>
       <p>주문 및 품목 관리를 위한 로그인</p>
 
@@ -2506,7 +2557,7 @@
   <div id="dashboardSection" class="dashboard-container">
     <header class="dashboard-header">
       <div class="header-left">
-        <img src="민숙농장로고가로형-배경없음.png" alt="민숙농장 로고" class="header-logo">
+        <img src="/민숙농장로고가로형-배경없음.png" alt="민숙농장 로고" class="header-logo">
         <span class="header-title">민숙농장 대시보드</span>
       </div>
       <div class="header-right">
@@ -2561,7 +2612,7 @@
               <button type="button" class="btn-action btn-action-danger" id="btnDeleteSelected" onclick="deleteSelectedOrders()" style="display: none;">🗑️ 선택 삭제</button>
               <button type="button" class="btn-action btn-action-secondary" onclick="downloadExcel()">📋 엑셀 다운로드</button>
               <button type="button" class="btn-action btn-action-secondary" onclick="openPrintTemplate()">🖨️ 주문 상황 인쇄</button>
-              <button type="button" class="btn-action btn-action-primary" onclick="loadOrders(); loadVisitorStats();">새로고침</button>
+              <button type="button" class="btn-action btn-action-primary" onclick="loadOrders({ force: true }); loadVisitorStats();">새로고침</button>
             </div>
           </div>
 
@@ -2774,9 +2825,20 @@
     let activeLoginTab = 'common'; // 'common' or 'staff'
     let currentUserRole = '';
     let currentUsername = '';
+    const ADMIN_TAB_PATHS = { orders: '/admin/orders', prices: '/admin/products', settings: '/admin/settings' };
+    const adminTabFromPath = () => Object.entries(ADMIN_TAB_PATHS).find(([, path]) => window.location.pathname === path)?.[0] || 'orders';
+
+    function updateAdminUrl(tabId, mode = 'push') {
+      if (window.location.protocol === 'file:' || mode === 'none') return;
+      const url = new URL(window.location.href);
+      url.pathname = ADMIN_TAB_PATHS[tabId] || ADMIN_TAB_PATHS.orders;
+      if (tabId === 'orders') writeFiltersToUrl(url);
+      else url.search = '';
+      window.history[mode === 'replace' ? 'replaceState' : 'pushState']({ adminTab: tabId }, '', url);
+    }
 
     // Switch sidebar navigation tabs
-    function switchTab(tabId) {
+    function switchTab(tabId, { historyMode = 'push', forceReload = false } = {}) {
       document.querySelectorAll('.sidebar-menu .menu-item-btn').forEach(btn => {
         btn.classList.remove('active');
       });
@@ -2787,15 +2849,18 @@
       if (tabId === 'orders') {
         document.getElementById('menuOrders').classList.add('active');
         document.getElementById('tabOrders').classList.add('active');
-        loadOrders();
+        if (window.allOrders && !forceReload) renderOrdersTable(window.allOrders);
+        else loadOrders({ force: forceReload });
       } else if (tabId === 'prices') {
         document.getElementById('menuPrices').classList.add('active');
         document.getElementById('tabPrices').classList.add('active');
-        loadProducts();
+        if (window.productsLoaded && !forceReload) renderProductsTable(allProducts);
+        else loadProducts();
       } else if (tabId === 'settings') {
         document.getElementById('menuSettings').classList.add('active');
         document.getElementById('tabSettings').classList.add('active');
       }
+      updateAdminUrl(tabId, historyMode);
     }
 
     // Show message toast
@@ -2891,7 +2956,9 @@
       document.getElementById('loginSection').style.display = 'none';
       document.getElementById('dashboardSection').style.display = 'flex';
       document.getElementById('loggedInUserDisplay').textContent = `사용자: 최고 관리자 (admin)`;
-      switchTab('orders');
+      const initialTab = adminTabFromPath();
+      if (initialTab === 'orders') restoreFiltersFromUrl();
+      switchTab(initialTab, { historyMode: 'replace' });
       loadVisitorStats();
       checkPendingMigration();
     }
@@ -2932,12 +2999,20 @@
       }
     }
 
-    async function loadOrders() {
+    let ordersLoadPromise = null;
+    async function loadOrders({ force = false } = {}) {
+      if (ordersLoadPromise) return ordersLoadPromise;
+      if (!force && Array.isArray(window.allOrders)) {
+        renderOrdersTable(window.allOrders);
+        return;
+      }
       const pickupTbody = document.getElementById('pickupOrdersTableBody');
       const deliveryTbody = document.getElementById('deliveryOrdersTableBody');
       const loadingHtml = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 40px 0;">주문 리스트를 로드 중...</td></tr>`;
-      if (pickupTbody) pickupTbody.innerHTML = loadingHtml;
-      if (deliveryTbody) deliveryTbody.innerHTML = loadingHtml;
+      if (!window.allOrders) {
+        if (pickupTbody) pickupTbody.innerHTML = loadingHtml;
+        if (deliveryTbody) deliveryTbody.innerHTML = loadingHtml;
+      }
 
       if (window.location.protocol === 'file:') {
         const localOrders = JSON.parse(localStorage.getItem('minsook_orders') || '[]');
@@ -2946,10 +3021,10 @@
         return;
       }
 
-      try {
+      ordersLoadPromise = (async () => { try {
         let res = await fetch('/api/admin/orders');
         if (res.status >= 500) {
-          await new Promise(resolve => setTimeout(resolve, 700));
+          await new Promise(resolve => setTimeout(resolve, 300));
           res = await fetch('/api/admin/orders');
         }
         if (res.status === 401) {
@@ -2973,7 +3048,9 @@
         if (pickupTbody) pickupTbody.innerHTML = errorHtml;
         if (deliveryTbody) deliveryTbody.innerHTML = errorHtml;
         showToast('❌ 주문내역 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.');
-      }
+      } })();
+      try { return await ordersLoadPromise; }
+      finally { ordersLoadPromise = null; }
     }
 
     // Filter and Render Orders Table
@@ -3035,12 +3112,47 @@
       return `${year}-${month}-${day}`;
     }
 
-    function initializeDateFilter() {
+    function writeFiltersToUrl(url) {
+      const fields = {
+        start: document.getElementById('filterStartDate')?.value || '',
+        end: document.getElementById('filterEndDate')?.value || '',
+        type: document.getElementById('filterSearchType')?.value || 'all',
+        q: document.getElementById('filterSearchKeyword')?.value.trim() || '',
+        status: document.getElementById('filterStatus')?.value || 'all'
+      };
+      Object.entries(fields).forEach(([key, value]) => {
+        if (!value || (key !== 'start' && key !== 'end' && value === 'all')) url.searchParams.delete(key);
+        else url.searchParams.set(key, value);
+      });
+      return url;
+    }
+
+    function restoreFiltersFromUrl() {
+      const params = new URLSearchParams(window.location.search);
       const today = formatDateInputValue(new Date());
       const startInput = document.getElementById('filterStartDate');
       const endInput = document.getElementById('filterEndDate');
-      if (startInput && !startInput.value) startInput.value = today;
-      if (endInput && !endInput.value) endInput.value = today;
+      const searchType = document.getElementById('filterSearchType');
+      const keyword = document.getElementById('filterSearchKeyword');
+      const status = document.getElementById('filterStatus');
+      const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value || '');
+      startInput.value = validDate(params.get('start')) ? params.get('start') : today;
+      endInput.value = validDate(params.get('end')) ? params.get('end') : today;
+      searchType.value = ['all', 'name', 'phone', 'address'].includes(params.get('type')) ? params.get('type') : 'all';
+      keyword.value = params.get('q') || '';
+      const requestedStatus = params.get('status') || 'all';
+      status.value = Array.from(status.options).some(option => option.value === requestedStatus) ? requestedStatus : 'all';
+    }
+
+    function syncFilterUrl(mode = 'replace') {
+      if (window.location.protocol === 'file:') return;
+      const url = writeFiltersToUrl(new URL(window.location.href));
+      url.pathname = ADMIN_TAB_PATHS.orders;
+      window.history[mode === 'push' ? 'pushState' : 'replaceState']({ adminTab: 'orders' }, '', url);
+    }
+
+    function initializeDateFilter() {
+      restoreFiltersFromUrl();
     }
 
     function shiftFilterDate(dayOffset) {
@@ -3124,8 +3236,8 @@
 
     // Filter Action Functions
     function applyFilters() {
-      if (!window.allOrders) return;
-      renderOrdersTable(window.allOrders);
+      syncFilterUrl();
+      if (window.allOrders) renderOrdersTable(window.allOrders);
       showToast('🔍 필터가 적용되었습니다.');
     }
 
@@ -3136,9 +3248,8 @@
       document.getElementById('filterSearchType').value = 'all';
       document.getElementById('filterSearchKeyword').value = '';
       document.getElementById('filterStatus').value = 'all';
-      
-      if (!window.allOrders) return;
-      renderOrdersTable(window.allOrders);
+      syncFilterUrl();
+      if (window.allOrders) renderOrdersTable(window.allOrders);
       showToast('🔄 필터가 초기화되었습니다.');
     }
 
@@ -3217,12 +3328,9 @@
           <strong>${Number(order.total_price || 0).toLocaleString()}원</strong>
         </td>
         <td class="order-card-status" data-label="주문상태">
-          <div>
-            <span class="status-badge ${statusClass}">${window.orderStatusLabel(order.status)}</span>
-            <select class="status-select" onchange="updateOrderStatus(${order.id}, this.value, this)">
-              ${window.orderStatusOptions(order).map(value => `<option value="${value}" ${order.status === value ? 'selected' : ''}>${window.orderStatusLabel(value)}</option>`).join('')}
-            </select>
-          </div>
+          <button type="button" class="status-badge status-chip-button ${statusClass}" onclick="openOrderStatusModal(${Number(order.id)})" aria-label="${escapeHtml(window.orderStatusLabel(order.status))} 상태 변경">
+            ${escapeHtml(window.orderStatusLabel(order.status))}
+          </button>
         </td>
       `;
       return tr;
@@ -3317,7 +3425,7 @@
 
     // Open a printable popup with order manifest template
     function openPrintTemplate() {
-      const orders = window.loadedOrders || [];
+      const orders = window.filteredOrders || window.allOrders || [];
       if (orders.length === 0) {
         showToast('🖨️ 인쇄할 주문 데이터가 없습니다.');
         return;
@@ -3435,98 +3543,129 @@
       document.getElementById('statStatusCancel').textContent = `${countCancel}건`;
     }
 
-    let currentOrderIdForDelivery = null;
-    let previousSelectElement = null;
+    let activeStatusOrderId = null;
+    let statusModalSubmitting = false;
 
-    function closeDeliveryModal() {
-      document.getElementById('deliveryModal').classList.add('hidden');
-      if (previousSelectElement && currentOrderIdForDelivery) {
-        const order = (window.loadedOrders || []).find(o => o.id === currentOrderIdForDelivery);
-        if (order) {
-          previousSelectElement.value = order.status;
-        }
-      }
-      currentOrderIdForDelivery = null;
-      previousSelectElement = null;
+    function activeStatusOrder() {
+      return (window.allOrders || []).find(order => Number(order.id) === Number(activeStatusOrderId));
     }
 
-    // Setup delivery modal listeners
-    document.getElementById('btnDeliveryModalClose').addEventListener('click', () => closeDeliveryModal());
-    document.getElementById('btnDeliveryCancel').addEventListener('click', () => closeDeliveryModal());
-    document.querySelector('.admin-modal-overlay').addEventListener('click', () => closeDeliveryModal());
-
-    document.getElementById('deliveryForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const courier = document.querySelector('input[name="courier"]:checked').value;
-      const trackingNumber = document.getElementById('modalTrackingNumber').value.trim();
-      
-      if (!trackingNumber) {
-        showToast('⚠️ 송장 번호를 입력해 주세요.');
-        return;
-      }
-      
-      const orderId = currentOrderIdForDelivery;
-      if (!orderId) return;
-
-      // Close modal without resetting selectElement mapping (so it doesn't revert)
-      document.getElementById('deliveryModal').classList.add('hidden');
-      currentOrderIdForDelivery = null;
-      previousSelectElement = null;
-
-      await submitDeliveryStatus(orderId, courier, trackingNumber);
-    });
-
-    // Update status API
-    async function updateOrderStatus(orderId, newStatus, selectElement) {
-      if (newStatus === '택배발송') {
-        currentOrderIdForDelivery = orderId;
-        deliveryOrderRevision = window.allOrders.find(o => o.id === orderId)?.revision;
-        previousSelectElement = selectElement;
-        
-        // Open the custom delivery modal
-        document.getElementById('deliveryModal').classList.remove('hidden');
-        document.getElementById('modalTrackingNumber').value = '';
-        document.getElementById('modalTrackingNumber').focus();
-        return;
-      }
-
-      await persistOrderStatus(orderId, { status: newStatus });
+    function setStatusModalSubmitting(submitting) {
+      statusModalSubmitting = submitting;
+      const submit = document.getElementById('btnOrderStatusSubmit');
+      submit.disabled = submitting;
+      submit.classList.toggle('is-loading', submitting);
+      document.getElementById('modalOrderStatus').disabled = submitting;
+      document.getElementById('btnOrderStatusCancel').disabled = submitting;
+      document.getElementById('btnOrderStatusModalClose').disabled = submitting;
     }
 
-    let deliveryOrderRevision;
-    async function persistOrderStatus(orderId, patch) {
+    function updateStatusModalFields() {
+      const order = activeStatusOrder();
+      if (!order) return;
+      const selectedStatus = document.getElementById('modalOrderStatus').value;
+      document.getElementById('statusShippingFields').hidden = selectedStatus !== '택배발송';
+      document.querySelector('#btnOrderStatusSubmit [data-label]').textContent = selectedStatus === order.status
+        ? '알림톡 재전송'
+        : '알림톡 전송';
+    }
+
+    function openOrderStatusModal(orderId) {
+      const order = (window.allOrders || []).find(item => Number(item.id) === Number(orderId));
+      if (!order) return;
+      activeStatusOrderId = order.id;
+      const modal = document.getElementById('orderStatusModal');
+      const select = document.getElementById('modalOrderStatus');
+      select.innerHTML = window.orderStatusOptions(order)
+        .map(value => `<option value="${escapeHtml(value)}">${escapeHtml(window.orderStatusLabel(value))}</option>`)
+        .join('');
+      select.value = order.status;
+      document.getElementById('orderStatusModalOrder').textContent = `주문 ${order.id} · ${order.name || '고객명 없음'}`;
+      document.getElementById('modalTrackingNumber').value = order.tracking_number || '';
+      const courier = order.courier || '한진택배';
+      const radio = Array.from(document.querySelectorAll('input[name="statusCourier"]')).find(input => input.value === courier)
+        || document.querySelector('input[name="statusCourier"]');
+      if (radio) radio.checked = true;
+      document.getElementById('orderStatusMessage').textContent = '';
+      setStatusModalSubmitting(false);
+      updateStatusModalFields();
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      select.focus();
+    }
+
+    function closeOrderStatusModal() {
+      if (statusModalSubmitting) return;
+      const modal = document.getElementById('orderStatusModal');
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+      activeStatusOrderId = null;
+      document.getElementById('orderStatusMessage').textContent = '';
+    }
+
+    document.getElementById('btnOrderStatusModalClose').addEventListener('click', closeOrderStatusModal);
+    document.getElementById('btnOrderStatusCancel').addEventListener('click', closeOrderStatusModal);
+    document.getElementById('orderStatusModalOverlay').addEventListener('click', closeOrderStatusModal);
+    document.getElementById('modalOrderStatus').addEventListener('change', updateStatusModalFields);
+
+    document.getElementById('orderStatusForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      if (statusModalSubmitting) return;
       if (window.location.protocol === 'file:') {
-        showToast('변경 이력을 저장하려면 관리자 사이트에 접속해 주세요.');
-        loadOrders(); return;
+        document.getElementById('orderStatusMessage').textContent = '변경 이력을 저장하려면 관리자 사이트에 접속해 주세요.';
+        return;
       }
-      const order = window.allOrders.find(o => o.id === orderId);
-      try {
-        const res = await fetch(`/api/admin/orders/${orderId}/status`, {
-          method: 'PUT', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...patch, revision: patch.status === '택배발송' ? deliveryOrderRevision : order?.revision })
-        });
-        const result = await res.json();
-        if (!res.ok) throw Error(result.error || '주문 변경을 저장하지 못했습니다.');
-        const notification = result.notification;
-        if (!notification) {
-          showToast('주문 변경을 저장했습니다.');
-        } else if (notification.status === 'delivered') {
-          showToast('주문 변경을 저장했고 알림톡 전송이 완료되었습니다.');
-        } else if (notification.status === 'accepted') {
-          showToast('주문 변경을 저장했고 알림톡 발송 요청이 정상 접수되었습니다.');
-        } else if (notification.status === 'failed') {
-          showToast(`주문 변경은 저장했지만 알림톡 전송에 실패했습니다. ${notification.reason || ''}`.trim());
-        } else if (notification.status === 'blocked' || notification.status === 'disabled') {
-          showToast(`주문 변경은 저장했지만 알림톡은 전송되지 않았습니다. ${notification.reason || ''}`.trim());
-        } else {
-          showToast(`주문 변경을 저장했습니다. 알림톡 결과를 확인해 주세요. ${notification.reason || ''}`.trim());
+      const order = activeStatusOrder();
+      if (!order) return;
+      const selectedStatus = document.getElementById('modalOrderStatus').value;
+      const resend = selectedStatus === order.status;
+      const patch = { status: selectedStatus, revision: order.revision, resend };
+      if (selectedStatus === '택배발송') {
+        patch.courier = document.querySelector('input[name="statusCourier"]:checked')?.value || '한진택배';
+        patch.trackingNumber = document.getElementById('modalTrackingNumber').value.trim();
+        if (!patch.trackingNumber) {
+          document.getElementById('orderStatusMessage').textContent = '운송장 번호를 입력해 주세요.';
+          document.getElementById('modalTrackingNumber').focus();
+          return;
         }
-      } catch (error) { showToast(error.message || '연결을 확인한 뒤 다시 시도해 주세요.'); }
-      await loadOrders();
-    }
-    async function submitDeliveryStatus(orderId, courier, trackingNumber) {
-      await persistOrderStatus(orderId, { status: '택배발송', courier, trackingNumber });
-    }
+      }
+
+      const message = document.getElementById('orderStatusMessage');
+      message.textContent = resend ? '알림톡을 다시 전송하고 있습니다…' : '주문 상태를 저장하고 알림톡을 전송하고 있습니다…';
+      setStatusModalSubmitting(true);
+      try {
+        const response = await fetch(`/api/admin/orders/${order.id}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify(patch)
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || '주문 상태를 저장하지 못했습니다.');
+
+        order.status = selectedStatus;
+        order.revision = result.revision;
+        if (selectedStatus === '택배발송') {
+          order.courier = patch.courier;
+          order.tracking_number = patch.trackingNumber;
+        }
+        renderOrdersTable(window.allOrders);
+        const notification = result.notification;
+        if (notification?.status === 'delivered' || notification?.status === 'accepted') {
+          showToast(notification.status === 'delivered' ? '알림톡 전송이 완료되었습니다.' : '알림톡 발송 요청이 정상 접수되었습니다.');
+          setStatusModalSubmitting(false);
+          closeOrderStatusModal();
+          return;
+        }
+        const reason = notification?.reason || '알림톡 처리 결과를 확인하지 못했습니다.';
+        message.textContent = `주문 상태는 저장했지만 알림톡 전송에 실패했습니다. ${reason}`;
+        updateStatusModalFields();
+      } catch (error) {
+        message.textContent = error.message || '연결을 확인한 뒤 다시 시도해 주세요.';
+      } finally {
+        setStatusModalSubmitting(false);
+      }
+    });
 
     // Toggle check/uncheck all orders for Pickup
     function toggleSelectAllPickup(masterCheckbox) {
@@ -3645,6 +3784,7 @@
           localStorage.setItem('minsook_products', JSON.stringify(allProducts));
         }
         renderProductsTable(allProducts);
+        window.productsLoaded = true;
         return;
       }
 
@@ -3659,6 +3799,7 @@
         const data = await res.json();
         allProducts = data.products || [];
         renderProductsTable(allProducts);
+        window.productsLoaded = true;
       } catch (err) {
         console.error('Failed to load products:', err);
         showToast('❌ 품목 데이터를 불러오지 못했습니다.');
@@ -3680,6 +3821,7 @@
         
         const imgList = parseProductImages(p.image_url);
         const imgPath = imgList.length > 0 && imgList[0].trim() ? imgList[0].trim() : '민숙농장로고가로형-배경없음.png';
+        const imgSrc = /^(data:|https?:\/\/|\/)/i.test(imgPath) ? imgPath : `/${imgPath}`;
         const badgeHTML = p.badge_text ? `<span class="status-badge ${p.badge_class || 'status-order'}">${p.badge_text}</span>` : '-';
         
         let priceDisplay = '';
@@ -3708,7 +3850,7 @@
         
         tr.innerHTML = `
           <td style="vertical-align: middle; text-align: center;">
-            <img src="${imgPath}" alt="${p.name}" style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+            <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(p.name)}" style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
           </td>
           <td style="font-weight: bold; vertical-align: middle;">${escapeHtml(p.name)}</td>
           <td style="font-weight: bold; color: var(--primary); vertical-align: middle; line-height: 1.4;">${priceDisplay}</td>
@@ -3817,7 +3959,7 @@
         item.style.height = '80px';
         
         item.innerHTML = `
-          <img src="${escapeHtml(img)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+          <img src="${escapeHtml(/^(data:|https?:\/\/|\/)/i.test(img) ? img : `/${img}`)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
           <button type="button" onclick="deleteUploadedImage(${idx})" style="position: absolute; top: -5px; right: -5px; width: 18px; height: 18px; border-radius: 50%; background: #ef4444; color: white; border: none; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;" title="이미지 삭제">&times;</button>
         `;
         list.appendChild(item);
@@ -4222,24 +4364,26 @@
 
     // Verify session state on first load
     async function checkAuthOnLoad() {
-      const sessionLoggedIn = sessionStorage.getItem('minsook_admin_logged_in');
-      if (sessionLoggedIn !== 'true') {
-        showLogin();
-        return;
-      }
-
       if (window.location.protocol === 'file:') {
-        currentUserRole = 'admin';
-        currentUsername = 'admin';
-        showDashboard();
+        if (sessionStorage.getItem('minsook_admin_logged_in') === 'true') {
+          currentUserRole = 'admin';
+          currentUsername = 'admin';
+          showDashboard();
+        } else showLogin();
         return;
       }
 
       try {
-        const res = await fetch('/api/admin/orders');
+        let res = await fetch('/api/admin/session', { credentials: 'same-origin' });
+        if (res.status >= 500) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+          res = await fetch('/api/admin/session', { credentials: 'same-origin' });
+        }
         if (res.ok) {
+          const session = await res.json();
           currentUserRole = 'admin';
-          currentUsername = 'admin'; 
+          currentUsername = session.username || 'admin';
+          sessionStorage.setItem('minsook_admin_logged_in', 'true');
           showDashboard();
         } else {
           sessionStorage.removeItem('minsook_admin_logged_in');
@@ -4254,20 +4398,25 @@
     window.addEventListener('pageshow', () => {
       document.getElementById('loginPassword').value = '';
     });
+    window.addEventListener('popstate', () => {
+      if (document.getElementById('dashboardSection').style.display === 'none') return;
+      restoreFiltersFromUrl();
+      switchTab(adminTabFromPath(), { historyMode: 'none' });
+    });
     window.onload = () => {
       initializeDateFilter();
       checkAuthOnLoad();
     };
   </script>
-  <script src="html2canvas.min.js"></script>
-  <script src="admin-order-history.js?v=1"></script>
-  <script src="admin-orders.js?v=6"></script>
-  <script src="admin-templates.js?v=3"></script>
-  <script src="admin-print.js?v=1"></script>
-  <script src="admin-notifications.js?v=4"></script>
-  <script src="product-gallery.js?v=1"></script>
-  <script src="admin-product-images.js?v=1"></script>
-  <script src="shipping-format.js?v=1"></script>
-  <script src="shipping-export.js?v=1"></script>
+  <script src="/html2canvas.min.js"></script>
+  <script src="/admin-order-history.js?v=2"></script>
+  <script src="/admin-orders.js?v=6"></script>
+  <script src="/admin-templates.js?v=3"></script>
+  <script src="/admin-print.js?v=1"></script>
+  <script src="/admin-notifications.js?v=4"></script>
+  <script src="/product-gallery.js?v=1"></script>
+  <script src="/admin-product-images.js?v=1"></script>
+  <script src="/shipping-format.js?v=1"></script>
+  <script src="/shipping-export.js?v=1"></script>
 </body>
 </html>

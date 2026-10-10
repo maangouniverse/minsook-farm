@@ -143,13 +143,15 @@ function createLifecycle(db, { notifier = null } = {}) {
     });
     queue = pending.catch(() => {}); return pending;
   }
-  async function record(tx, before, after, source) {
+  async function record(tx, before, after, source, forceNotify = false) {
     const statusChanged = !before || before.status !== after.status;
     const shippingChanged = !!before && (text(before.courier) !== text(after.courier) || text(before.tracking_number) !== text(after.tracking_number));
-    if (before && !statusChanged && !shippingChanged) return null;
+    const dataChanged = statusChanged || shippingChanged;
+    if (before && !dataChanged && !forceNotify) return null;
     const event = randomUUID(), at = new Date().toISOString();
-    const snapshot = o => o ? JSON.stringify({ status: o.status, courier: o.courier || '', tracking_number: o.tracking_number || '', revision: o === after ? (before ? before.revision + 1 : 0) : o.revision }) : null;
-    await tx.run('INSERT INTO order_events (id, order_id, kind, actor, source, before_json, after_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [event, after.id, !before ? 'created' : statusChanged && shippingChanged ? 'status_shipping' : shippingChanged ? 'shipping' : 'status', before ? '관리자' : '신규 주문 접수', source, snapshot(before), snapshot(after), at]);
+    const snapshot = o => o ? JSON.stringify({ status: o.status, courier: o.courier || '', tracking_number: o.tracking_number || '', revision: o === after ? (before ? before.revision + (dataChanged ? 1 : 0) : 0) : o.revision }) : null;
+    const kind = !before ? 'created' : forceNotify && !dataChanged ? 'notification_resend' : statusChanged && shippingChanged ? 'status_shipping' : shippingChanged ? 'shipping' : 'status';
+    await tx.run('INSERT INTO order_events (id, order_id, kind, actor, source, before_json, after_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [event, after.id, kind, before ? '관리자' : '신규 주문 접수', source, snapshot(before), snapshot(after), at]);
     const target = notificationStatus(after.status);
     const previousTarget = before ? notificationStatus(before.status) : null;
     const templateStatus = target || '주문취소';
@@ -161,7 +163,7 @@ function createLifecycle(db, { notifier = null } = {}) {
     else if (rendered.body.length > 1000) { state = 'blocked'; reason = '변수 치환 후 알림톡 본문이 1,000자를 초과합니다.'; }
     else if (!template.provider_code) { state = 'blocked'; reason = '솔라피 승인 템플릿 ID가 없습니다. 실제 발송하지 않았습니다.'; }
     else if (notifier) { const eligible = notifier.eligibility(after.phone); state = eligible.status; reason = eligible.reason; }
-    const shouldNotify = !!target && (!before || target !== previousTarget || (target === '택배발송' && shippingChanged));
+    const shouldNotify = !!target && (forceNotify || !before || target !== previousTarget || (target === '택배발송' && shippingChanged));
     if (!shouldNotify) {
       state = 'disabled'; reason = '같은 주문 상태의 알림톡은 중복 발송하지 않습니다.';
     }
@@ -196,7 +198,7 @@ function createLifecycle(db, { notifier = null } = {}) {
     }
     return { checked: Object.keys(results).length };
   }
-  async function update(id, patch, expectedRevision, source) {
+  async function update(id, patch, expectedRevision, source, { forceNotify = false } = {}) {
     if (!Number.isInteger(expectedRevision) || expectedRevision < 0) throw fail('주문 정보를 새로 불러온 뒤 다시 저장해 주세요.', 409);
     const result = await transaction(async tx => {
       const before = await tx.get('SELECT * FROM orders WHERE id = ?', [id]);
@@ -217,10 +219,14 @@ function createLifecycle(db, { notifier = null } = {}) {
       }
       const keys = ['name', 'phone', 'address', 'memo', 'items', 'total_price', 'status', 'tracking_number', 'courier'];
       if (before.revision !== expectedRevision) throw fail('다른 화면에서 이 주문이 수정되었습니다. 새로고침 후 변경 내용을 확인해 주세요.', 409);
-      if (keys.every(k => text(before[k]) === text(after[k]))) return { success: true, revision: before.revision, unchanged: true };
+      if (keys.every(k => text(before[k]) === text(after[k]))) {
+        if (!forceNotify) return { success: true, revision: before.revision, unchanged: true };
+        const eventId = await record(tx, before, after, source, true);
+        return { success: true, revision: before.revision, unchanged: true, resent: true, eventId };
+      }
       const result = await tx.run(`UPDATE orders SET ${keys.map(k => k + ' = ?').join(', ')}, revision = revision + 1 WHERE id = ? AND revision = ?`, [...keys.map(k => after[k]), id, expectedRevision]);
       if (!result.changes) throw fail('다른 화면에서 이 주문이 수정되었습니다. 새로고침해 주세요.', 409);
-      const eventId = await record(tx, before, after, source);
+      const eventId = await record(tx, before, after, source, false);
       return { success: true, revision: before.revision + 1, eventId };
     });
     await dispatch(result.eventId);

@@ -26,7 +26,7 @@ app.use(cookieParser());
 app.use('/internal', (req, res) => res.sendStatus(404));
 app.use(express.static(path.join(__dirname)));
 
-app.get('/admin', (req, res) => {
+app.get(['/admin', '/admin/', '/admin/orders', '/admin/products', '/admin/settings'], (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
@@ -426,7 +426,7 @@ function authenticateAdmin(req, res, next) {
     req.admin = verified;
     next();
   } catch (err) {
-    res.status(400).json({ error: 'Invalid token.' });
+    res.status(401).json({ error: 'Invalid token.' });
   }
 }
 
@@ -627,15 +627,19 @@ app.post('/api/admin/login', (req, res) => {
     }
 
     // Generate token
-    const token = jwt.sign({ role: 'admin', username: 'admin' }, JWT_SECRET, { expiresIn: '12h' });
-    res.cookie('admin_token', token, { httpOnly: true, maxAge: 12 * 60 * 60 * 1000 });
+    const token = jwt.sign({ role: 'admin', username: 'admin' }, JWT_SECRET, { expiresIn: '7d' });
+    res.cookie('admin_token', token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' || !!process.env.VERCEL, path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
     return res.json({ success: true, role: 'admin' });
   });
 });
 
+app.get('/api/admin/session', authenticateAdmin, (req, res) => {
+  res.json({ authenticated: true, role: req.admin.role || 'admin', username: req.admin.username || 'admin' });
+});
+
 // 3. Admin Logout
 app.post('/api/admin/logout', (req, res) => {
-  res.clearCookie('admin_token');
+  res.clearCookie('admin_token', { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' || !!process.env.VERCEL, path: '/' });
   res.json({ success: true });
 });
 
@@ -693,12 +697,13 @@ app.put('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
 });
 
 app.put('/api/admin/orders/:id/status', authenticateAdmin, async (req, res) => {
+  if (req.body.resend !== undefined && typeof req.body.resend !== 'boolean') return res.status(400).json({ error: '알림톡 재전송 요청을 확인해 주세요.' });
   const patch = { status: req.body.status };
   if (req.body.status === '택배발송') {
     if (typeof req.body.trackingNumber !== 'string' || typeof req.body.courier !== 'string') return res.status(400).json({ error: '택배사와 운송장 번호를 입력해 주세요.' });
     patch.tracking_number = req.body.trackingNumber; patch.courier = req.body.courier;
   }
-  try { res.json(await lifecycle.update(req.params.id, patch, req.body.revision, '주문 목록')); }
+  try { res.json(await lifecycle.update(req.params.id, patch, req.body.revision, req.body.resend ? '주문상태 팝업 · 알림톡 재전송' : '주문상태 팝업', { forceNotify: req.body.resend === true })); }
   catch (error) { res.status(error.status || 503).json({ error: error.status ? error.message : '저장하지 못했습니다. 다시 확인해 주세요.' }); }
 });
 

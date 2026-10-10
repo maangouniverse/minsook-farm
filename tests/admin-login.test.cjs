@@ -14,4 +14,4 @@ async function scenario(status, data, throws = false) {
   if(dashboard) assert.equal(nodes.loginPassword.value,'');
   else assert.equal(nodes.loginError.hidden,false);
 }
-(async()=>{await scenario(200,{success:true,role:'admin'});await scenario(401,{});await scenario(500,{});await scenario(0,{},true);for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))new vm.Script(match[1]);console.log('PASS: success, incorrect password, server failure, network failure, script syntax');})().catch(e=>{console.error(e);process.exitCode=1});
+(async()=>{await scenario(200,{success:true,role:'admin'});await scenario(401,{});await scenario(500,{});await scenario(0,{},true);for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))new vm.Script(match[1]);assert.match(html,/\/api\/admin\/session/);assert.match(html,/notification_resend|알림톡 재전송/);assert.match(html,/writeFiltersToUrl/);assert.doesNotMatch(html,/onchange="updateOrderStatus/);console.log('PASS: login states, persistent session check, URL filters, status modal, script syntax');})().catch(e=>{console.error(e);process.exitCode=1});
